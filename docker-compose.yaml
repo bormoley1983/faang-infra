@@ -61,13 +61,13 @@ services:
       - kafka
     entrypoint: >
       /bin/sh -c "
-      sleep 10;
-      kafka-topics --create --topic notification_like_topic --bootstrap-server kafka:9093 --partitions 3 --replication-factor 1 || echo 'notification_like_topic already exists';
-      kafka-topics --create --topic notification_comment_topic --bootstrap-server kafka:9093 --partitions 2 --replication-factor 1 || echo 'notification_comment_topic already exists';
-      kafka-topics --create --topic analytics_like_topic --bootstrap-server kafka:9093 --partitions 3 --replication-factor 2 || echo 'analytics_like_topic already exists';
-      kafka-topics --create --topic analytics_comment_topic --bootstrap-server kafka:9093 --partitions 1 --replication-factor 1 || echo 'analytics_comment_topic already exists';
-      kafka-topics --create --topic user_ban_topic --bootstrap-server kafka:9093 --partitions 1 --replication-factor 1 || echo 'user_ban_topic already exists';
-      kafka-topics --create --topic userViewProfileTopic --bootstrap-server kafka:9093 --partitions 3 --replication-factor 1 || echo 'userViewProfileTopic already exists';
+      sleep 20;
+      kafka-topics --create --topic notification_like_topic --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1 || echo 'notification_like_topic already exists';
+      kafka-topics --create --topic notification_comment_topic --bootstrap-server localhost:9092 --partitions 2 --replication-factor 1 || echo 'notification_comment_topic already exists';
+      kafka-topics --create --topic analytics_like_topic --bootstrap-server localhost:9092 --partitions 3 --replication-factor 2 || echo 'analytics_like_topic already exists';
+      kafka-topics --create --topic analytics_comment_topic --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 || echo 'analytics_comment_topic already exists';
+      kafka-topics --create --topic user_ban_topic --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 || echo 'user_ban_topic already exists';
+      kafka-topics --create --topic userViewProfileTopic --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1 || echo 'userViewProfileTopic already exists';
       exit 0;
       "
 
