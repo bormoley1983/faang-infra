@@ -62,6 +62,62 @@ services:
       /init-kafka.sh &&
       wait"
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    environment:
+      - discovery.type=single-node
+      - http.host=0.0.0.0
+      - transport.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - indices.memory.index_buffer_size=20%
+      - reindex.remote.whitelist=localhost:9200
+      - action.auto_create_index=true
+      - node.store.allow_mmap=false
+    ports:
+      - 9200:9200
+      - 9300:9300
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    mem_limit: 2g
+    cap_add:
+        - IPC_LOCK
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.3
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - KIBANA_LOGGING_VERBOSE=true
+      - TELEMETRY_ENABLED=false
+      - SERVER_PUBLICBASEURL=http://localhost:5601
+      - LOGGING_DEST=stdout
+    ports:
+      - 5601:5601
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - kb_data:/usr/share/kibana/data
+
 volumes:
   kafka_data:
+    driver: local
+  es_data:
+    driver: local
+  kb_data:
     driver: local
