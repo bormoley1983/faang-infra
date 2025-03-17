@@ -11,6 +11,7 @@ services:
     image: redis/redis-stack:latest
     ports:
       - "6379:6379"
+      - "8001:8001"
   minio:
     image: minio/minio
     ports:
@@ -89,12 +90,19 @@ services:
         - IPC_LOCK
     volumes:
       - es_data:/usr/share/elasticsearch/data
+      - ./init-elastic.sh:/init-elastic.sh
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
       interval: 30s
       timeout: 10s
       retries: 5
+    command: >
+      sh -c "
+      /usr/local/bin/docker-entrypoint.sh elasticsearch &
+      sleep 30 &&
+      /init-elastic.sh &&
+      wait"
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.17.3
