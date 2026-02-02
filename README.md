@@ -1,3 +1,3 @@
 # infra
-* Инфраструктурная директория
-* Запускает базу данных для локальной разработки
+* Docker-based infra deployment and initial config
+* Runs database and other prerequisite services preconfigured
