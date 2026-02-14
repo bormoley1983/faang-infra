@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faang-achievement-service
+  namespace: default
+  labels:
+    app: achievement-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: achievement-service
+  template:
+    metadata:
+      labels:
+        app: achievement-service
+    spec:
+      containers:
+        - name: achievement-service
+          image: your-registry/faang-achievement-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8085
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/postgres"
+            - name: DATABASE_USERNAME
+              value: "$(POSTGRES_USER)"
+            - name: DATABASE_PASSWORD
+              value: "$(POSTGRES_PASSWORD)"
+            - name: DATABASE_SCHEMA
+              value: "achievement_service"
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: REDIS_PORT
+            - name: PROJECT_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: PROJECT_SERVICE_URL
+            - name: USER_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: USER_SERVICE_URL
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8085
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8085
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: achievement-service
+  namespace: default
+spec:
+  selector:
+    app: achievement-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8085
+  type: ClusterIP

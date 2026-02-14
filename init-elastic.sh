@@ -1,18 +1,22 @@
 #!/bin/bash
-echo "Waiting for Elasticsearch..."
-until $(curl --silent --output /dev/null http://elasticsearch:9200); do
+# Default values if environment variables are not set
+ELASTICSEARCH_URL=${ELASTICSEARCH_URL:-http://elasticsearch:9200}
+
+echo "Waiting for Elasticsearch at $ELASTICSEARCH_URL..."
+until $(curl --silent --output /dev/null $ELASTICSEARCH_URL); do
   sleep 5
 done
 
 if [ "$WAIT_FOR_REDIS" = "true" ]; then
-  echo "Waiting for Redis..."
-  until $(redis-cli -h redis ping > /dev/null 2>&1); do
+  REDIS_HOST=${REDIS_HOST:-redis}
+  echo "Waiting for Redis at $REDIS_HOST..."
+  until $(redis-cli -h $REDIS_HOST ping > /dev/null 2>&1); do
     sleep 2
   done
 fi
 
 echo "Creating Elasticsearch indexes..."
-curl -X PUT "http://elasticsearch:9200/hashtags_index" -H 'Content-Type: application/json' -d '
+curl -X PUT "$ELASTICSEARCH_URL/hashtags_index" -H 'Content-Type: application/json' -d '
 {
   "settings": {
     "number_of_shards": 5,

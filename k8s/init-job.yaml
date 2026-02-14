@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-init-job
+  namespace: default
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init-postgres
+          image: your-registry/faang-init-utils:latest # Replace with your built image
+          imagePullPolicy: IfNotPresent
+          command: ["/scripts/init-postgres.sh"]
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: "postgres" # Usually connecting to default db to create others
+        
+        - name: init-kafka
+          image: your-registry/faang-init-utils:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/scripts/init-kafka.sh"]
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+        
+        - name: init-elastic
+          image: your-registry/faang-init-utils:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/scripts/init-elastic.sh"]
+          env:
+            - name: ELASTICSEARCH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: ELASTICSEARCH_URL
+            - name: WAIT_FOR_REDIS
+              value: "true"
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: REDIS_HOST

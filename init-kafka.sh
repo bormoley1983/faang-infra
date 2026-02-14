@@ -1,10 +1,23 @@
 #!/bin/bash
-echo "Waiting for Kafka to be ready..."
+# Default values if environment variables are not set
+KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+
+# Determine kafka-topics.sh location
+if [ -x "/opt/kafka/bin/kafka-topics.sh" ]; then
+  KAFKA_TOPICS_CMD="/opt/kafka/bin/kafka-topics.sh"
+elif [ -x "/bin/kafka-topics.sh" ]; then
+  KAFKA_TOPICS_CMD="/bin/kafka-topics.sh"
+else
+  # Fallback to finding it in PATH
+  KAFKA_TOPICS_CMD="kafka-topics.sh"
+fi
+
+echo "Waiting for Kafka at $KAFKA_BOOTSTRAP_SERVERS to be ready..."
 
 MAX_RETRIES=20
 RETRIES=0
 
-while ! /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list > /dev/null 2>&1; do
+while ! $KAFKA_TOPICS_CMD --bootstrap-server $KAFKA_BOOTSTRAP_SERVERS --list > /dev/null 2>&1; do
   if [ $RETRIES -eq $MAX_RETRIES ]; then
     echo "Kafka failed to start within the allowed time"
     exit 1
@@ -18,12 +31,12 @@ echo "Kafka is ready!"
 echo "Initializing Kafka topics..."
 
 echo "Current topics in Kafka:"
-/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list | while read topic; do
+$KAFKA_TOPICS_CMD --bootstrap-server $KAFKA_BOOTSTRAP_SERVERS --list | while read topic; do
   echo "- $topic"
 done
 echo ""
 
-TOPIC_LIST=$(/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list)
+TOPIC_LIST=$($KAFKA_TOPICS_CMD --bootstrap-server $KAFKA_BOOTSTRAP_SERVERS --list)
 
 # Check and create each topic
 for TOPIC_CONFIG in \
@@ -44,7 +57,7 @@ do
     if echo "$TOPIC_LIST" | grep -q "$TOPIC"; then
       echo "$TOPIC already exists"
     else
-      /opt/kafka/bin/kafka-topics.sh --create --topic $TOPIC --bootstrap-server kafka:9092 --partitions $PARTITIONS --replication-factor $REPLICATION
+      $KAFKA_TOPICS_CMD --create --topic $TOPIC --bootstrap-server $KAFKA_BOOTSTRAP_SERVERS --partitions $PARTITIONS --replication-factor $REPLICATION
       echo "$TOPIC created"
     fi
   done

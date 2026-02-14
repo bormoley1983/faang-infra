@@ -1,10 +1,17 @@
 #!/bin/bash
-echo "Waiting for PostgreSQL to be ready..."
+# Default values if environment variables are not set
+PG_HOST=${POSTGRES_HOST:-postgres}
+PG_PORT=${POSTGRES_PORT:-5432}
+PG_USER=${POSTGRES_USER:-user}
+PG_PASSWORD=${POSTGRES_PASSWORD:-password}
+PG_DB=${POSTGRES_DB:-postgres}
+
+echo "Waiting for PostgreSQL at $PG_HOST:$PG_PORT to be ready..."
 
 MAX_RETRIES=30
 RETRIES=0
 
-until PGPASSWORD=password psql -h postgres -U user -d postgres -c '\q' 2>/dev/null; do
+until PGPASSWORD=$PG_PASSWORD psql -h $PG_HOST -p $PG_PORT -U $PG_USER -d $PG_DB -c '\q' 2>/dev/null; do
   if [ $RETRIES -eq $MAX_RETRIES ]; then
     echo "PostgreSQL failed to start within the allowed time"
     exit 1
@@ -15,7 +22,7 @@ until PGPASSWORD=password psql -h postgres -U user -d postgres -c '\q' 2>/dev/nu
 done
 
 echo "PostgreSQL is ready!"
-echo "Initializing database schemas in postgres database..."
+echo "Initializing database schemas in $PG_DB database..."
 
 # Array of services that need schemas
 SERVICES=(
@@ -33,7 +40,7 @@ SERVICES=(
 # Create schemas in the postgres database
 for SERVICE in "${SERVICES[@]}"; do
   echo "Creating schema: $SERVICE"
-  PGPASSWORD=password psql -h postgres -U user -d postgres -c "CREATE SCHEMA IF NOT EXISTS $SERVICE;" 2>&1
+  PGPASSWORD=$PG_PASSWORD psql -h $PG_HOST -p $PG_PORT -U $PG_USER -d $PG_DB -c "CREATE SCHEMA IF NOT EXISTS $SERVICE;" 2>&1
   if [ $? -eq 0 ]; then
     echo "✓ Schema $SERVICE created successfully"
   else
@@ -42,8 +49,8 @@ for SERVICE in "${SERVICES[@]}"; do
 done
 
 echo ""
-echo "Current schemas in postgres database:"
-PGPASSWORD=password psql -h postgres -U user -d postgres -c "\dn"
+echo "Current schemas in $PG_DB database:"
+PGPASSWORD=$PG_PASSWORD psql -h $PG_HOST -p $PG_PORT -U $PG_USER -d $PG_DB -c "\dn"
 
 echo ""
 echo "PostgreSQL initialization complete!"

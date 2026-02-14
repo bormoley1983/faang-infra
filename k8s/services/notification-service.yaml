@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faang-notification-service
+  namespace: default
+  labels:
+    app: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: your-registry/faang-notification-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: REDIS_PORT
+            - name: KAFKA_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: SMTP_PORT
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: SMTP_USERNAME
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: SMTP_PASSWORD
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: TELEGRAM_BOT_TOKEN
+            - name: VONAGE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: VONAGE_API_KEY
+            - name: VONAGE_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: VONAGE_API_SECRET
+            - name: PROJECT_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: PROJECT_SERVICE_URL
+            - name: USER_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: USER_SERVICE_URL
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8083
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: default
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8083
+  type: ClusterIP

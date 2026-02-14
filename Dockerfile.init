@@ -1,0 +1,35 @@
+FROM ubuntu:24.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary tools
+# Using Ubuntu 24.04 gives us access to newer packages.
+# openjdk-21-jre-headless matches the project's target Java version.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-client \
+    curl \
+    jq \
+    wget \
+    openjdk-21-jre-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Kafka tools
+ENV KAFKA_VERSION=3.9.0
+ENV SCALA_VERSION=2.13
+RUN wget "https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz" && \
+    tar -xzf "kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz" && \
+    mv "kafka_${SCALA_VERSION}-${KAFKA_VERSION}" /opt/kafka && \
+    rm "kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz"
+
+ENV PATH=/opt/kafka/bin:$PATH
+
+WORKDIR /scripts
+COPY init-postgres.sh .
+COPY init-kafka.sh .
+COPY init-elastic.sh .
+
+RUN chmod +x init-postgres.sh init-kafka.sh init-elastic.sh
+
+# Default command to show help if no script is specified
+CMD ["/bin/bash", "-c", "echo 'FAANG Init Utils Ready. Use /scripts/init-postgres.sh, init-kafka.sh, or init-elastic.sh' && /bin/bash"]
