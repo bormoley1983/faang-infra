@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: init-postgres
-          image: your-registry/faang-init-utils:latest # Replace with your built image
+          image: faang-init-utils:latest
           imagePullPolicy: IfNotPresent
           command: ["/scripts/init-postgres.sh"]
           env:
@@ -34,10 +34,13 @@ spec:
                   name: faang-secrets
                   key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
-              value: "postgres" # Usually connecting to default db to create others
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_DB
         
         - name: init-kafka
-          image: your-registry/faang-init-utils:latest
+          image: faang-init-utils:latest
           imagePullPolicy: IfNotPresent
           command: ["/scripts/init-kafka.sh"]
           env:
@@ -48,7 +51,7 @@ spec:
                   key: KAFKA_BOOTSTRAP_SERVERS
         
         - name: init-elastic
-          image: your-registry/faang-init-utils:latest
+          image: faang-init-utils:latest
           imagePullPolicy: IfNotPresent
           command: ["/scripts/init-elastic.sh"]
           env:

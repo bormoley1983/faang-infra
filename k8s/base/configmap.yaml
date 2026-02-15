@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: faang-config
+  namespace: default
+data:
+  # Infrastructure Services
+  POSTGRES_HOST: "postgres-main"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "faang"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-main:9092"
+  REDIS_HOST: "redis-main"
+  REDIS_PORT: "6379"
+  ELASTICSEARCH_URL: "http://elasticsearch-main:9200"
+  MINIO_URL: "http://minio-main:9000"
+  APP_ENV: "production"
+
+  # Internal Service URLs (Updated with faang- prefix)
+  ACCOUNT_SERVICE_URL: "http://faang-account-service"
+  ACHIEVEMENT_SERVICE_URL: "http://faang-achievement-service"
+  ANALYTICS_SERVICE_URL: "http://faang-analytics-service"
+  NOTIFICATION_SERVICE_URL: "http://faang-notification-service"
+  PAYMENT_SERVICE_URL: "http://faang-payment-service"
+  POST_SERVICE_URL: "http://faang-post-service"
+  PROJECT_SERVICE_URL: "http://faang-project-service"
+  URL_SHORTENER_SERVICE_URL: "http://faang-url-shortener-service"
+  USER_SERVICE_URL: "http://faang-account-service"
+
+  # External Integrations
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  VONAGE_API_SENDER: "FaangTestBot"
+  TELEGRAM_BOT_NAME: "@FaangTestBot"

@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: faang-achievement-service
+  name: faang-project-service
   namespace: default
   labels:
-    app: achievement-service
+    app: faang-project-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: achievement-service
+      app: faang-project-service
   template:
     metadata:
       labels:
-        app: achievement-service
+        app: faang-project-service
     spec:
       containers:
-        - name: achievement-service
-          image: your-registry/faang-achievement-service:latest
+        - name: project-service
+          image: docker-registry:5000/faang-project-service:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8085
+            - containerPort: 8082
           env:
             - name: POSTGRES_HOST
               valueFrom:
@@ -42,14 +42,19 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_DB
             - name: DATABASE_URL
-              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/postgres"
+              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
             - name: DATABASE_USERNAME
               value: "$(POSTGRES_USER)"
             - name: DATABASE_PASSWORD
               value: "$(POSTGRES_PASSWORD)"
             - name: DATABASE_SCHEMA
-              value: "achievement_service"
+              value: "project_service"
             - name: REDIS_URL
               valueFrom:
                 configMapKeyRef:
@@ -60,39 +65,38 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: REDIS_PORT
-            - name: PROJECT_SERVICE_HOST
+            - name: MINIO_SERVICE_HOST
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: PROJECT_SERVICE_URL
+                  key: MINIO_URL
+            - name: PAYMENT_SERVICE_HOST
+              value: "faang-payment-service"
             - name: USER_SERVICE_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: USER_SERVICE_URL
+              value: "faang-account-service"
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 8085
+              port: 8082
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 8085
+              port: 8082
             initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: achievement-service
+  name: faang-project-service
   namespace: default
 spec:
   selector:
-    app: achievement-service
+    app: faang-project-service
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 8085
+      targetPort: 8082
   type: ClusterIP

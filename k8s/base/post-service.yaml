@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: faang-project-service
+  name: faang-post-service
   namespace: default
   labels:
-    app: project-service
+    app: faang-post-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: project-service
+      app: faang-post-service
   template:
     metadata:
       labels:
-        app: project-service
+        app: faang-post-service
     spec:
       containers:
-        - name: project-service
-          image: your-registry/faang-project-service:latest
+        - name: post-service
+          image: docker-registry:5000/faang-post-service:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8082
+            - containerPort: 8081
           env:
             - name: POSTGRES_HOST
               valueFrom:
@@ -42,14 +42,24 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_DB
             - name: DATABASE_URL
-              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/postgres"
+              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
             - name: DATABASE_USERNAME
               value: "$(POSTGRES_USER)"
             - name: DATABASE_PASSWORD
               value: "$(POSTGRES_PASSWORD)"
             - name: DATABASE_SCHEMA
-              value: "project_service"
+              value: "post_service"
+            - name: KAFKA_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
             - name: REDIS_URL
               valueFrom:
                 configMapKeyRef:
@@ -65,33 +75,45 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: MINIO_URL
-            - name: PAYMENT_SERVICE_HOST
-              value: "payment-service"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: MINIO_SECRET_KEY
+            - name: PROJECT_SERVICE_HOST
+              value: "faang-project-service"
             - name: USER_SERVICE_HOST
-              value: "user-service"
+              value: "faang-account-service"
+            - name: PAYMENT_SERVICE_HOST
+              value: "faang-payment-service"
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 8082
+              port: 8081
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 8082
+              port: 8081
             initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: project-service
+  name: faang-post-service
   namespace: default
 spec:
   selector:
-    app: project-service
+    app: faang-post-service
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 8082
+      targetPort: 8081
   type: ClusterIP

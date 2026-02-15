@@ -1,52 +1,40 @@
-# FAANG Social Network - Infrastructure
+# FAANG System Infrastructure & Deployment
 
-This repository manages the core infrastructure, initialization scripts, and Kubernetes deployment configurations for the FAANG microservices ecosystem.
+This repository manages the deployment and configuration of the FAANG microservices system on a Kubernetes cluster.
 
-> **Note:** For local development using Docker Compose and CI/CD pipelines, please refer to the [faang-main (Root)](../) repository.
+## Architecture
+- **Infrastructure**: Existing homelab services (Postgres, Kafka, etc.) or K8s-deployed instances.
+- **Deployment**: Managed via **Kustomize** (located in `k8s/`).
+- **CI/CD**: Jenkins for builds, ArgoCD for GitOps deployment.
+- **Ingress**: Traefik-based subdomain routing.
 
----
+## Project Structure
+- `k8s/base/`: Standard Kubernetes manifests (Generic).
+- `k8s/overlays/homelab/`: Environment-specific patches (Private domain settings).
+- `ops/`: Jenkins and ArgoCD configuration.
+- `scripts/`: Initialization scripts for DB, Kafka, and Elastic.
 
-## 1. Infrastructure Initialization
+## Deployment Workflows
 
-The ecosystem requires specific schemas, Kafka topics, and Elasticsearch indices to be created before services start.
+### 1. Manual Deployment (Local)
+Use this for initial setup or local testing.
+```powershell
+# From the faang-infra folder
+.\deploy.ps1
+```
+*Note: This script uses your local `.env` and applies the Kustomize overlay.*
 
-### Initialization Utility Image
-A custom Docker image (`Dockerfile.init`) packages all necessary CLI tools (`psql`, `kafka-topics`, `curl`) and scripts.
-```bash
-docker build -t your-registry/faang-init-utils:latest -f Dockerfile.init .
+### 2. Infrastructure Setup
+Run this once to create the `faang` database, schemas, and Kafka topics on your existing servers.
+```powershell
+.\setup-infra.ps1
 ```
 
-### Initialization Scripts
-*   **`init-postgres.sh`**: Creates schemas for all microservices in the target database.
-*   **`init-kafka.sh`**: Pre-creates required topics with defined partitions and replication factors.
-*   **`init-elastic.sh`**: Configures Elasticsearch indices and mappings.
+### 3. GitOps Deployment (ArgoCD)
+ArgoCD monitors this repo. To deploy, simply push changes to the `main` branch.
+- Manifests are located in `k8s/overlays/homelab`.
+- Ensure ArgoCD is configured to point to your Git repo.
 
-All scripts are configurable via environment variables (`POSTGRES_HOST`, `KAFKA_BOOTSTRAP_SERVERS`, etc.).
-
----
-
-## 2. Kubernetes Deployment (Production/Homelab)
-
-The `k8s/` directory contains manifests for deploying to a Kubernetes cluster (managed via Rancher/ArgoCD).
-
-### Configuration & Secrets
-1.  **`configmap.yaml`**: Update with your external server URLs (Postgres host, Kafka brokers, etc.).
-2.  **`secret.yaml`**: Update with your credentials (passwords, access keys).
-
-### Deployment Steps
-1.  **Apply Configuration**:
-    ```bash
-    kubectl apply -f k8s/configmap.yaml
-    kubectl apply -f k8s/secret.yaml
-    ```
-2.  **Run Initialization Job**:
-    Executes the init scripts against your external servers.
-    ```bash
-    kubectl apply -f k8s/init-job.yaml
-    ```
-3.  **Deploy Services**:
-    Each service manifest in `k8s/services/` (e.g., `account-service.yaml`) defines its own Deployment and ClusterIP Service, injecting environment variables from the shared ConfigMap/Secret.
-    ```bash
-    kubectl apply -f k8s/services/
-    ```
-
+## Security & Privacy
+- Sensitive credentials are in `k8s/base/secret.yaml` (Base64 encoded). **Update these before production!**
+- Domain names are managed via Kustomize overlays. The `kustomization.yaml` file is excluded from Git to keep your homelab domain private.

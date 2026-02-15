@@ -4,20 +4,20 @@ metadata:
   name: faang-payment-service
   namespace: default
   labels:
-    app: payment-service
+    app: faang-payment-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: payment-service
+      app: faang-payment-service
   template:
     metadata:
       labels:
-        app: payment-service
+        app: faang-payment-service
     spec:
       containers:
         - name: payment-service
-          image: your-registry/faang-payment-service:latest
+          image: docker-registry:5000/faang-payment-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
@@ -50,11 +50,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: payment-service
+  name: faang-payment-service
   namespace: default
 spec:
   selector:
-    app: payment-service
+    app: faang-payment-service
   ports:
     - protocol: TCP
       port: 80

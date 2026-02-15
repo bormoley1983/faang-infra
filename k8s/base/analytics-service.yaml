@@ -4,20 +4,20 @@ metadata:
   name: faang-analytics-service
   namespace: default
   labels:
-    app: analytics-service
+    app: faang-analytics-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: analytics-service
+      app: faang-analytics-service
   template:
     metadata:
       labels:
-        app: analytics-service
+        app: faang-analytics-service
     spec:
       containers:
         - name: analytics-service
-          image: your-registry/faang-analytics-service:latest
+          image: docker-registry:5000/faang-analytics-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8086
@@ -42,8 +42,13 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_DB
             - name: DATABASE_URL
-              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/postgres"
+              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
             - name: DATABASE_USERNAME
               value: "$(POSTGRES_USER)"
             - name: DATABASE_PASSWORD
@@ -86,11 +91,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: analytics-service
+  name: faang-analytics-service
   namespace: default
 spec:
   selector:
-    app: analytics-service
+    app: faang-analytics-service
   ports:
     - protocol: TCP
       port: 80

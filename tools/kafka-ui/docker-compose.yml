@@ -1,0 +1,14 @@
+services:
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    restart: unless-stopped
+    ports:
+      - "19092:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: homelab
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-main:9092
+      # Optional (recommended if you run KRaft controller on 9093 and want extra visibility)
+      # KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: ""
+      # KAFKA_CLUSTERS_0_SCHEMAREGISTRY: ""
+      # KAFKA_CLUSTERS_0_METRICS_PORT: "9997"

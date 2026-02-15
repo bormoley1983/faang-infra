@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana-main
+  namespace: default
+  labels:
+    app: kibana-main
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana-main
+  template:
+    metadata:
+      labels:
+        app: kibana-main
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:9.2.4
+          ports:
+            - containerPort: 5601
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch-main:9200"
+            - name: SERVER_HOST
+              value: "0.0.0.0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana-main
+  namespace: default
+spec:
+  selector:
+    app: kibana-main
+  type: NodePort # Easier to access in homelab
+  ports:
+    - protocol: TCP
+      port: 5601
+      targetPort: 5601

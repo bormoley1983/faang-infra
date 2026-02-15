@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastic-main
+  namespace: default
+  labels:
+    app: elastic-main
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elastic-main
+  template:
+    metadata:
+      labels:
+        app: elastic-main
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:9.3.0
+          ports:
+            - containerPort: 9200
+            - containerPort: 9300
+          env:
+            - name: discovery.type
+              value: "single-node"
+            - name: xpack.security.enabled
+              value: "false"
+            - name: ES_JAVA_OPTS
+              value: "-Xms1g -Xmx1g"
+            - name: action.auto_create_index
+              value: "true"
+          resources:
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: es-data
+              mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: es-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elastic-main
+  namespace: default
+spec:
+  selector:
+    app: elastic-main
+  ports:
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200
+    - protocol: TCP
+      port: 9300
+      targetPort: 9300

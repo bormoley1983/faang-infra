@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: faang-url-shortener-service
+  name: faang-account-service
   namespace: default
   labels:
-    app: url-shortener-service
+    app: faang-account-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: url-shortener-service
+      app: faang-account-service
   template:
     metadata:
       labels:
-        app: url-shortener-service
+        app: faang-account-service
     spec:
       containers:
-        - name: url-shortener-service
-          image: your-registry/faang-url-shortener-service:latest
+        - name: account-service
+          image: docker-registry:5000/faang-account-service:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 18080
+            - containerPort: 8090
           env:
             - name: POSTGRES_HOST
               valueFrom:
@@ -42,47 +42,42 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_DB
             - name: DATABASE_URL
-              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/postgres"
+              value: "jdbc:postgresql://$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
             - name: DATABASE_USERNAME
               value: "$(POSTGRES_USER)"
             - name: DATABASE_PASSWORD
               value: "$(POSTGRES_PASSWORD)"
             - name: DATABASE_SCHEMA
-              value: "url_shortener_service"
-            - name: REDIS_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: REDIS_HOST
-            - name: REDIS_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: REDIS_PORT
+              value: "account_service"
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 18080
+              port: 8090
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 18080
+              port: 8090
             initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: url-shortener-service
+  name: faang-account-service
   namespace: default
 spec:
   selector:
-    app: url-shortener-service
+    app: faang-account-service
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 18080
+      targetPort: 8090
   type: ClusterIP
