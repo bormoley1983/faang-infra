@@ -8,6 +8,9 @@ This guide explains how to connect your local Windows machine to your **K3s Home
 3. Your local machine must be able to resolve the hostname `k3s-control-plane` (via DNS or `hosts` file).
 
 ---
+## Step 0: add docker registry
+kubectl apply -f ops/docker-registry.yaml
+
 
 ## Step 1: Extract the Kubeconfig
 K3s stores its access configuration on the server. You need to copy this to your local machine.
