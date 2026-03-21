@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: faang-notification-service
-  namespace: default
   labels:
     app: faang-notification-service
 spec:
@@ -62,6 +61,11 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_BOT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: TELEGRAM_BOT_NAME
             - name: VONAGE_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -72,16 +76,31 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: VONAGE_API_SECRET
+            - name: VONAGE_API_SENDER
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: VONAGE_API_SENDER
             - name: PROJECT_SERVICE_HOST
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: PROJECT_SERVICE_URL
+                  key: PROJECT_SERVICE_HOST
+            - name: PROJECT_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: PROJECT_SERVICE_PORT
             - name: USER_SERVICE_HOST
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: USER_SERVICE_URL
+                  key: USER_SERVICE_HOST
+            - name: USER_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: USER_SERVICE_PORT
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -99,7 +118,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: faang-notification-service
-  namespace: default
 spec:
   selector:
     app: faang-notification-service

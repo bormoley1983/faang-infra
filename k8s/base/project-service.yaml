@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: faang-project-service
-  namespace: default
   labels:
     app: faang-project-service
 spec:
@@ -65,15 +64,51 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: REDIS_PORT
-            - name: MINIO_SERVICE_HOST
+            - name: S3_ENDPOINT
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: MINIO_URL
+                  key: S3_ENDPOINT
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: MINIO_ACCESS_KEY
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: MINIO_SECRET_KEY
+            - name: S3_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: S3_BUCKET_NAME
+            - name: S3_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: S3_REGION
             - name: PAYMENT_SERVICE_HOST
-              value: "faang-payment-service"
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: PAYMENT_SERVICE_HOST
+            - name: PAYMENT_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: PAYMENT_SERVICE_PORT
             - name: USER_SERVICE_HOST
-              value: "faang-account-service"
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: USER_SERVICE_HOST
+            - name: USER_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: USER_SERVICE_PORT
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -91,7 +126,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: faang-project-service
-  namespace: default
 spec:
   selector:
     app: faang-project-service

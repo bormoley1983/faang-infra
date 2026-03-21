@@ -1,7 +1,4 @@
 resources:
-  - configmap.yaml
-  - secret.yaml
-  - ingress.yaml
   - account-service.yaml
   - achievement-service.yaml
   - analytics-service.yaml

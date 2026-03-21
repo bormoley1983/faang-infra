@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: faang-analytics-service
-  namespace: default
   labels:
     app: faang-analytics-service
 spec:
@@ -74,7 +73,12 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: PROJECT_SERVICE_URL
+                  key: PROJECT_SERVICE_HOST
+            - name: PROJECT_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: PROJECT_SERVICE_PORT
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -92,7 +96,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: faang-analytics-service
-  namespace: default
 spec:
   selector:
     app: faang-analytics-service

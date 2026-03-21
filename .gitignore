@@ -24,3 +24,6 @@ Thumbs.db
 .env
 bin/
 out/
+
+#
+faang-secrets.yaml
