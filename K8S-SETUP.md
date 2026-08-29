@@ -19,11 +19,11 @@ Run the following in **PowerShell**:
 
 ```powershell
 # Create the .kube directory if it doesn't exist
-mkdir "$HOME\.kube" -ErrorAction SilentlyContinue
+mkdir ".kube" -ErrorAction SilentlyContinue
 
 # Copy the config from your k3s server (replace 'user' with your SSH username)
 # This will save it as a separate file to avoid overwriting your default config
-scp user@k3s-control-plane:/etc/rancher/k3s/k3s.yaml "$HOME\.kube\config-homelab"
+scp user@k3s-control-plane:/etc/rancher/k3s/k3s.yaml "$.kube\config-homelab"
 ```
 
 ---
@@ -50,7 +50,7 @@ You need to tell your terminal to use this configuration file.
 
 **For the current session:**
 ```powershell
-$env:KUBECONFIG = "$HOME\.kube\config-homelab"
+$env:KUBECONFIG = ".kube\config-homelab"
 ```
 
 **To make it permanent:**
