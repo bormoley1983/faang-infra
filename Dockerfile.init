@@ -5,13 +5,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install necessary tools
 # Using Ubuntu 24.04 gives us access to newer packages.
-# openjdk-21-jre-headless matches the project's target Java version.
+# openjdk-25-jre-headless matches the project's target Java version.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     curl \
     jq \
     wget \
-    openjdk-21-jre-headless \
+    openjdk-25-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Kafka tools

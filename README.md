@@ -32,8 +32,10 @@ Run this once to create the `faang` database, schemas, and Kafka topics on your 
 ```
 
 ### 3. Automated CI/CD (The GitOps Loop)
-1. **Jenkins**: Listens for pushes to GitHub. It uses the `ops/jenkins/Jenkinsfile` to build and push images to `docker-registry:5000`.
-2. **ArgoCD**: Listens for manifest changes. Apply the app once to start the sync:
+1. **Service CI**: Each service repository runs its Gradle build and tests for pull requests and pushes to `dev-local`.
+2. **Jenkins**: The delivery pipeline builds an immutable image, pushes it to `docker-registry:5000`, and commits only that service's image tag to the homelab overlay.
+3. **Infrastructure CI**: `ops/jenkins/Jenkinsfile` renders the overlay to catch invalid Kustomize configuration; it does not deploy directly.
+4. **ArgoCD**: Watches the overlay and performs the cluster sync. Apply the app once to start the sync:
    ```powershell
    kubectl apply -f ops/argocd/application.yaml
    ```

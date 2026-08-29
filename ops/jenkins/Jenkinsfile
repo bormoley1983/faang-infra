@@ -1,12 +1,28 @@
 pipeline {
     agent any
-    stages {
-        // ... (Build and Push stages same as before)
 
-        stage('Deploy') {
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds(abortPrevious: true)
+        timeout(time: 10, unit: 'MINUTES')
+        timestamps()
+    }
+
+    stages {
+        stage('Checkout') {
             steps {
-                // Kustomize is built into kubectl. Just point to the overlay.
-                sh "kubectl apply -k faang-infra/k8s/overlays/homelab"
+                checkout scm
+                script {
+                    env.INFRA_DIR = fileExists('faang-infra/k8s') ? 'faang-infra' : '.'
+                }
+            }
+        }
+
+        stage('Validate Homelab Overlay') {
+            steps {
+                dir(env.INFRA_DIR) {
+                    sh 'kubectl kustomize k8s/overlays/homelab > /dev/null'
+                }
             }
         }
     }

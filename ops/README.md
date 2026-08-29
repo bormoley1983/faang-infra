@@ -17,11 +17,21 @@ To enable GitOps sync for the whole system:
 kubectl apply -f ops/argocd/application.yaml
 ```
 
-## 3. Jenkins CI Pipeline
-1. Create a Pipeline job in Jenkins.
-2. Point it to your Git repository and set the script path to `faang-infra/ops/jenkins/Jenkinsfile`.
-3. **Important**: Add a Global Environment Variable in Jenkins named `BASE_DOMAIN` with your domain (e.g., `office.aviv.com.ua`).
-4. Ensure Jenkins has the `docker-credentials` and `k3s-kubeconfig` credentials set up.
+## 3. Jenkins Pipelines
+
+The root `Jenkinsfile` owns delivery for the account service. On trusted `dev-local` builds it:
+
+1. builds and tests the service
+2. pushes an image tagged with the service commit SHA
+3. updates only the account-service tag in the homelab overlay
+4. pushes the resulting GitOps commit for ArgoCD to sync
+
+Configure these Jenkins credentials before enabling delivery:
+
+- `docker-credentials`: username and password for the configured registry
+- `github-credentials`: username/token credential with push access to the infrastructure repository
+
+The `ops/jenkins/Jenkinsfile` is a separate infrastructure validation job. Point it at the main or infrastructure repository; it renders the homelab Kustomize overlay and never calls `kubectl apply`.
 
 ## 4. Ingress Access
 After services are deployed, apply the Ingress rules:
