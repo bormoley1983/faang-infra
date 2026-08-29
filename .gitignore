@@ -25,3 +25,6 @@ Thumbs.db
 bin/
 out/
 .kube
+
+#
+faang-secrets.yaml

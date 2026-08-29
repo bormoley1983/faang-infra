@@ -1,32 +1,24 @@
+namespace: faang
+
 resources:
+  - namespace.yaml
+  - configmap.yaml
   - ../../base
 
-patches:
-  - target:
-      kind: Ingress
-      name: faang-ingress
-    patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: faang-account.${BASE_DOMAIN}
-      - op: replace
-        path: /spec/rules/1/host
-        value: faang-achievement.${BASE_DOMAIN}
-      - op: replace
-        path: /spec/rules/2/host
-        value: faang-analytics.${BASE_DOMAIN}
-      - op: replace
-        path: /spec/rules/3/host
-        value: faang-notification.${BASE_DOMAIN}
-      - op: replace
-        path: /spec/rules/4/host
-        value: faang-payment.${BASE_DOMAIN}
-      - op: replace
-        path: /spec/rules/5/host
-        value: faang-post.${BASE_DOMAIN}
-      - op: replace
-        path: /spec/rules/6/host
-        value: faang-project.${BASE_DOMAIN}
-      - op: replace
-        path: /spec/rules/7/host
-        value: faang-url-shortener.${BASE_DOMAIN}
+images:
+  - name: docker-registry:5000/faang-account-service
+    newTag: bootstrap
+  - name: docker-registry:5000/faang-achievement-service
+    newTag: bootstrap
+  - name: docker-registry:5000/faang-analytics-service
+    newTag: bootstrap
+  - name: docker-registry:5000/faang-notification-service
+    newTag: bootstrap
+  - name: docker-registry:5000/faang-payment-service
+    newTag: bootstrap
+  - name: docker-registry:5000/faang-post-service
+    newTag: bootstrap
+  - name: docker-registry:5000/faang-project-service
+    newTag: bootstrap
+  - name: docker-registry:5000/faang-url-shortener-service
+    newTag: bootstrap
