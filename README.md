@@ -40,6 +40,8 @@ Run this once to create the `faang` database, schemas, and Kafka topics on your 
    kubectl apply -f ops/argocd/application.yaml
    ```
 
+Hashtag Service has no Kubernetes resource by design. Add one only after the repository contains a deployable application, Dockerfile, configuration contract, and health endpoints.
+
 ### 4. Manual/Emergency Deployment
 If you need to bypass CI/CD and deploy from your workstation:
 ```powershell
