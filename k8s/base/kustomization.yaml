@@ -7,3 +7,4 @@ resources:
   - post-service.yaml
   - project-service.yaml
   - url-shortener-service.yaml
+  - user-service.yaml

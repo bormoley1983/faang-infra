@@ -1,9 +1,9 @@
 #!/bin/bash
-# Default values if environment variables are not set
 PG_HOST=${POSTGRES_HOST:-postgres}
 PG_PORT=${POSTGRES_PORT:-5432}
 PG_USER=${POSTGRES_USER:-user}
-PG_PASSWORD=${POSTGRES_PASSWORD:-password}
+: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
+PG_PASSWORD=$POSTGRES_PASSWORD
 TARGET_DB=${POSTGRES_DB:-faang}
 
 echo "Waiting for PostgreSQL at $PG_HOST:$PG_PORT to be ready..."
