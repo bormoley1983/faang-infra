@@ -47,6 +47,7 @@ for TOPIC_CONFIG in \
   "analytics_comment_topic:1:1" \
   "analytics_comment_topic.DLT:1:1" \
   "user_ban_topic:1:1" \
+  "user_deactivation_topic:1:1" \
   "userViewProfileTopic:3:1" \
   "event_start_topic:1:1" \
   "analytics_user_view_profile_topic:1:1" \
