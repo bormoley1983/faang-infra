@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang
+  namespace: argocd
+spec:
+  description: FAANG application workloads managed from the faang-infra repository
+  sourceRepos:
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: faang
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  orphanedResources:
+    warn: true

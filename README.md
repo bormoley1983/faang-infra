@@ -35,10 +35,13 @@ Run this once to create the `faang` database, schemas, and Kafka topics on your 
 1. **Service CI**: Each service repository runs its Gradle build and tests for pull requests and pushes to `dev-local`.
 2. **Jenkins**: The delivery pipeline builds an immutable image, pushes it to `docker-registry:5000`, and commits only that service's image tag to the homelab overlay.
 3. **Infrastructure CI**: `ops/jenkins/Jenkinsfile` renders the overlay to catch invalid Kustomize configuration; it does not deploy directly.
-4. **ArgoCD**: Watches the overlay and performs the cluster sync. Apply the app once to start the sync:
+4. **ArgoCD**: Watches the `faang-infra` `dev-local` branch and `k8s/overlays/homelab` directly, then performs the cluster sync. The `faang-main` submodule pointer is updated only for deliberate integration snapshots and is not used as the deployment revision. Apply the restricted project and app once to start the sync:
    ```powershell
+   kubectl apply -f ops/argocd/project.yaml
    kubectl apply -f ops/argocd/application.yaml
    ```
+
+   Automated sync remains disabled while the initial deployment blockers are being closed. Applying the Application registers and compares the desired state but does not authorize rollout.
 
 Hashtag Service has no Kubernetes resource by design. Add one only after the repository contains a deployable application, Dockerfile, configuration contract, and health endpoints.
 

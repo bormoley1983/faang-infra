@@ -4,18 +4,14 @@ metadata:
   name: faang-system
   namespace: argocd
 spec:
-  project: default
+  project: faang
   source:
-    repoURL: 'https://github.com/bormoley1983/faang-main.git'
-    targetRevision: HEAD
-    # Pointing to the OVERLAY, not the base
-    path: faang-infra/k8s/overlays/homelab
+    repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+    targetRevision: dev-local
+    path: k8s/overlays/homelab
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: faang
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
     syncOptions:
       - CreateNamespace=true
