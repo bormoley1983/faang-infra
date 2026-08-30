@@ -7,7 +7,7 @@ resources:
 
 images:
   - name: docker-registry:5000/faang-account-service
-    newTag: def001-rollback-probe
+    newTag: bootstrap
   - name: docker-registry:5000/faang-achievement-service
     newTag: bootstrap
   - name: docker-registry:5000/faang-analytics-service
