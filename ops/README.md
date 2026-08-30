@@ -41,9 +41,11 @@ The `ops/jenkins/Jenkinsfile` is a separate infrastructure validation job. Point
 Its deployment gate runs `ops/validation/validate_deployment.py` and the negative policy tests. The validator uses pinned Kustomize/Kubernetes schema expectations, a checksum-verified kubeconform binary, service runtime contracts, and an explicit known-debt baseline. See `ops/validation/README.md` for local Windows and Linux commands. New findings and stale baseline entries fail CI.
 
 ## 4. Ingress Access
-After services are deployed, apply the Ingress rules:
+
+Ingress is part of the committed homelab overlay. For an authorized emergency/manual reconciliation, render and apply the exact same path watched by Argo CD:
+
 ```bash
-# Locally (uses variable substitution)
-.\deploy.ps1 
+kubectl apply -k k8s/overlays/homelab
 ```
-Or via ArgoCD if you choose to track the overlay in Git.
+
+Normal delivery is performed by Argo CD. Do not apply `k8s/base` directly; its hosts and external endpoints are deliberately non-routable portable defaults.

@@ -7,7 +7,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: faang-account.${BASE_DOMAIN}
+  - host: faang-account.example.invalid
     http:
       paths:
       - path: /
@@ -17,7 +17,7 @@ spec:
             name: faang-account-service
             port:
               number: 80
-  - host: faang-achievement.${BASE_DOMAIN}
+  - host: faang-achievement.example.invalid
     http:
       paths:
       - path: /
@@ -27,7 +27,7 @@ spec:
             name: faang-achievement-service
             port:
               number: 80
-  - host: faang-analytics.${BASE_DOMAIN}
+  - host: faang-analytics.example.invalid
     http:
       paths:
       - path: /
@@ -37,7 +37,7 @@ spec:
             name: faang-analytics-service
             port:
               number: 80
-  - host: faang-notification.${BASE_DOMAIN}
+  - host: faang-notification.example.invalid
     http:
       paths:
       - path: /
@@ -47,7 +47,7 @@ spec:
             name: faang-notification-service
             port:
               number: 80
-  - host: faang-payment.${BASE_DOMAIN}
+  - host: faang-payment.example.invalid
     http:
       paths:
       - path: /
@@ -57,7 +57,7 @@ spec:
             name: faang-payment-service
             port:
               number: 80
-  - host: faang-post.${BASE_DOMAIN}
+  - host: faang-post.example.invalid
     http:
       paths:
       - path: /
@@ -67,7 +67,7 @@ spec:
             name: faang-post-service
             port:
               number: 80
-  - host: faang-project.${BASE_DOMAIN}
+  - host: faang-project.example.invalid
     http:
       paths:
       - path: /
@@ -77,7 +77,7 @@ spec:
             name: faang-project-service
             port:
               number: 80
-  - host: faang-url-shortener.${BASE_DOMAIN}
+  - host: faang-url-shortener.example.invalid
     http:
       paths:
       - path: /
@@ -85,5 +85,15 @@ spec:
         backend:
           service:
             name: faang-url-shortener-service
+            port:
+              number: 80
+  - host: faang-user.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-user-service
             port:
               number: 80

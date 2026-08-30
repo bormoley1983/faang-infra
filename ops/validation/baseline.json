@@ -3,7 +3,6 @@
   "knownIssues": [
     "CON003|Deployment/faang-payment-service|missing env CURRENCY_EXCHANGE_ACCESS_KEY",
     "CON003|Deployment/faang-user-service|missing env KAFKA_SERVERS,PAYMENT_SERVICE_HOST,PAYMENT_SERVICE_PORT,PROJECT_SERVICE_HOST,PROJECT_SERVICE_PORT,REDIS_PORT,REDIS_URL,S3_ACCESS_KEY,S3_BUCKET_NAME,S3_ENDPOINT,S3_REGION,S3_SECRET_KEY",
-    "POL001|k8s/base/ingress.yaml|unresolved token ${BASE_DOMAIN}",
     "POL002|Deployment/faang-account-service|mutable or placeholder image docker-registry:5000/faang-account-service:bootstrap",
     "POL002|Deployment/faang-achievement-service|mutable or placeholder image docker-registry:5000/faang-achievement-service:bootstrap",
     "POL002|Deployment/faang-analytics-service|mutable or placeholder image docker-registry:5000/faang-analytics-service:bootstrap",
@@ -27,9 +26,6 @@
       "POL002|Deployment/faang-post-service|mutable or placeholder image docker-registry:5000/faang-post-service:bootstrap",
       "POL002|Deployment/faang-project-service|mutable or placeholder image docker-registry:5000/faang-project-service:bootstrap",
       "POL002|Deployment/faang-url-shortener-service|mutable or placeholder image docker-registry:5000/faang-url-shortener-service:bootstrap"
-    ],
-    "DEF-007": [
-      "POL001|k8s/base/ingress.yaml|unresolved token ${BASE_DOMAIN}"
     ],
     "DEF-012": [
       "CON003|Deployment/faang-payment-service|missing env CURRENCY_EXCHANGE_ACCESS_KEY",

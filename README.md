@@ -51,6 +51,9 @@ If you need to bypass CI/CD and deploy from your workstation:
 .\deploy.ps1
 ```
 
-## Security & Privacy
-- **Domain Privacy**: Domain names are managed via Kustomize placeholders `${BASE_DOMAIN}`.
-- **Local Config**: Your actual domain is stored in a private `.env` file and applied on-the-fly during deployment, ensuring `office.aviv.com.ua` never leaks to GitHub.
+## Configuration ownership
+
+- `k8s/base` contains portable resource structure and deliberately non-routable dependency/ingress defaults.
+- `k8s/overlays/homelab` owns the committed homelab dependency endpoints and complete ingress hostnames.
+- Argo CD and emergency `kubectl apply -k` deployment render the same overlay; there is no shell-time substitution.
+- Credentials remain outside ConfigMaps and plaintext Git. Runtime secret delivery is implemented separately under DEP-043.

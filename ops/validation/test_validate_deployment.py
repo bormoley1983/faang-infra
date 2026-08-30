@@ -1,4 +1,5 @@
 import importlib.util
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ assert SPEC.loader is not None
 sys.modules[SPEC.name] = VALIDATOR
 SPEC.loader.exec_module(VALIDATOR)
 FIXTURES = Path(__file__).with_name("fixtures")
+ROOT = MODULE_PATH.parents[2]
 
 
 class DeploymentPolicyTests(unittest.TestCase):
@@ -47,6 +49,59 @@ class DeploymentPolicyTests(unittest.TestCase):
         self.assertIn("CON002", codes)
         self.assertIn("CON003", codes)
         self.assertIn("CON004", codes)
+
+
+class ConfigurationOwnershipTests(unittest.TestCase):
+    def render(self, path: Path) -> str:
+        result = subprocess.run(
+            ["kubectl", "kustomize", str(path)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        return result.stdout
+
+    def test_base_has_only_portable_configuration(self):
+        rendered = self.render(ROOT / "k8s" / "base")
+        forbidden = (
+            "office.aviv.com.ua",
+            "postgres-main",
+            "redis-main",
+            "kafka-main",
+            "elasticsearch-main",
+            "minio-main",
+            "smtp.gmail.com",
+            "${",
+        )
+        for value in forbidden:
+            self.assertNotIn(value, rendered)
+
+    def test_homelab_has_one_configmap_and_all_ingress_hosts(self):
+        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        identities = [VALIDATOR.resource_identity(document) for document in VALIDATOR.split_documents(rendered)]
+        self.assertEqual(1, identities.count(("ConfigMap", "faang-config")))
+        self.assertEqual(1, identities.count(("Ingress", "faang-ingress")))
+        self.assertNotIn("${", rendered)
+        services = (
+            "account",
+            "achievement",
+            "analytics",
+            "notification",
+            "payment",
+            "post",
+            "project",
+            "url-shortener",
+            "user",
+        )
+        for service in services:
+            self.assertIn(f"host: faang-{service}.office.aviv.com.ua", rendered)
+
+    def test_manual_scripts_apply_the_argocd_overlay_without_substitution(self):
+        for script_name in ("deploy.ps1", "deploy.sh"):
+            script = (ROOT / script_name).read_text(encoding="utf-8")
+            self.assertIn("kubectl apply -k k8s/overlays/homelab", script)
+            self.assertNotIn("BASE_DOMAIN", script)
 
 
 if __name__ == "__main__":

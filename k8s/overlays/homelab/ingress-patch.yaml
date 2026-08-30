@@ -1,0 +1,93 @@
+- op: replace
+  path: /spec/rules
+  value:
+    - host: faang-account.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-account-service
+                port:
+                  number: 80
+    - host: faang-achievement.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-achievement-service
+                port:
+                  number: 80
+    - host: faang-analytics.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-analytics-service
+                port:
+                  number: 80
+    - host: faang-notification.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-notification-service
+                port:
+                  number: 80
+    - host: faang-payment.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-payment-service
+                port:
+                  number: 80
+    - host: faang-post.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-post-service
+                port:
+                  number: 80
+    - host: faang-project.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-project-service
+                port:
+                  number: 80
+    - host: faang-url-shortener.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-url-shortener-service
+                port:
+                  number: 80
+    - host: faang-user.office.aviv.com.ua
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faang-user-service
+                port:
+                  number: 80

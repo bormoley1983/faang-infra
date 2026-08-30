@@ -3,18 +3,28 @@ kind: ConfigMap
 metadata:
   name: faang-config
 data:
-  # Infrastructure Services
-  POSTGRES_HOST: "postgres-main"
+  # Safe, non-routable dependency defaults. Every environment must override these.
+  POSTGRES_HOST: "postgres.invalid"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "faang"
-  KAFKA_BOOTSTRAP_SERVERS: "kafka-main:9092"
-  REDIS_HOST: "redis-main"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka.invalid:9092"
+  REDIS_HOST: "redis.invalid"
   REDIS_PORT: "6379"
-  ELASTICSEARCH_URL: "http://elasticsearch-main:9200"
-  MINIO_URL: "http://minio-main:9000"
-  APP_ENV: "production"
+  ELASTICSEARCH_URL: "http://elasticsearch.invalid:9200"
+  MINIO_URL: "http://minio.invalid:9000"
+  MINIO_BUCKET_NAME: "change-me"
+  S3_ENDPOINT: "http://minio.invalid:9000"
+  S3_BUCKET_NAME: "change-me"
+  S3_REGION: "us-east-1"
+  APP_ENV: "base"
 
-  # Internal Service URLs (Updated with faang- prefix)
+  # Portable in-cluster service discovery.
+  PROJECT_SERVICE_HOST: "faang-project-service"
+  PROJECT_SERVICE_PORT: "80"
+  PAYMENT_SERVICE_HOST: "faang-payment-service"
+  PAYMENT_SERVICE_PORT: "80"
+  USER_SERVICE_HOST: "faang-user-service"
+  USER_SERVICE_PORT: "80"
   ACCOUNT_SERVICE_URL: "http://faang-account-service"
   ACHIEVEMENT_SERVICE_URL: "http://faang-achievement-service"
   ANALYTICS_SERVICE_URL: "http://faang-analytics-service"
@@ -24,9 +34,7 @@ data:
   PROJECT_SERVICE_URL: "http://faang-project-service"
   URL_SHORTENER_SERVICE_URL: "http://faang-url-shortener-service"
   USER_SERVICE_URL: "http://faang-user-service"
-
-  # External Integrations
-  SMTP_HOST: "smtp.gmail.com"
+  SMTP_HOST: "smtp.invalid"
   SMTP_PORT: "587"
-  VONAGE_API_SENDER: "FaangTestBot"
-  TELEGRAM_BOT_NAME: "@FaangTestBot"
+  VONAGE_API_SENDER: "change-me"
+  TELEGRAM_BOT_NAME: "change-me"

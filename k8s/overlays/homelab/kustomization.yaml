@@ -2,8 +2,17 @@ namespace: faang
 
 resources:
   - namespace.yaml
-  - configmap.yaml
   - ../../base
+
+patches:
+  - path: configmap.yaml
+    target:
+      kind: ConfigMap
+      name: faang-config
+  - path: ingress-patch.yaml
+    target:
+      kind: Ingress
+      name: faang-ingress
 
 images:
   - name: docker-registry:5000/faang-account-service

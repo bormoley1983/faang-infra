@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: faang-config
 data:
+  # Existing homelab stateful endpoints. DEP-040 will make each independently selectable.
   POSTGRES_HOST: "postgres-main"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "faang"
@@ -15,22 +16,7 @@ data:
   S3_ENDPOINT: "http://minio-main:9000"
   S3_BUCKET_NAME: "corpbucket"
   S3_REGION: "us-east-1"
-  PROJECT_SERVICE_HOST: "faang-project-service"
-  PROJECT_SERVICE_PORT: "80"
-  PAYMENT_SERVICE_HOST: "faang-payment-service"
-  PAYMENT_SERVICE_PORT: "80"
-  USER_SERVICE_HOST: "faang-user-service"
-  USER_SERVICE_PORT: "80"
   APP_ENV: "production"
-  ACCOUNT_SERVICE_URL: "http://faang-account-service"
-  ACHIEVEMENT_SERVICE_URL: "http://faang-achievement-service"
-  ANALYTICS_SERVICE_URL: "http://faang-analytics-service"
-  NOTIFICATION_SERVICE_URL: "http://faang-notification-service"
-  PAYMENT_SERVICE_URL: "http://faang-payment-service"
-  POST_SERVICE_URL: "http://faang-post-service"
-  PROJECT_SERVICE_URL: "http://faang-project-service"
-  URL_SHORTENER_SERVICE_URL: "http://faang-url-shortener-service"
-  USER_SERVICE_URL: "http://faang-user-service"
   SMTP_HOST: "smtp.gmail.com"
   SMTP_PORT: "587"
   VONAGE_API_SENDER: "FaangTestBot"

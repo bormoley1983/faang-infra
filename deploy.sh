@@ -6,11 +6,8 @@ fi
 
 # Default if not set
 USE_EXISTING_INFRA=${USE_EXISTING_INFRA:-true}
-BASE_DOMAIN=${BASE_DOMAIN:-example.com}
-
 echo "Starting FAANG System Deployment..."
 echo "Mode: $( [ "$USE_EXISTING_INFRA" = "true" ] && echo 'Using Existing Network Infra' || echo 'Deploying New Infra in K8s' )"
-echo "Domain: $BASE_DOMAIN"
 
 # 1. Build Initialization Image
 docker build -f Dockerfile.init -t faang-init-utils:latest .
@@ -29,10 +26,9 @@ kubectl apply -f k8s/base/configmap.yaml
 kubectl apply -f k8s/init-job.yaml
 kubectl wait --for=condition=complete job/faang-init-job --timeout=300s
 
-# 4. Deploy System via Kustomize with Domain Substitution
+# 4. Deploy the exact same committed overlay rendered by Argo CD
 echo "Deploying FAANG System via Kustomize..."
-# We pipe the kustomize output through sed to replace the placeholder
-kubectl kustomize k8s/overlays/homelab | sed "s/\${BASE_DOMAIN}/$BASE_DOMAIN/g" | kubectl apply -f -
+kubectl apply -k k8s/overlays/homelab
 
 echo "Deployment Complete!"
 echo "Check status with: kubectl get pods"
