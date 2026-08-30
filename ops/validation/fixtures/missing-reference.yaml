@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: existing-config
+data:
+  OTHER_KEY: value
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-reference
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          image: example.invalid/app@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          env:
+            - name: REQUIRED_VALUE
+              valueFrom:
+                configMapKeyRef:
+                  name: existing-config
+                  key: missing-key

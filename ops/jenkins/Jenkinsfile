@@ -18,10 +18,18 @@ pipeline {
             }
         }
 
-        stage('Validate Homelab Overlay') {
+        stage('Test Deployment Policies') {
             steps {
                 dir(env.INFRA_DIR) {
-                    sh 'kubectl kustomize k8s/overlays/homelab > /dev/null'
+                    sh 'python3 -m unittest discover -s ops/validation -p "test_*.py" -v'
+                }
+            }
+        }
+
+        stage('Validate Homelab Desired State') {
+            steps {
+                dir(env.INFRA_DIR) {
+                    sh 'python3 ops/validation/validate_deployment.py'
                 }
             }
         }

@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-test
+spec:
+  template:
+    spec:
+      containers:
+        - name: postgres
+          image: postgres@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      volumes:
+        - name: data
+          emptyDir: {}

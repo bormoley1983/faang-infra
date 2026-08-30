@@ -38,6 +38,8 @@ Configure these Jenkins credentials before enabling delivery:
 
 The `ops/jenkins/Jenkinsfile` is a separate infrastructure validation job. Point it at the main or infrastructure repository; it renders the homelab Kustomize overlay and never calls `kubectl apply`.
 
+Its deployment gate runs `ops/validation/validate_deployment.py` and the negative policy tests. The validator uses pinned Kustomize/Kubernetes schema expectations, a checksum-verified kubeconform binary, service runtime contracts, and an explicit known-debt baseline. See `ops/validation/README.md` for local Windows and Linux commands. New findings and stale baseline entries fail CI.
+
 ## 4. Ingress Access
 After services are deployed, apply the Ingress rules:
 ```bash

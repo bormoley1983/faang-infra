@@ -25,6 +25,9 @@ Thumbs.db
 bin/
 out/
 .kube
+.cache/
+__pycache__/
+*.pyc
 
 #
 faang-secrets.yaml
