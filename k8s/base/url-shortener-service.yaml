@@ -64,6 +64,16 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: REDIS_PORT
+            - name: URL_SHORTENER_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: URL_SHORTENER_BASE_URL
+            - name: URL_SHORTENER_PUBLIC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: URL_SHORTENER_PUBLIC_URL
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness

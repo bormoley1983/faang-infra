@@ -13,9 +13,9 @@ The system is designed for an optimized homelab environment where the entire CI/
 
 ## Project Structure
 - `k8s/base/`: Standard Kubernetes manifests (Generic, tracked in Git).
+- `k8s/bootstrap/`: Versioned, idempotent PostgreSQL, Kafka, Elasticsearch, and MinIO bootstrap Jobs.
 - `k8s/overlays/homelab/`: Kustomize patches for your specific domain and environment.
 - `ops/`: Configuration for Jenkins, ArgoCD, and the internal Docker Registry.
-- `scripts/`: Initialization scripts for DB, Kafka, and Elastic.
 
 ## Deployment Workflows
 
@@ -25,11 +25,15 @@ Before any builds can happen, the internal storage must be available:
 kubectl apply -f ops/docker-registry.yaml
 ```
 
-### 2. Infrastructure Setup (Configuration)
-Run this once to create the `faang` database, schemas, and Kafka topics on your existing servers.
+### 2. Infrastructure Setup Validation
+
+Validate the committed bootstrap resources without changing the cluster:
+
 ```powershell
 .\setup-infra.ps1
 ```
+
+Argo CD executes the four versioned bootstrap Jobs in ordered sync waves after the protected Secret and dependency endpoints are ready. See `k8s/bootstrap/README.md`. No local `latest` utility image or direct Secret manifest is used.
 
 ### 3. Automated CI/CD (The GitOps Loop)
 1. **Service CI**: Each service repository runs its Gradle build and tests for pull requests and pushes to `dev-local`.

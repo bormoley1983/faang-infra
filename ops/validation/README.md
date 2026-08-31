@@ -1,5 +1,7 @@
 # Deployment validation
 
+The service dependency and environment-variable mapping is documented in `runtime-contracts.md`; its machine-readable required-input subset is `service-contracts.json`.
+
 Run from the `faang-infra` repository root:
 
 ```powershell

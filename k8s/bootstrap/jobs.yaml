@@ -1,0 +1,211 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-bootstrap-postgres-v1
+  labels:
+    app.kubernetes.io/name: faang-bootstrap-postgres
+    app.kubernetes.io/component: bootstrap
+    faang.io/bootstrap-contract: v1
+  annotations:
+    argocd.argoproj.io/sync-wave: "-40"
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: faang-bootstrap-postgres
+        app.kubernetes.io/component: bootstrap
+    spec:
+      serviceAccountName: faang-bootstrap
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/scripts/init-postgres.sh"]
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: faang-bootstrap-scripts-v1
+            defaultMode: 0555
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-bootstrap-kafka-v1
+  labels:
+    app.kubernetes.io/name: faang-bootstrap-kafka
+    app.kubernetes.io/component: bootstrap
+    faang.io/bootstrap-contract: v1
+  annotations:
+    argocd.argoproj.io/sync-wave: "-39"
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: faang-bootstrap-kafka
+        app.kubernetes.io/component: bootstrap
+    spec:
+      serviceAccountName: faang-bootstrap
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: apache/kafka:4.3.1@sha256:77e3df9054047a88b520d0cc46e16696d3b22022e1d580aeccd2632df6532837
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/scripts/init-kafka.sh"]
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: faang-bootstrap-scripts-v1
+            defaultMode: 0555
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-bootstrap-elasticsearch-v1
+  labels:
+    app.kubernetes.io/name: faang-bootstrap-elasticsearch
+    app.kubernetes.io/component: bootstrap
+    faang.io/bootstrap-contract: v1
+  annotations:
+    argocd.argoproj.io/sync-wave: "-38"
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: faang-bootstrap-elasticsearch
+        app.kubernetes.io/component: bootstrap
+    spec:
+      serviceAccountName: faang-bootstrap
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/scripts/init-elasticsearch.sh"]
+          env:
+            - name: ELASTICSEARCH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: ELASTICSEARCH_URL
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: faang-bootstrap-scripts-v1
+            defaultMode: 0555
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-bootstrap-minio-v1
+  labels:
+    app.kubernetes.io/name: faang-bootstrap-minio
+    app.kubernetes.io/component: bootstrap
+    faang.io/bootstrap-contract: v1
+  annotations:
+    argocd.argoproj.io/sync-wave: "-37"
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: faang-bootstrap-minio
+        app.kubernetes.io/component: bootstrap
+    spec:
+      serviceAccountName: faang-bootstrap
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: minio/mc:RELEASE.2025-04-16T18-13-26Z@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/scripts/init-minio.sh"]
+          env:
+            - name: MINIO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: MINIO_URL
+            - name: MINIO_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: MINIO_BUCKET_NAME
+            - name: S3_AVATAR_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: S3_AVATAR_BUCKET_NAME
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: MINIO_SECRET_KEY
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: faang-bootstrap-scripts-v1
+            defaultMode: 0555

@@ -119,6 +119,16 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: PAYMENT_SERVICE_PORT
+            - name: MODERATION_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: MODERATION_API_URL
+            - name: SPELLCHECKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: SPELLCHECKER_URL
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness

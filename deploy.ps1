@@ -15,28 +15,13 @@ if ($null -eq $USE_EXISTING_INFRA) { $USE_EXISTING_INFRA = $true }
 Write-Host "Starting FAANG System Deployment..." -ForegroundColor Green
 Write-Host "Mode: $(if ($USE_EXISTING_INFRA) { 'Using Existing Network Infra' } else { 'Deploying New Infra in K8s' })" -ForegroundColor Yellow
 
-# 1. Build Initialization Image
-Write-Host "Building Initialization Utility Image..." -ForegroundColor Cyan
-docker build -f Dockerfile.init -t faang-init-utils:latest .
-
-# 2. Infrastructure Logic
+# Infrastructure selection is implemented by DEP-040/DEP-042 profiles.
 if (-not $USE_EXISTING_INFRA) {
-    Write-Host "Deploying New Infrastructure..." -ForegroundColor Cyan
-    kubectl apply -k k8s/infra/  # Assuming infra also uses kustomize or standard apply
+    throw "Internal infrastructure delivery is not available until DEP-040 and DEP-042 are resolved."
 }
 
-# 3. Run Configuration/Initialization Job
-Write-Host "Running Initialization Job..." -ForegroundColor Cyan
-kubectl delete job faang-init-job --ignore-not-found
-# Secrets and ConfigMaps are part of the Kustomize base, but for the job we apply them directly or via base
-kubectl apply -f k8s/base/secret.yaml
-kubectl apply -f k8s/base/configmap.yaml
-kubectl apply -f k8s/init-job.yaml
-
-Write-Host "Waiting for initialization to complete..." -ForegroundColor Cyan
-kubectl wait --for=condition=complete job/faang-init-job --timeout=300s
-
-# 4. Deploy the exact same committed overlay rendered by Argo CD
+# Bootstrap Jobs are part of this overlay. Argo CD honors their negative sync waves;
+# kubectl does not, so this path is emergency-only after prerequisites are ready.
 Write-Host "Deploying FAANG System via Kustomize..." -ForegroundColor Cyan
 kubectl apply -k k8s/overlays/homelab
 

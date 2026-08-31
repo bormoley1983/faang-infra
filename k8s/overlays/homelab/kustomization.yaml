@@ -3,6 +3,7 @@ namespace: faang
 resources:
   - namespace.yaml
   - ../../base
+  - ../../bootstrap
 
 patches:
   - path: configmap.yaml

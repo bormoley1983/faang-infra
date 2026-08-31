@@ -2,6 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: faang-config
+  annotations:
+    argocd.argoproj.io/sync-wave: "-50"
 data:
   # Safe, non-routable dependency defaults. Every environment must override these.
   POSTGRES_HOST: "postgres.invalid"
@@ -15,7 +17,9 @@ data:
   MINIO_BUCKET_NAME: "change-me"
   S3_ENDPOINT: "http://minio.invalid:9000"
   S3_BUCKET_NAME: "change-me"
+  S3_AVATAR_BUCKET_NAME: "user-avatars"
   S3_REGION: "us-east-1"
+  S3_DOWNLOAD_PATH: "/api/v1/buckets/change-me/objects/download?preview=true&prefix="
   APP_ENV: "base"
 
   # Portable in-cluster service discovery.
@@ -34,6 +38,11 @@ data:
   PROJECT_SERVICE_URL: "http://faang-project-service"
   URL_SHORTENER_SERVICE_URL: "http://faang-url-shortener-service"
   USER_SERVICE_URL: "http://faang-user-service"
+  URL_SHORTENER_BASE_URL: "http://faang-url-shortener.example.invalid"
+  URL_SHORTENER_PUBLIC_URL: "http://faang-url-shortener.example.invalid/url"
+  CURRENCY_EXCHANGE_API_URL: "https://api.exchangeratesapi.io/v1"
+  DICEBEAR_API_URL: "https://api.dicebear.com/9.x"
+  SPELLCHECKER_URL: "https://speller.yandex.net/services/spellservice.json"
   SMTP_HOST: "smtp.invalid"
   SMTP_PORT: "587"
   VONAGE_API_SENDER: "change-me"

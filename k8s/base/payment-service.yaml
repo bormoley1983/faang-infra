@@ -33,6 +33,16 @@ spec:
                   key: REDIS_PORT
             - name: PAYMENT_SERVICE_PORT
               value: "8082"
+            - name: CURRENCY_EXCHANGE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: CURRENCY_EXCHANGE_API_URL
+            - name: CURRENCY_EXCHANGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: CURRENCY_EXCHANGE_ACCESS_KEY
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness

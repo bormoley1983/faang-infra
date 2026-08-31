@@ -20,7 +20,7 @@ kubectl apply -f ops/argocd/application.yaml
 
 The application watches `https://github.com/bormoley1983/faang-infra.git` directly on the explicit `dev-local` branch and renders `k8s/overlays/homelab`. Jenkins pushes desired-image updates to that same repository and branch. `faang-main` retains `faang-infra` as a convenience submodule for reproducible local integration snapshots; its gitlink is updated deliberately during an integration snapshot, not after every service delivery, and is not the deployment revision consumed by Argo CD.
 
-Automated sync is intentionally disabled during the deployment-remediation phases. Argo CD may compare and report desired state, but an operator must not sync until placeholder image references, runtime configuration, bootstrap, and secret delivery blockers are resolved. Automated prune/self-heal is enabled only by the later Argo delivery task after its safety acceptance checks pass.
+Automated sync is intentionally disabled during the deployment-remediation phases. Argo CD may compare and report desired state, but an operator must not sync until placeholder image references and secret delivery blockers are resolved. Bootstrap is represented by versioned negative-wave Jobs under `k8s/bootstrap`; automated prune/self-heal is enabled only by the later Argo delivery task after its safety acceptance checks pass.
 
 ## 3. Jenkins Pipelines
 

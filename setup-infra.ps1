@@ -1,26 +1,29 @@
-# Setup Existing Infrastructure for FAANG (PowerShell)
-Write-Host "Starting Infrastructure Configuration..." -ForegroundColor Green
+param(
+    [switch]$ShowClusterStatus
+)
 
-# 1. Build Initialization Image
-Write-Host "Building Configuration Utility Image..." -ForegroundColor Cyan
-docker build -f Dockerfile.init -t faang-init-utils:latest .
+$ErrorActionPreference = "Stop"
+$repoRoot = $PSScriptRoot
 
-# 2. Apply Secrets and Configs
-Write-Host "Applying Secrets and ConfigMaps..." -ForegroundColor Cyan
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/configmap.yaml
+Write-Host "Validating the committed bootstrap contract..." -ForegroundColor Cyan
+Push-Location $repoRoot
+try {
+    python ops/validation/validate_deployment.py
+    if ($LASTEXITCODE -ne 0) {
+        throw "Deployment validation failed."
+    }
+    kubectl kustomize k8s/overlays/homelab > $null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Homelab overlay rendering failed."
+    }
+} finally {
+    Pop-Location
+}
 
-# 3. Run Initialization Job
-Write-Host "Running Configuration Job (Schemas, Topics, Indices)..." -ForegroundColor Cyan
-kubectl delete job faang-init-job --ignore-not-found
-kubectl apply -f k8s/init-job.yaml
+Write-Host "Bootstrap configuration is valid." -ForegroundColor Green
+Write-Host "Argo CD owns execution and honors the committed sync waves." -ForegroundColor Yellow
 
-Write-Host "Waiting for configuration to complete..." -ForegroundColor Cyan
-kubectl wait --for=condition=complete job/faang-init-job --timeout=300s
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Initialization failed. Checking logs..." -ForegroundColor Red
-    kubectl logs -l job-name=faang-init-job --all-containers=true
-} else {
-    Write-Host "Infrastructure configuration successful!" -ForegroundColor Green
+if ($ShowClusterStatus) {
+    kubectl -n faang get jobs -l app.kubernetes.io/component=bootstrap
+    kubectl -n faang get pods -l app.kubernetes.io/component=bootstrap
 }

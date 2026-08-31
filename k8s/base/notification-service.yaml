@@ -21,16 +21,6 @@ spec:
           ports:
             - containerPort: 8083
           env:
-            - name: REDIS_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: REDIS_HOST
-            - name: REDIS_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: REDIS_PORT
             - name: KAFKA_SERVERS
               valueFrom:
                 configMapKeyRef:
@@ -81,16 +71,6 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: VONAGE_API_SENDER
-            - name: PROJECT_SERVICE_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: PROJECT_SERVICE_HOST
-            - name: PROJECT_SERVICE_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: PROJECT_SERVICE_PORT
             - name: USER_SERVICE_HOST
               valueFrom:
                 configMapKeyRef:

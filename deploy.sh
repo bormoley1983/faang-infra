@@ -9,24 +9,14 @@ USE_EXISTING_INFRA=${USE_EXISTING_INFRA:-true}
 echo "Starting FAANG System Deployment..."
 echo "Mode: $( [ "$USE_EXISTING_INFRA" = "true" ] && echo 'Using Existing Network Infra' || echo 'Deploying New Infra in K8s' )"
 
-# 1. Build Initialization Image
-docker build -f Dockerfile.init -t faang-init-utils:latest .
-
-# 2. Infrastructure Logic
+# Infrastructure selection is implemented by DEP-040/DEP-042 profiles.
 if [ "$USE_EXISTING_INFRA" = "false" ]; then
-    echo "Deploying New Infrastructure..."
-    kubectl apply -f k8s/infra/
+    echo "Internal infrastructure delivery is not available until DEP-040 and DEP-042 are resolved." >&2
+    exit 2
 fi
 
-# 3. Run Initialization Job
-echo "Running Initialization Job..."
-kubectl delete job faang-init-job --ignore-not-found
-kubectl apply -f k8s/base/secret.yaml
-kubectl apply -f k8s/base/configmap.yaml
-kubectl apply -f k8s/init-job.yaml
-kubectl wait --for=condition=complete job/faang-init-job --timeout=300s
-
-# 4. Deploy the exact same committed overlay rendered by Argo CD
+# Bootstrap Jobs are part of this overlay. Argo CD honors their negative sync waves;
+# kubectl does not, so this path is emergency-only after prerequisites are ready.
 echo "Deploying FAANG System via Kustomize..."
 kubectl apply -k k8s/overlays/homelab
 

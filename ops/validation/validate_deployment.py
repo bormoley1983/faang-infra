@@ -127,7 +127,12 @@ def validate_rendered(rendered: str, contracts: dict[str, object]) -> list[Issue
 
     for (kind, name), document in resources.items():
         location = f"{kind}/{name}"
-        tokens = sorted(set(re.findall(r"\$\{[A-Za-z_][A-Za-z0-9_]*\}", document)))
+        # The generated bootstrap ConfigMap contains executable shell scripts,
+        # where ${...} is intentional runtime expansion rather than a missed
+        # manifest substitution.
+        tokens = [] if (kind, name) == ("ConfigMap", "faang-bootstrap-scripts-v1") else sorted(
+            set(re.findall(r"\$\{[A-Za-z_][A-Za-z0-9_]*\}", document))
+        )
         for token in tokens:
             issues.add(Issue("POL001", location, f"unresolved token {token}"))
 
@@ -188,6 +193,10 @@ def validate_tracked_sources() -> list[Issue]:
         if ".example." in relative_path.name or relative_path.parts[:3] == ("ops", "validation", "fixtures"):
             continue
         path = ROOT / relative_path
+        if not path.exists():
+            # A valid working-tree validation may include tracked files staged
+            # for deletion before the corresponding commit is created.
+            continue
         text = path.read_text(encoding="utf-8")
         issues.extend(validate_source_text(relative_path, text))
     return issues

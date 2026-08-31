@@ -54,26 +54,6 @@ spec:
               value: "$(POSTGRES_PASSWORD)"
             - name: DATABASE_SCHEMA
               value: "achievement_service"
-            - name: REDIS_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: REDIS_HOST
-            - name: REDIS_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: REDIS_PORT
-            - name: PROJECT_SERVICE_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: PROJECT_SERVICE_HOST
-            - name: PROJECT_SERVICE_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: faang-config
-                  key: PROJECT_SERVICE_PORT
             - name: USER_SERVICE_HOST
               valueFrom:
                 configMapKeyRef:
