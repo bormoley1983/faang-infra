@@ -36,3 +36,4 @@ faang-secrets.yaml
 # Workstation/homelab topology (copy from the tracked example)
 /config/homelab.local.json
 /k8s/registry/tests/*.local.yaml
+/artifacts/
