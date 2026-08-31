@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: faang-cosign-keygen
+  namespace: jenkins
+  labels:
+    app.kubernetes.io/name: faang-cosign-keygen
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  initContainers:
+    - name: keygen
+      image: ghcr.io/sigstore/cosign/cosign:v3.1.2@sha256:d91bc4e7e95e8d2f549c747a72dc174f90579e410a1695f57f686674f84ce849
+      imagePullPolicy: IfNotPresent
+      args:
+        - generate-key-pair
+        - --output-key-prefix=/keys/cosign
+      env:
+        - name: COSIGN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: faang-cosign-bootstrap
+              key: password
+        - name: HOME
+          value: /tmp
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 250m
+          memory: 128Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: keys
+          mountPath: /keys
+        - name: tmp
+          mountPath: /tmp
+  containers:
+    - name: holder
+      image: moby/buildkit:v0.30.0-rootless@sha256:d76eb1caecac5733ef7553c1e90a1b21f1bb218cd1142d3553de0747b4a14ba9
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-ec"]
+      args:
+        - test -s /keys/cosign.key && test -s /keys/cosign.pub && sleep 3600
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: keys
+          mountPath: /keys
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+  volumes:
+    - name: keys
+      emptyDir:
+        medium: Memory
+    - name: tmp
+      emptyDir:
+        medium: Memory

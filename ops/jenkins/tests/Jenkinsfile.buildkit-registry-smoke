@@ -1,0 +1,149 @@
+podTemplate(yaml: '''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: Unconfined
+  containers:
+    - name: buildkit
+      image: moby/buildkit:v0.30.0-rootless@sha256:d76eb1caecac5733ef7553c1e90a1b21f1bb218cd1142d3553de0747b4a14ba9
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["3600"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: BUILDKITD_FLAGS
+          value: --oci-worker-no-process-sandbox --oci-worker-snapshotter=native
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+      securityContext:
+        allowPrivilegeEscalation: true
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: Unconfined
+        appArmorProfile:
+          type: Unconfined
+      volumeMounts:
+        - name: buildkit-state
+          mountPath: /home/user/.local/share/buildkit
+        - name: buildkit-config
+          mountPath: /home/user/.config/buildkit
+          readOnly: true
+        - name: registry-ca
+          mountPath: /etc/buildkit/certs
+          readOnly: true
+        - name: registry-client
+          mountPath: /etc/faang-registry
+          readOnly: true
+    - name: curl
+      image: curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["3600"]
+      workingDir: /home/jenkins/agent
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: registry-ca
+          mountPath: /etc/registry-certs
+          readOnly: true
+        - name: registry-client
+          mountPath: /etc/faang-registry
+          readOnly: true
+  volumes:
+    - name: buildkit-state
+      emptyDir: {}
+    - name: buildkit-config
+      configMap:
+        name: faang-buildkit-config
+    - name: registry-ca
+      configMap:
+        name: faang-registry-ca
+    - name: registry-client
+      configMap:
+        name: faang-registry-client
+''') {
+    node(POD_LABEL) {
+        timeout(time: 15, unit: 'MINUTES') {
+            withCredentials([usernamePassword(
+                credentialsId: 'faang-registry-push',
+                usernameVariable: 'REGISTRY_USERNAME',
+                passwordVariable: 'REGISTRY_PASSWORD'
+            )]) {
+                container('buildkit') {
+                    sh '''
+                        set +x
+                        endpoint="$(cat /etc/faang-registry/endpoint)"
+                        test -n "$endpoint"
+                        export DOCKER_CONFIG="$WORKSPACE/.docker"
+                        mkdir -p "$DOCKER_CONFIG" "$WORKSPACE/context"
+                        auth="$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64 | tr -d '\n')"
+                        printf '{"auths":{"%s":{"auth":"%s"}}}\n' "$endpoint" "$auth" > "$DOCKER_CONFIG/config.json"
+                        printf '%s\n' \
+                          'FROM scratch' \
+                          'ARG TARGETARCH' \
+                          'LABEL io.faang.ci.smoke.arch="${TARGETARCH}"' \
+                          'COPY marker.txt /marker.txt' > "$WORKSPACE/context/Dockerfile"
+                        printf '%s\n' 'jenkins-rootless-buildkit-registry-smoke' > "$WORKSPACE/context/marker.txt"
+                        image="$endpoint/faang-ci/jenkins-buildkit-smoke:build-$BUILD_NUMBER"
+                        buildctl-daemonless.sh build \
+                          --progress=plain \
+                          --frontend=dockerfile.v0 \
+                          --local context="$WORKSPACE/context" \
+                          --local dockerfile="$WORKSPACE/context" \
+                          --opt platform=linux/amd64,linux/arm64 \
+                          --opt attest:provenance=mode=max \
+                          --opt attest:sbom=generator=docker/buildkit-syft-scanner:stable-1@sha256:ae4f3b554449e7e25548e7d8ccc029d17357348e30c6e3df01b92bc93654d6a9 \
+                          --output "type=image,name=$image,push=true"
+                        printf '%s' "$image" > "$WORKSPACE/image-ref"
+                        rm -rf "$DOCKER_CONFIG"
+                    '''
+                }
+                container('curl') {
+                    sh '''
+                        set +x
+                        endpoint="$(cat /etc/faang-registry/endpoint)"
+                        image="$(cat "$WORKSPACE/image-ref")"
+                        repository="${image#${endpoint}/}"
+                        repository="${repository%:*}"
+                        tag="${image##*:}"
+                        curl --fail --silent --show-error \
+                          --cacert /etc/registry-certs/ca.crt \
+                          --user "$REGISTRY_USERNAME:$REGISTRY_PASSWORD" \
+                          --header 'Accept: application/vnd.oci.image.index.v1+json' \
+                          "https://${endpoint}/v2/${repository}/manifests/${tag}" > "$WORKSPACE/index.json"
+                        grep -Eq '"architecture"[[:space:]]*:[[:space:]]*"amd64"' "$WORKSPACE/index.json"
+                        grep -Eq '"architecture"[[:space:]]*:[[:space:]]*"arm64"' "$WORKSPACE/index.json"
+                        test "$(grep -Eo '"architecture"[[:space:]]*:[[:space:]]*"unknown"' "$WORKSPACE/index.json" | wc -l)" -ge 2
+                        rm -f "$WORKSPACE/index.json"
+                        echo 'JENKINS ROOTLESS BUILDKIT REGISTRY PASS linux/amd64,linux/arm64'
+                    '''
+                }
+            }
+        }
+    }
+}
