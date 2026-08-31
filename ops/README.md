@@ -3,10 +3,8 @@
 This directory contains the necessary manifests to set up a full CI/CD pipeline for the FAANG project.
 
 ## 1. Local Image Registry
-Before building, deploy the local registry where Jenkins will push images:
-```bash
-kubectl apply -f ops/docker-registry.yaml
-```
+
+The authenticated persistent POC registry is installed from the repository root with `install-registry.ps1`. Its real endpoint and storage-node mapping are held only in ignored `config/homelab.local.json`. See `k8s/registry/README.md`; the old unauthenticated `emptyDir` registry has been removed.
 
 ## 2. ArgoCD Application
 To enable GitOps sync for the whole system:

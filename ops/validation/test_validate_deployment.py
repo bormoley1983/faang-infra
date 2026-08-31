@@ -65,7 +65,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
     def test_base_has_only_portable_configuration(self):
         rendered = self.render(ROOT / "k8s" / "base")
         forbidden = (
-            "office.aviv.com.ua",
+            "home.arpa",
             "postgres-main",
             "redis-main",
             "kafka-main",
@@ -100,7 +100,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             "user",
         )
         for service in services:
-            self.assertIn(f"host: faang-{service}.office.aviv.com.ua", rendered)
+            self.assertIn(f"host: faang-{service}.home.arpa", rendered)
 
     def test_manual_scripts_apply_the_argocd_overlay_without_substitution(self):
         for script_name in ("deploy.ps1", "deploy.sh"):

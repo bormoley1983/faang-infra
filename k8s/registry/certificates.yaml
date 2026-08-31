@@ -1,0 +1,31 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: registry-selfsigned
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: registry-ca
+spec:
+  isCA: true
+  commonName: faang-registry-ca
+  secretName: registry-ca
+  duration: 43800h
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: registry-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: registry-ca
+spec:
+  ca:
+    secretName: registry-ca

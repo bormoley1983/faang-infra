@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: registry
+
+resources:
+  - namespace.yaml
+  - certificates.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: faang-registry
+      app.kubernetes.io/part-of: faang-platform
+

@@ -1,7 +1,7 @@
 - op: replace
   path: /spec/rules
   value:
-    - host: faang-account.office.aviv.com.ua
+    - host: faang-account.home.arpa
       http:
         paths:
           - path: /
@@ -11,7 +11,7 @@
                 name: faang-account-service
                 port:
                   number: 80
-    - host: faang-achievement.office.aviv.com.ua
+    - host: faang-achievement.home.arpa
       http:
         paths:
           - path: /
@@ -21,7 +21,7 @@
                 name: faang-achievement-service
                 port:
                   number: 80
-    - host: faang-analytics.office.aviv.com.ua
+    - host: faang-analytics.home.arpa
       http:
         paths:
           - path: /
@@ -31,7 +31,7 @@
                 name: faang-analytics-service
                 port:
                   number: 80
-    - host: faang-notification.office.aviv.com.ua
+    - host: faang-notification.home.arpa
       http:
         paths:
           - path: /
@@ -41,7 +41,7 @@
                 name: faang-notification-service
                 port:
                   number: 80
-    - host: faang-payment.office.aviv.com.ua
+    - host: faang-payment.home.arpa
       http:
         paths:
           - path: /
@@ -51,7 +51,7 @@
                 name: faang-payment-service
                 port:
                   number: 80
-    - host: faang-post.office.aviv.com.ua
+    - host: faang-post.home.arpa
       http:
         paths:
           - path: /
@@ -61,7 +61,7 @@
                 name: faang-post-service
                 port:
                   number: 80
-    - host: faang-project.office.aviv.com.ua
+    - host: faang-project.home.arpa
       http:
         paths:
           - path: /
@@ -71,7 +71,7 @@
                 name: faang-project-service
                 port:
                   number: 80
-    - host: faang-url-shortener.office.aviv.com.ua
+    - host: faang-url-shortener.home.arpa
       http:
         paths:
           - path: /
@@ -81,7 +81,7 @@
                 name: faang-url-shortener-service
                 port:
                   number: 80
-    - host: faang-user.office.aviv.com.ua
+    - host: faang-user.home.arpa
       http:
         paths:
           - path: /

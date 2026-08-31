@@ -8,8 +8,15 @@ This guide explains how to connect your local Windows machine to your **K3s Home
 3. Your local machine must be able to resolve the hostname `k3s-control-plane` (via DNS or `hosts` file).
 
 ---
-## Step 0: add docker registry
-kubectl apply -f ops/docker-registry.yaml
+## Step 0: install the POC registry
+
+```powershell
+Copy-Item .\config\homelab.example.json .\config\homelab.local.json
+# Edit the ignored local mapping, then run:
+.\install-registry.ps1
+```
+
+Complete the CA trust procedure in `k8s/registry/README.md` on every k3s node before deploying workloads.
 
 
 ## Step 1: Extract the Kubeconfig
