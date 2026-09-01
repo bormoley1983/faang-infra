@@ -62,7 +62,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         "faang-notification-service": "09bf7e990fca2e506052109b072a968658d2be8ed98d2daae1b9a5e659c80f8b",
         "faang-payment-service": "d82cafd7736a2f0267f285a44a20f93749a5656c29ecb331eb255cace81c5f86",
         "faang-post-service": "8c7a22a115da9ea907714a0e1b8e1294a30b2e543bf58c8a3c50f1e51bb83989",
-        "faang-project-service": "ee5c1bcf48ff8c7a6d8b1f380b5174482da40facf58efa458ac8a6eda66b69e8",
+        "faang-project-service": "285bd0c3e9699b35fa9c78b44ed3a7083c8d1d76e53908a47e406957a7b63afa",
         "faang-url-shortener-service": "342dea20b24a4a14286a2d6b54cf0472094d77d5135c0d247b3ad667e1d88ba5",
         "faang-user-service": "aa68174163ae0f5117f7be541ec04d2f3b2e4314467baedf814a7ed7a1d02d5d",
     }

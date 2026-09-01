@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: faang-grype-db-refresh
+  namespace: jenkins
+  labels:
+    app.kubernetes.io/name: faang-grype-db-refresh
+spec:
+  schedule: "17 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: faang-grype-db-refresh
+        spec:
+          restartPolicy: OnFailure
+          nodeSelector:
+            workload.faang.io/ci-heavy: "true"
+            kubernetes.io/arch: amd64
+          containers:
+            - name: grype-db-refresh
+              image: anchore/grype:v0.116.1@sha256:1e71065c0a4cff3e6bd3b8add525ffac4343eb4971694eb90a31cf6d4d3e85db
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: GRYPE_DB_CACHE_DIR
+                  value: /home/jenkins/agent/.grype
+              command:
+                - grype
+                - db
+                - update
+              volumeMounts:
+                - name: grype-db-cache
+                  mountPath: /home/jenkins/agent/.grype
+          volumes:
+            - name: grype-db-cache
+              persistentVolumeClaim:
+                claimName: faang-grype-db-cache

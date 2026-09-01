@@ -54,6 +54,31 @@ The `ops/jenkins/Jenkinsfile` is a separate infrastructure validation job. Point
 
 Its deployment gate runs `ops/validation/validate_deployment.py` and the negative policy tests. The validator uses pinned Kustomize/Kubernetes schema expectations, a checksum-verified kubeconform binary, service runtime contracts, and an explicit known-debt baseline. See `ops/validation/README.md` for local Windows and Linux commands. New findings and stale baseline entries fail CI.
 
+### CI-heavy placement and caches
+
+For homelab performance tuning, pin heavy CI/CD control workloads to the fastest amd64 worker using a private logical label.
+
+1. Label the node once (replace `<node-name>`):
+
+```bash
+kubectl label node <node-name> workload.faang.io/ci-heavy=true --overwrite
+```
+
+2. Provision persistent Jenkins caches:
+
+```bash
+kubectl apply -f ops/jenkins/agents/cache-persistent-volumes.yaml
+kubectl apply -f ops/jenkins/agents/grype-db-refresh-cronjob.yaml
+```
+
+3. Pin Argo CD repo generation and control loops:
+
+```powershell
+.\ops\argocd\pin-ci-heavy-node.ps1
+```
+
+The service-delivery Jenkins pod template now uses `workload.faang.io/ci-heavy=true` and `kubernetes.io/arch=amd64`, keeps native amd64/arm64 runtime verification stages, mounts persistent Gradle and Grype DB caches, and enforces one concurrent heavy build (`disableConcurrentBuilds()`).
+
 ## 4. Ingress Access
 
 Ingress is part of the committed homelab overlay. For an authorized emergency/manual reconciliation, render and apply the exact same path watched by Argo CD:

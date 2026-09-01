@@ -2,12 +2,19 @@ def publishedReference = ''
 def publishedPullReference = ''
 def publishedDigest = ''
 
+properties([
+    disableConcurrentBuilds()
+])
+
 podTemplate(yaml: '''
 apiVersion: v1
 kind: Pod
 spec:
   serviceAccountName: faang-build-agent
   automountServiceAccountToken: false
+  nodeSelector:
+    workload.faang.io/ci-heavy: "true"
+    kubernetes.io/arch: amd64
   imagePullSecrets:
     - name: faang-registry-pull
   securityContext:
@@ -37,6 +44,9 @@ spec:
         runAsGroup: 1000
         capabilities:
           drop: ["ALL"]
+      volumeMounts:
+        - name: gradle-cache
+          mountPath: /home/jenkins/agent/.gradle
     - name: buildkit
       image: moby/buildkit:v0.30.0-rootless@sha256:d76eb1caecac5733ef7553c1e90a1b21f1bb218cd1142d3553de0747b4a14ba9
       imagePullPolicy: IfNotPresent
@@ -104,7 +114,15 @@ spec:
         - name: cosign-public-key
           mountPath: /etc/cosign
           readOnly: true
+        - name: grype-db-cache
+          mountPath: /home/jenkins/agent/.grype
   volumes:
+    - name: gradle-cache
+      persistentVolumeClaim:
+        claimName: faang-gradle-cache
+    - name: grype-db-cache
+      persistentVolumeClaim:
+        claimName: faang-grype-db-cache
     - name: buildkit-state
       emptyDir: {}
     - name: buildkit-config
