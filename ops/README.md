@@ -21,6 +21,8 @@ Each dependency declares exactly one `mode`. `external` creates a selectorless S
 
 The local-path MinIO profile survives Pod and same-node restarts, but it is not resilient to loss of the PVC's node or disk. Treat it as the POC profile until DEP-042 adds backup/restore and reviewed failure-domain storage. The final delivery path moves selections and topology into a separate private environment repository and protects credentials with SOPS/age (DEP-040 through DEP-043).
 
+Runtime credentials belong to `faang/faang-secrets`. Copy `k8s/overlays/homelab/secret.example.yaml` to the ignored `faang-secrets.yaml`, set real values, and apply it with `kubectl -n faang apply -f k8s/overlays/homelab/faang-secrets.yaml`. The manifest also declares `metadata.namespace: faang` so an omitted CLI namespace cannot silently update `default/faang-secrets`.
+
 To enable GitOps sync for the whole system:
 1. Ensure your local `k8s/overlays/homelab/kustomization.yaml` is correct.
 2. If the `faang-infra` repository becomes private, configure its read-only repository credential in Argo CD. Do not commit that credential.

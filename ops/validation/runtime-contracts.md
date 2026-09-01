@@ -24,6 +24,7 @@ This matrix is the human-readable companion to `service-contracts.json`. Kuberne
 - `S3_BUCKET_NAME` is the shared application bucket; `S3_AVATAR_BUCKET_NAME` is the User avatar bucket. The MinIO bootstrap Job creates both idempotently.
 - `APP_ENV` selects the User Service Spring profile and is `production` in homelab.
 - `URL_SHORTENER_BASE_URL` and `URL_SHORTENER_PUBLIC_URL` must be externally reachable URLs for the selected environment.
+- External Elasticsearch uses `ELASTICSEARCH_USERNAME` and `ELASTICSEARCH_PASSWORD` from `faang-secrets`. The homelab POC currently sets `ELASTICSEARCH_TLS_INSECURE=true` because the external certificate does not cover the cluster-local Service alias; production must use a trusted CA and a SAN-correct private endpoint.
 
 ## Optional integration policy
 

@@ -10,7 +10,10 @@ data:
   KAFKA_BOOTSTRAP_SERVERS: "kafka-main:9092"
   REDIS_HOST: "redis-main"
   REDIS_PORT: "6379"
-  ELASTICSEARCH_URL: "http://elasticsearch-main:9200"
+  ELASTICSEARCH_URL: "https://elasticsearch-main:9200"
+  # POC bridge for the external node's certificate, whose SAN does not contain the cluster-local alias.
+  # DEP-041 must replace this with a trusted CA and a SAN-correct private endpoint.
+  ELASTICSEARCH_TLS_INSECURE: "true"
   MINIO_URL: "http://minio-main:9000"
   MINIO_BUCKET_NAME: "corpbucket"
   S3_ENDPOINT: "http://minio-main:9000"

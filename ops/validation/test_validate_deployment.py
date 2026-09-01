@@ -115,6 +115,9 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertIn('kind = "EndpointSlice"', installer)
         self.assertIn('"IgnoreExtraneous"', installer)
 
+        secret_example = (ROOT / "k8s" / "overlays" / "homelab" / "secret.example.yaml").read_text(encoding="utf-8")
+        self.assertIn("namespace: faang", secret_example)
+
     def test_internal_minio_profile_is_persistent_pinned_and_secret_driven(self):
         rendered = self.render(ROOT / "k8s" / "components" / "dependencies" / "minio" / "internal")
         self.assertIn("kind: StatefulSet", rendered)
@@ -125,6 +128,16 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertIn("key: MINIO_ACCESS_KEY", rendered)
         self.assertIn("key: MINIO_SECRET_KEY", rendered)
         self.assertNotIn("value: password", rendered)
+
+    def test_external_elasticsearch_bootstrap_has_auth_and_explicit_tls_policy(self):
+        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        self.assertIn("ELASTICSEARCH_URL: https://elasticsearch-main:9200", rendered)
+        self.assertIn('ELASTICSEARCH_TLS_INSECURE: "true"', rendered)
+        self.assertIn("key: ELASTICSEARCH_USERNAME", rendered)
+        self.assertIn("key: ELASTICSEARCH_PASSWORD", rendered)
+        script = (ROOT / "k8s" / "bootstrap" / "scripts" / "init-elasticsearch.sh").read_text(encoding="utf-8")
+        self.assertIn('--user "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD"', script)
+        self.assertIn('true) set -- "$@" --insecure', script)
 
     def test_homelab_has_one_configmap_and_all_ingress_hosts(self):
         rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")

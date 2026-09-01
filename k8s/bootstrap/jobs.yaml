@@ -137,6 +137,21 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: ELASTICSEARCH_URL
+            - name: ELASTICSEARCH_TLS_INSECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: ELASTICSEARCH_TLS_INSECURE
+            - name: ELASTICSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: ELASTICSEARCH_USERNAME
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: ELASTICSEARCH_PASSWORD
           volumeMounts:
             - name: scripts
               mountPath: /scripts
