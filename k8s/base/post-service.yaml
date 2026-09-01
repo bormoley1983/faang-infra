@@ -124,6 +124,12 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: MODERATION_API_URL
+                  optional: true
+            - name: MODERATION_AI_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: MODERATION_AI_ENABLED
             - name: SPELLCHECKER_URL
               valueFrom:
                 configMapKeyRef:

@@ -43,6 +43,12 @@ spec:
                 secretKeyRef:
                   name: faang-secrets
                   key: CURRENCY_EXCHANGE_ACCESS_KEY
+                  optional: true
+            - name: CURRENCY_EXCHANGE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: CURRENCY_EXCHANGE_ENABLED
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness

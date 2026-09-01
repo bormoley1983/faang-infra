@@ -25,6 +25,7 @@ This matrix is the human-readable companion to `service-contracts.json`. Kuberne
 - `APP_ENV` selects the User Service Spring profile and is `production` in homelab.
 - `URL_SHORTENER_BASE_URL` and `URL_SHORTENER_PUBLIC_URL` must be externally reachable URLs for the selected environment.
 - External Elasticsearch uses `ELASTICSEARCH_USERNAME` and `ELASTICSEARCH_PASSWORD` from `faang-secrets`. The homelab POC currently sets `ELASTICSEARCH_TLS_INSECURE=true` because the external certificate does not cover the cluster-local Service alias; production must use a trusted CA and a SAN-correct private endpoint.
+- Exchange Rates API, AI moderation, SMTP, Telegram, and SMS are optional integrations. Their `*_ENABLED` flags default to `false`; disabled integrations must not require credentials or perform outbound calls. Tests may enable them with mock/local endpoints, while real credentials remain in `faang-secrets`.
 
 ## Optional integration policy
 
