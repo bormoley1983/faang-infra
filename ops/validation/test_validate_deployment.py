@@ -181,6 +181,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertEqual(9, len(deployments))
         required_fragments = (
             "automountServiceAccountToken: false",
+            "imagePullSecrets:\n      - name: faang-registry-pull",
             "terminationGracePeriodSeconds: 60",
             "runAsNonRoot: true",
             "runAsUser: 10001",

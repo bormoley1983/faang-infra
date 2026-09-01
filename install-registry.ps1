@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$ConfigPath = "",
-    [string]$RegistryUsername = "jenkins"
+    [string]$RegistryUsername = "jenkins",
+    [string]$RegistryAlias = "docker-registry:5000"
 )
 
 $ErrorActionPreference = "Stop"
@@ -68,19 +69,19 @@ if ($LASTEXITCODE -eq 0) {
     $registryPassword = New-RandomSecret
 }
 
-$htpasswd = $registryPassword | docker run --rm -i --entrypoint htpasswd $htpasswdImage -Bin $RegistryUsername
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($htpasswd)) {
-    throw "Unable to generate the bcrypt htpasswd entry"
-}
-$htpasswd = $htpasswd.Trim()
-
 $existingAuth = & kubectl -n $registryNamespace get secret $authSecret -o json 2>$null
 if ($LASTEXITCODE -eq 0) {
     $authData = $existingAuth | ConvertFrom-Json
+    $htpasswd = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($authData.data.htpasswd))
     $httpSecret = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($authData.data.'http-secret'))
 } else {
+    $htpasswd = $registryPassword | docker run --rm -i --entrypoint htpasswd $htpasswdImage -Bin $RegistryUsername
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($htpasswd)) {
+        throw "Unable to generate the bcrypt htpasswd entry"
+    }
     $httpSecret = New-RandomSecret
 }
+$htpasswd = $htpasswd.Trim()
 
 $credentialsManifest = @{
     apiVersion = "v1"
@@ -109,7 +110,13 @@ $authManifest | kubectl apply -f -
 if ($LASTEXITCODE -ne 0) { throw "Unable to apply registry server credentials" }
 
 $dockerAuth = ConvertTo-Base64 "$RegistryUsername`:$registryPassword"
-$dockerConfig = @{ auths = @{ $RegistryEndpoint = @{ username = $RegistryUsername; password = $registryPassword; auth = $dockerAuth } } } | ConvertTo-Json -Compress -Depth 6
+$registryAuth = @{ username = $RegistryUsername; password = $registryPassword; auth = $dockerAuth }
+$dockerConfig = @{
+    auths = @{
+        $RegistryEndpoint = $registryAuth
+        $RegistryAlias = $registryAuth
+    }
+} | ConvertTo-Json -Compress -Depth 6
 $pullSecretManifest = @{
     apiVersion = "v1"
     kind = "Secret"

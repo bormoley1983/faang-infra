@@ -41,10 +41,13 @@ $config = Get-Content .\config\homelab.local.json -Raw | ConvertFrom-Json
 $endpoint = "$($config.registry.address):$($config.registry.port)"
 ```
 
-On every k3s server/agent, copy the CA to `/etc/rancher/k3s/registry-certs/faang-registry-ca.crt` and merge this entry into `/etc/rancher/k3s/registries.yaml`, replacing `<registry-endpoint>` with the local `$endpoint` value:
+Application manifests use the topology-neutral alias `docker-registry:5000`. On every k3s server/agent, copy the CA to `/etc/rancher/k3s/registry-certs/faang-registry-ca.crt` and merge these entries into `/etc/rancher/k3s/registries.yaml`, replacing `<registry-endpoint>` with the local `$endpoint` value:
 
 ```yaml
 mirrors:
+  "docker-registry:5000":
+    endpoint:
+      - "https://<registry-endpoint>"
   "<registry-endpoint>":
     endpoint:
       - "https://<registry-endpoint>"
@@ -54,7 +57,7 @@ configs:
       ca_file: /etc/rancher/k3s/registry-certs/faang-registry-ca.crt
 ```
 
-Restart `k3s-agent` on agents and `k3s` on the server one node at a time. Authentication is supplied by the namespace pull Secret, not by node files. Install the same CA in Docker Desktop and Jenkins build agents before pushing.
+Restart `k3s-agent` on agents and `k3s` on the server one node at a time. Re-run `install-registry.ps1` so the namespace pull Secret contains credentials for both the physical endpoint and logical alias. Authentication is supplied by that Secret, not by node files. Install the same CA in Docker Desktop and Jenkins build agents before pushing.
 
 ## Verification
 
