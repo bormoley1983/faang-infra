@@ -3,7 +3,7 @@
   { "directory": "faang-achievement_service", "image": "faang-achievement-service", "port": 8085 },
   { "directory": "faang-analytics_service", "image": "faang-analytics-service", "port": 8086 },
   { "directory": "faang-notification_service", "image": "faang-notification-service", "port": 8083 },
-  { "directory": "faang-payment_service", "image": "faang-payment-service", "port": 9080 },
+  { "directory": "faang-payment_service", "image": "faang-payment-service", "port": 8082 },
   { "directory": "faang-post_service", "image": "faang-post-service", "port": 8081 },
   { "directory": "faang-project_service", "image": "faang-project-service", "port": 8082 },
   { "directory": "faang-url_shortener_service", "image": "faang-url-shortener-service", "port": 18080 },
