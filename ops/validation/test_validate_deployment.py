@@ -10,8 +10,9 @@ from pathlib import Path
 
 MODULE_PATH = Path(__file__).with_name("validate_deployment.py")
 SPEC = importlib.util.spec_from_file_location("validate_deployment", MODULE_PATH)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"Unable to load module spec for {MODULE_PATH}")
 VALIDATOR = importlib.util.module_from_spec(SPEC)
-assert SPEC.loader is not None
 sys.modules[SPEC.name] = VALIDATOR
 SPEC.loader.exec_module(VALIDATOR)
 FIXTURES = Path(__file__).with_name("fixtures")

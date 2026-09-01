@@ -152,8 +152,10 @@ def validate_rendered(rendered: str, contracts: dict[str, object]) -> list[Issue
             elif key not in available:
                 issues.add(Issue("REF002", location, f"missing key {referenced_kind}/{referenced_name}:{key}"))
 
-    service_contracts = contracts.get("services", {}) if contracts else {}
-    for deployment_name, contract_value in service_contracts.items():
+    raw_service_contracts = contracts.get("services") if contracts else None
+    service_contracts = raw_service_contracts if isinstance(raw_service_contracts, dict) else {}
+    for deployment_name_raw, contract_value in service_contracts.items():
+        deployment_name = str(deployment_name_raw)
         contract = contract_value if isinstance(contract_value, dict) else {}
         location = f"Deployment/{deployment_name}"
         document = resources.get(("Deployment", deployment_name))
@@ -285,13 +287,15 @@ def load_json(path: Path) -> dict[str, object]:
 def evaluate_baseline(issues: list[Issue], baseline_path: Path, strict: bool) -> bool:
     current = {issue.fingerprint for issue in issues}
     baseline_data = load_json(baseline_path)
-    baseline = set(baseline_data.get("knownIssues", []))
+    known_issues = baseline_data.get("knownIssues", [])
+    baseline = {issue for issue in known_issues if isinstance(issue, str)} if isinstance(known_issues, list) else set()
     defect_owners = baseline_data.get("defectOwners", {})
     owned = {
         fingerprint
         for fingerprints in defect_owners.values()
         if isinstance(fingerprints, list)
         for fingerprint in fingerprints
+        if isinstance(fingerprint, str)
     } if isinstance(defect_owners, dict) else set()
     if baseline != owned:
         unowned = sorted(baseline - owned)
