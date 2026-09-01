@@ -36,6 +36,9 @@ controller:
     - font-awesome-api:7.3.1-1013.v0835a_879ec6d
     - git:5.10.1
     - git-client:6.6.1
+    - github:1.47.0
+    - github-api:1.330-492.v3941a_032db_2a_
+    - github-branch-source:1983.vfa_27ed961853
     - gson-api:2.14.0-201.v8eefe5515533
     - instance-identity:203.v15e81a_1b_7a_38
     - ionicons-api:94.vcc3065403257
@@ -46,8 +49,10 @@ controller:
     - jakarta-xml-bind-api:4.0.9-19.v2b_a_5b_44d9a_1c
     - javax-activation-api:1.2.0-8
     - jaxb:2.3.9-143.v5979df3304e6
+    - jjwt-api:0.13.0-141.vd58b_a_9592b_6c
     - joda-time-api:2.14.3-200.v65623733c99f
     - json-api:20260814-226.v20f9685d642c
+    - json-path-api:3.0.0-218.vcd4dd1355de2
     - kubernetes:4540.v612369217f87
     - kubernetes-client-api:7.3.1-256.v788a_0b_787114
     - kubernetes-credentials:207.v492f58828b_ed
@@ -73,6 +78,7 @@ controller:
     - snakeyaml-api:2.5-149.v72471e9c6371
     - ssh-credentials:372.va_250881b_08cd
     - structs:362.va_b_695ef4fdf9
+    - token-macro:477.vd4f0dc3cb_cf1
     - variant:70.va_d9f17f859e0
     - woodstox-core-api:7.2.2-10.vcb_629759b_2c2
     - workflow-aggregator:608.v67378e9d3db_1
@@ -85,3 +91,20 @@ controller:
     - workflow-scm-step:466.va_d69e602552b_
     - workflow-step-api:724.v538c2362b_dfb_
     - workflow-support:1015.v785e5a_b_b_8b_22
+
+  JCasC:
+    configScripts:
+      faang-shared-library: |
+        unclassified:
+          globalLibraries:
+            libraries:
+              - name: faang-ci
+                defaultVersion: dev-local
+                allowVersionOverride: false
+                implicit: false
+                includeInChangesets: true
+                retriever:
+                  modernSCM:
+                    scm:
+                      git:
+                        remote: https://github.com/bormoley1983/faang-infra.git
