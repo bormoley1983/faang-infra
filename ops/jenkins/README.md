@@ -32,6 +32,11 @@ Publication remains a later trusted job and cannot run when validation fails.
 - Install the reviewed exact plugin lock and validate Jenkins restart/recovery.
 - Create nine multibranch jobs in `faang-untrusted`, with branch and pull-request
   discovery and repository webhooks.
+- Configure a dedicated GitHub App credential for SCM discovery and webhook
+  delivery. Grant only Commit statuses read/write, Contents read-only, Metadata
+  read-only, and Pull requests read-only; restrict untrusted token use to the
+  inferred repository with read-only contents. Do not reuse or copy the trusted
+  delivery token into `faang-untrusted`.
 - Add and prove a common source static-analysis/dependency-vulnerability gate.
   The existing trusted delivery image scan remains mandatory but does not by
   itself satisfy this source-validation item.
