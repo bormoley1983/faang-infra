@@ -49,6 +49,26 @@ foreach ($contract in $dependencyContract) {
         throw "dependencies.$($contract.ConfigKey) is required"
     }
 
+    $mode = [string]$entry.mode
+    if ($mode -notin @("external", "internal")) {
+        throw "dependencies.$($contract.ConfigKey).mode must be exactly 'external' or 'internal'"
+    }
+
+    if ($mode -eq "internal") {
+        if ($contract.ConfigKey -ne "minio") {
+            throw "Internal mode is not implemented yet for dependencies.$($contract.ConfigKey)"
+        }
+        if (-not $ValidateOnly) {
+            kubectl -n $Namespace delete endpointslice "$($contract.ServiceName)-external" --ignore-not-found
+            if ($LASTEXITCODE -ne 0) { throw "Unable to remove the obsolete external MinIO endpoint" }
+            kubectl apply -k "$PSScriptRoot/k8s/components/dependencies/minio/internal"
+            if ($LASTEXITCODE -ne 0) { throw "Unable to apply the internal MinIO profile" }
+            kubectl -n $Namespace rollout status statefulset/minio-main --timeout=300s
+            if ($LASTEXITCODE -ne 0) { throw "Internal MinIO did not become ready" }
+        }
+        continue
+    }
+
     $address = [string]$entry.address
     $parsedAddress = $null
     if (-not [Net.IPAddress]::TryParse($address, [ref]$parsedAddress)) {
@@ -129,7 +149,7 @@ foreach ($contract in $dependencyContract) {
 }
 
 if ($ValidateOnly) {
-    Write-Output "External dependency mapping is valid."
+    Write-Output "Dependency mode and mapping configuration is valid."
 } else {
-    Write-Output "External dependency aliases are configured in namespace '$Namespace'. Physical addresses remain only in the ignored local mapping."
+    Write-Output "Dependency profiles are configured in namespace '$Namespace'. Physical external addresses remain only in the ignored local mapping."
 }

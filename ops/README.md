@@ -17,7 +17,9 @@ Copy-Item config/homelab.example.json config/homelab.local.json # first use only
 .\install-external-dependencies.ps1
 ```
 
-The installer creates selectorless Services and EndpointSlices in `faang`; it never writes physical addresses to tracked files. These objects are annotated as locally managed and are not pruned by the manual Argo workflow. This is a bootstrap bridge only. The final delivery path moves the same mappings into a separate private environment repository and protects credentials with SOPS/age (DEP-040 through DEP-043).
+Each dependency declares exactly one `mode`. `external` creates a selectorless Service and EndpointSlice from the ignored IP/port mapping. The currently supported `internal` profile deploys MinIO as a restricted, digest-pinned StatefulSet with a 20 GiB `local-path` PVC and credentials from `faang-secrets`. The objects are annotated as locally managed and are not pruned by the manual Argo workflow.
+
+The local-path MinIO profile survives Pod and same-node restarts, but it is not resilient to loss of the PVC's node or disk. Treat it as the POC profile until DEP-042 adds backup/restore and reviewed failure-domain storage. The final delivery path moves selections and topology into a separate private environment repository and protects credentials with SOPS/age (DEP-040 through DEP-043).
 
 To enable GitOps sync for the whole system:
 1. Ensure your local `k8s/overlays/homelab/kustomization.yaml` is correct.

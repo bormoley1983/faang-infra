@@ -96,7 +96,13 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         example = json.loads((ROOT / "config" / "homelab.example.json").read_text(encoding="utf-8"))
         expected = {"postgresql", "redis", "elasticsearch", "kafka", "minio"}
         self.assertEqual(expected, set(example["dependencies"]))
-        for dependency in example["dependencies"].values():
+        self.assertEqual("internal", example["dependencies"]["minio"]["mode"])
+        for name, dependency in example["dependencies"].items():
+            self.assertIn(dependency["mode"], {"external", "internal"})
+            if dependency["mode"] == "internal":
+                self.assertEqual("minio", name)
+                self.assertNotIn("address", dependency)
+                continue
             self.assertIn(dependency["address"].split(".")[0:3], (["192", "0", "2"], ["198", "51", "100"], ["203", "0", "113"]))
             self.assertGreater(dependency["port"], 0)
             self.assertLessEqual(dependency["port"], 65535)
@@ -108,6 +114,17 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             self.assertIn(service, installer)
         self.assertIn('kind = "EndpointSlice"', installer)
         self.assertIn('"IgnoreExtraneous"', installer)
+
+    def test_internal_minio_profile_is_persistent_pinned_and_secret_driven(self):
+        rendered = self.render(ROOT / "k8s" / "components" / "dependencies" / "minio" / "internal")
+        self.assertIn("kind: StatefulSet", rendered)
+        self.assertIn("storageClassName: local-path", rendered)
+        self.assertIn("storage: 20Gi", rendered)
+        self.assertIn("minio/minio:RELEASE.2025-04-22T22-12-26Z@sha256:", rendered)
+        self.assertNotIn("image: minio/minio:latest", rendered)
+        self.assertIn("key: MINIO_ACCESS_KEY", rendered)
+        self.assertIn("key: MINIO_SECRET_KEY", rendered)
+        self.assertNotIn("value: password", rendered)
 
     def test_homelab_has_one_configmap_and_all_ingress_hosts(self):
         rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
