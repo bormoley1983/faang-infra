@@ -1,0 +1,146 @@
+podTemplate(yaml: '''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: Unconfined
+  containers:
+    - name: buildkit
+      image: moby/buildkit:v0.30.0-rootless@sha256:d76eb1caecac5733ef7553c1e90a1b21f1bb218cd1142d3553de0747b4a14ba9
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["3600"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: BUILDKITD_FLAGS
+          value: --oci-worker-no-process-sandbox --oci-worker-snapshotter=native
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+      securityContext:
+        allowPrivilegeEscalation: true
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: Unconfined
+        appArmorProfile:
+          type: Unconfined
+      volumeMounts:
+        - name: buildkit-state
+          mountPath: /home/user/.local/share/buildkit
+        - name: buildkit-config
+          mountPath: /home/user/.config/buildkit
+          readOnly: true
+        - name: registry-ca
+          mountPath: /etc/buildkit/certs
+          readOnly: true
+        - name: registry-client
+          mountPath: /etc/faang-registry
+          readOnly: true
+    - name: curl
+      image: curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["3600"]
+      workingDir: /home/jenkins/agent
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: registry-ca
+          mountPath: /etc/registry-certs
+          readOnly: true
+        - name: registry-client
+          mountPath: /etc/faang-registry
+          readOnly: true
+  volumes:
+    - name: buildkit-state
+      emptyDir: {}
+    - name: buildkit-config
+      configMap:
+        name: faang-buildkit-config
+    - name: registry-ca
+      configMap:
+        name: faang-registry-ca
+    - name: registry-client
+      configMap:
+        name: faang-registry-client
+''') {
+    node(POD_LABEL) {
+        timeout(time: 15, unit: 'MINUTES') {
+            withCredentials([usernamePassword(
+                credentialsId: 'faang-registry-push',
+                usernameVariable: 'REGISTRY_USERNAME',
+                passwordVariable: 'REGISTRY_PASSWORD'
+            )]) {
+                container('buildkit') {
+                    sh '''
+                        set +x
+                        endpoint="$(cat /etc/faang-registry/endpoint)"
+                        export DOCKER_CONFIG="$WORKSPACE/.docker"
+                        mkdir -p "$DOCKER_CONFIG" "$WORKSPACE/context"
+                        auth="$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64 | tr -d '\n')"
+                        printf '{"auths":{"%s":{"auth":"%s"}}}\n' "$endpoint" "$auth" > "$DOCKER_CONFIG/config.json"
+                        cat > "$WORKSPACE/context/Dockerfile" <<'EOF'
+FROM ghcr.io/sigstore/cosign/cosign:v3.1.2@sha256:d91bc4e7e95e8d2f549c747a72dc174f90579e410a1695f57f686674f84ce849 AS cosign
+FROM ghcr.io/oras-project/oras:v1.3.3@sha256:a4c54befd87d0366e0ba3ac3a9536a5288c8a3735acd3b635cdace59a2c559c8 AS oras
+FROM anchore/grype:v0.116.1@sha256:1e71065c0a4cff3e6bd3b8add525ffac4343eb4971694eb90a31cf6d4d3e85db AS grype
+FROM curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+USER 0
+COPY --from=cosign --chmod=0555 /ko-app/cosign /usr/local/bin/cosign
+COPY --from=oras --chmod=0555 /bin/oras /usr/local/bin/oras
+COPY --from=grype --chmod=0555 /grype /usr/local/bin/grype
+USER 100
+WORKDIR /workspace
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["sleep 3600"]
+EOF
+                        image="$endpoint/faang-ci/jenkins-tools:v1"
+                        buildctl-daemonless.sh build \
+                          --progress=plain \
+                          --frontend=dockerfile.v0 \
+                          --local context="$WORKSPACE/context" \
+                          --local dockerfile="$WORKSPACE/context" \
+                          --opt platform=linux/amd64,linux/arm64 \
+                          --opt attest:provenance=mode=max \
+                          --opt attest:sbom=generator=docker/buildkit-syft-scanner:stable-1@sha256:ae4f3b554449e7e25548e7d8ccc029d17357348e30c6e3df01b92bc93654d6a9 \
+                          --output "type=image,name=$image,push=true" \
+                          --metadata-file "$WORKSPACE/metadata.json"
+                        rm -rf "$DOCKER_CONFIG"
+                    '''
+                }
+                container('curl') {
+                    sh '''
+                        set +x
+                        endpoint="$(cat /etc/faang-registry/endpoint)"
+                        digest="$(grep -Eo 'sha256:[0-9a-f]{64}' "$WORKSPACE/metadata.json" | tail -1)"
+                        test "${#digest}" -eq 71
+                        curl --fail --silent --show-error \
+                          --cacert /etc/registry-certs/ca.crt \
+                          --user "$REGISTRY_USERNAME:$REGISTRY_PASSWORD" \
+                          --header 'Accept: application/vnd.oci.image.index.v1+json' \
+                          "https://${endpoint}/v2/faang-ci/jenkins-tools/manifests/${digest}" > "$WORKSPACE/index.json"
+                        grep -Eq '"architecture"[[:space:]]*:[[:space:]]*"amd64"' "$WORKSPACE/index.json"
+                        grep -Eq '"architecture"[[:space:]]*:[[:space:]]*"arm64"' "$WORKSPACE/index.json"
+                        printf 'TOOLS_DIGEST=%s\n' "$digest"
+                        rm -f "$WORKSPACE/index.json"
+                    '''
+                }
+            }
+        }
+    }
+}

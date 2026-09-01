@@ -10,3 +10,17 @@ resources:
   - project-service.yaml
   - url-shortener-service.yaml
   - user-service.yaml
+
+patches:
+  - path: application-deployment-defaults.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: faang-.*-service
+  - path: user-service-probes.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: faang-user-service

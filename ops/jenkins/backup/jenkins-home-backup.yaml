@@ -41,11 +41,11 @@ spec:
           args:
             - |
               timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
-              archive="/backup/jenkins-home-${timestamp}.tar.gz"
-              tar -C /source -czf "${archive}" .
-              sha256sum "${archive}" > "${archive}.sha256"
-              tar -tzf "${archive}" | wc -l | awk '{print "archive_entries=" $1}'
-              cat "${archive}.sha256"
+              archive="/backup/jenkins-home-$timestamp.tar.gz"
+              tar -C /source -czf "$archive" .
+              sha256sum "$archive" > "$archive.sha256"
+              tar -tzf "$archive" | wc -l | awk '{print "archive_entries=" $1}'
+              cat "$archive.sha256"
           resources:
             requests:
               cpu: 100m

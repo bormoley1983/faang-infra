@@ -1,0 +1,113 @@
+- op: add
+  path: /spec/minReadySeconds
+  value: 10
+- op: add
+  path: /spec/progressDeadlineSeconds
+  value: 600
+- op: add
+  path: /spec/strategy
+  value:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+- op: add
+  path: /spec/template/spec/automountServiceAccountToken
+  value: false
+- op: add
+  path: /spec/template/spec/terminationGracePeriodSeconds
+  value: 60
+- op: add
+  path: /spec/template/spec/securityContext
+  value:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+- op: add
+  path: /spec/template/spec/topologySpreadConstraints
+  value:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchExpressions:
+          - key: app
+            operator: Exists
+- op: add
+  path: /spec/template/spec/containers/0/ports/0/name
+  value: http
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: SERVER_SHUTDOWN
+    value: graceful
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE
+    value: 45s
+- op: add
+  path: /spec/template/spec/containers/0/resources
+  value:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+- op: add
+  path: /spec/template/spec/containers/0/securityContext
+  value:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    capabilities:
+      drop:
+        - ALL
+- op: add
+  path: /spec/template/spec/containers/0/lifecycle
+  value:
+    preStop:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - sleep 10
+- op: add
+  path: /spec/template/spec/containers/0/startupProbe
+  value:
+    httpGet:
+      path: /actuator/health/liveness
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 30
+- op: add
+  path: /spec/template/spec/containers/0/livenessProbe/timeoutSeconds
+  value: 2
+- op: add
+  path: /spec/template/spec/containers/0/livenessProbe/failureThreshold
+  value: 3
+- op: add
+  path: /spec/template/spec/containers/0/readinessProbe/timeoutSeconds
+  value: 2
+- op: add
+  path: /spec/template/spec/containers/0/readinessProbe/failureThreshold
+  value: 3
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts
+  value:
+    - name: tmp
+      mountPath: /tmp
+- op: add
+  path: /spec/template/spec/volumes
+  value:
+    - name: tmp
+      emptyDir:
+        sizeLimit: 256Mi

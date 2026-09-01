@@ -1,29 +1,5 @@
 {
   "description": "Known deployment debt. Remove an entry in the same change that resolves it; strict mode ignores this file.",
-  "knownIssues": [
-    "POL002|Deployment/faang-account-service|mutable or placeholder image docker-registry:5000/faang-account-service:bootstrap",
-    "POL002|Deployment/faang-achievement-service|mutable or placeholder image docker-registry:5000/faang-achievement-service:bootstrap",
-    "POL002|Deployment/faang-analytics-service|mutable or placeholder image docker-registry:5000/faang-analytics-service:bootstrap",
-    "POL002|Deployment/faang-notification-service|mutable or placeholder image docker-registry:5000/faang-notification-service:bootstrap",
-    "POL002|Deployment/faang-payment-service|mutable or placeholder image docker-registry:5000/faang-payment-service:bootstrap",
-    "POL002|Deployment/faang-post-service|mutable or placeholder image docker-registry:5000/faang-post-service:bootstrap",
-    "POL002|Deployment/faang-project-service|mutable or placeholder image docker-registry:5000/faang-project-service:bootstrap",
-    "POL002|Deployment/faang-url-shortener-service|mutable or placeholder image docker-registry:5000/faang-url-shortener-service:bootstrap",
-    "POL002|Deployment/faang-user-service|mutable or placeholder image docker-registry:5000/faang-user-service:latest"
-  ],
-  "defectOwners": {
-    "DEF-002": [
-      "POL002|Deployment/faang-user-service|mutable or placeholder image docker-registry:5000/faang-user-service:latest"
-    ],
-    "DEF-003": [
-      "POL002|Deployment/faang-account-service|mutable or placeholder image docker-registry:5000/faang-account-service:bootstrap",
-      "POL002|Deployment/faang-achievement-service|mutable or placeholder image docker-registry:5000/faang-achievement-service:bootstrap",
-      "POL002|Deployment/faang-analytics-service|mutable or placeholder image docker-registry:5000/faang-analytics-service:bootstrap",
-      "POL002|Deployment/faang-notification-service|mutable or placeholder image docker-registry:5000/faang-notification-service:bootstrap",
-      "POL002|Deployment/faang-payment-service|mutable or placeholder image docker-registry:5000/faang-payment-service:bootstrap",
-      "POL002|Deployment/faang-post-service|mutable or placeholder image docker-registry:5000/faang-post-service:bootstrap",
-      "POL002|Deployment/faang-project-service|mutable or placeholder image docker-registry:5000/faang-project-service:bootstrap",
-      "POL002|Deployment/faang-url-shortener-service|mutable or placeholder image docker-registry:5000/faang-url-shortener-service:bootstrap"
-    ]
-  }
+  "knownIssues": [],
+  "defectOwners": {}
 }

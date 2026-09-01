@@ -44,7 +44,7 @@ spec:
               printf '%s\n' \
                 'FROM scratch' \
                 'ARG TARGETARCH' \
-                'LABEL io.faang.smoke.arch="${TARGETARCH}"' \
+                'LABEL io.faang.smoke.arch="$TARGETARCH"' \
                 'COPY marker.txt /marker.txt' > /workspace/context/Dockerfile
               printf '%s\n' 'rootless-buildkit-smoke' > /workspace/context/marker.txt
               buildctl-daemonless.sh build \
@@ -131,7 +131,7 @@ spec:
               printf '%s\n' \
                 'FROM scratch' \
                 'ARG TARGETARCH' \
-                'LABEL io.faang.smoke.arch="${TARGETARCH}"' \
+                'LABEL io.faang.smoke.arch="$TARGETARCH"' \
                 'COPY marker.txt /marker.txt' > /workspace/context/Dockerfile
               printf '%s\n' 'rootless-buildkit-smoke' > /workspace/context/marker.txt
               buildctl-daemonless.sh build \

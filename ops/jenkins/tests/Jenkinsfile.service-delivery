@@ -1,0 +1,347 @@
+def publishedReference = ''
+def publishedPullReference = ''
+def publishedDigest = ''
+
+podTemplate(yaml: '''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  imagePullSecrets:
+    - name: faang-registry-pull
+  securityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: Unconfined
+  containers:
+    - name: jdk
+      image: eclipse-temurin:25-jdk-alpine@sha256:09349d79941fd53bb3d487b393ca118d8853c08c09193f416fe6a8718df9e732
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["3600"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: GRADLE_USER_HOME
+          value: /home/jenkins/agent/.gradle
+      resources:
+        requests:
+          cpu: 500m
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 3Gi
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+    - name: buildkit
+      image: moby/buildkit:v0.30.0-rootless@sha256:d76eb1caecac5733ef7553c1e90a1b21f1bb218cd1142d3553de0747b4a14ba9
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["3600"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: BUILDKITD_FLAGS
+          value: --oci-worker-no-process-sandbox --oci-worker-snapshotter=native
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+      securityContext:
+        allowPrivilegeEscalation: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: Unconfined
+        appArmorProfile:
+          type: Unconfined
+      volumeMounts:
+        - name: buildkit-state
+          mountPath: /home/user/.local/share/buildkit
+        - name: buildkit-config
+          mountPath: /home/user/.config/buildkit
+          readOnly: true
+        - name: registry-ca
+          mountPath: /etc/buildkit/certs
+          readOnly: true
+    - name: tools
+      image: __TOOLS_IMAGE__
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["3600"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: HOME
+          value: /home/jenkins/agent
+        - name: GRYPE_DB_CACHE_DIR
+          value: /home/jenkins/agent/.grype
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: registry-ca
+          mountPath: /etc/registry-certs
+          readOnly: true
+        - name: registry-client
+          mountPath: /etc/faang-registry
+          readOnly: true
+        - name: cosign-public-key
+          mountPath: /etc/cosign
+          readOnly: true
+  volumes:
+    - name: buildkit-state
+      emptyDir: {}
+    - name: buildkit-config
+      configMap:
+        name: faang-buildkit-config
+    - name: registry-ca
+      configMap:
+        name: faang-registry-ca
+    - name: registry-client
+      configMap:
+        name: faang-registry-client
+    - name: cosign-public-key
+      configMap:
+        name: faang-cosign-public-key
+''') {
+    node(POD_LABEL) {
+        timeout(time: 30, unit: 'MINUTES') {
+            stage('Checkout committed service') {
+                deleteDir()
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/dev-local']],
+                    userRemoteConfigs: [[
+                        url: '__SERVICE_REPOSITORY_URL__',
+                        credentialsId: 'github-token'
+                    ]]
+                ])
+                def dirty = sh(returnStdout: true, script: 'git status --porcelain --untracked-files=all').trim()
+                if (dirty) {
+                    error('Refusing to publish a dirty service checkout')
+                }
+                env.OCI_REVISION = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                env.OCI_VERSION = env.OCI_REVISION.take(12)
+                env.OCI_SOURCE = sh(returnStdout: true, script: 'git remote get-url origin').trim()
+                env.OCI_CREATED = sh(returnStdout: true, script: 'date -u +%Y-%m-%dT%H:%M:%SZ').trim()
+            }
+
+            stage('Build, unit test, and coverage') {
+                container('jdk') {
+                    sh './gradlew clean build --no-daemon'
+                }
+            }
+
+            stage('Build immutable OCI layout') {
+                container('buildkit') {
+                    sh '''
+                        rm -rf "$WORKSPACE/image.tar" "$WORKSPACE/layout"
+                        buildctl-daemonless.sh build \
+                          --progress=plain \
+                          --frontend=dockerfile.v0 \
+                          --local context="$WORKSPACE" \
+                          --local dockerfile="$WORKSPACE" \
+                          --opt platform=linux/amd64,linux/arm64 \
+                          --opt build-arg:OCI_CREATED="$OCI_CREATED" \
+                          --opt build-arg:OCI_REVISION="$OCI_REVISION" \
+                          --opt build-arg:OCI_SOURCE="$OCI_SOURCE" \
+                          --opt build-arg:OCI_VERSION="$OCI_VERSION" \
+                          --opt attest:provenance=mode=max \
+                          --opt attest:sbom=generator=docker/buildkit-syft-scanner:stable-1@sha256:ae4f3b554449e7e25548e7d8ccc029d17357348e30c6e3df01b92bc93654d6a9 \
+                          --output "type=oci,name=__SERVICE_IMAGE__:$OCI_VERSION,dest=$WORKSPACE/image.tar"
+                    '''
+                }
+            }
+
+            stage('Vulnerability policy') {
+                container('tools') {
+                    sh '''
+                        set +e
+                        grype --platform linux/amd64 "oci-archive:$WORKSPACE/image.tar" --fail-on critical -o sarif > "$WORKSPACE/vulnerabilities-amd64.sarif.json"
+                        amd64_status=$?
+                        grype --platform linux/arm64 "oci-archive:$WORKSPACE/image.tar" --fail-on critical -o sarif > "$WORKSPACE/vulnerabilities-arm64.sarif.json"
+                        arm64_status=$?
+                        set -e
+                        printf 'amd64=%s\narm64=%s\n' "$amd64_status" "$arm64_status" | tee "$WORKSPACE/vulnerability-status"
+                        for report in "$WORKSPACE"/vulnerabilities-*.sarif.json; do
+                          printf '%s findings: ' "$(basename "$report")"
+                          grep -Eo '"ruleId"[[:space:]]*:[[:space:]]*"[^"]+"' "$report" | sort -u | wc -l
+                        done
+                    '''
+                }
+                archiveArtifacts(
+                    artifacts: 'vulnerabilities-*.sarif.json,vulnerability-status',
+                    fingerprint: true
+                )
+                def vulnerabilityGate = sh(
+                    returnStatus: true,
+                    script: "! grep -Eq '=(1|2|3|4|5|6|7|8|9)[0-9]*\$' vulnerability-status"
+                )
+                if (vulnerabilityGate != 0) {
+                    error('Critical-vulnerability policy failed; inspect the archived SARIF reports')
+                }
+            }
+
+            stage('Publish, sign, and verify') {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'faang-registry-push',
+                        usernameVariable: 'REGISTRY_USERNAME',
+                        passwordVariable: 'REGISTRY_PASSWORD'
+                    ),
+                    file(credentialsId: 'faang-cosign-key', variable: 'COSIGN_KEY'),
+                    string(credentialsId: 'faang-cosign-password', variable: 'COSIGN_PASSWORD')
+                ]) {
+                    container('tools') {
+                        sh '''
+                            set +x
+                            endpoint="$(cat /etc/faang-registry/endpoint)"
+                            target="$endpoint/__SERVICE_IMAGE__:$OCI_VERSION"
+                            export DOCKER_CONFIG="$WORKSPACE/.docker"
+                            export SSL_CERT_FILE=/etc/registry-certs/ca.crt
+                            trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+                            mkdir -p "$DOCKER_CONFIG" "$WORKSPACE/layout"
+                            auth="$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64 | tr -d '\n')"
+                            printf '{"auths":{"%s":{"auth":"%s"}}}\n' "$endpoint" "$auth" > "$DOCKER_CONFIG/config.json"
+                            tar -xf "$WORKSPACE/image.tar" -C "$WORKSPACE/layout"
+
+                            set +e
+                            copy_output="$(oras copy \
+                              --from-oci-layout \
+                              --to-ca-file /etc/registry-certs/ca.crt \
+                              --to-registry-config "$DOCKER_CONFIG/config.json" \
+                              "$WORKSPACE/layout:$OCI_VERSION" \
+                              "$target" 2>&1)"
+                            copy_status=$?
+                            set -e
+                            printf '%s\n' "$copy_output"
+                            test "$copy_status" -eq 0
+                            digest="$(printf '%s\n' "$copy_output" | awk '/^Digest: sha256:/{print $2}' | tail -1)"
+                            test "${#digest}" -eq 71
+                            reference="$endpoint/__SERVICE_IMAGE__@$digest"
+
+                            oras manifest fetch \
+                              --ca-file /etc/registry-certs/ca.crt \
+                              --registry-config "$DOCKER_CONFIG/config.json" \
+                              "$reference" > "$WORKSPACE/remote-index.json"
+                            grep -Eq '"architecture"[[:space:]]*:[[:space:]]*"amd64"' "$WORKSPACE/remote-index.json"
+                            grep -Eq '"architecture"[[:space:]]*:[[:space:]]*"arm64"' "$WORKSPACE/remote-index.json"
+                            test "$(grep -Eo '"architecture"[[:space:]]*:[[:space:]]*"unknown"' "$WORKSPACE/remote-index.json" | wc -l)" -ge 2
+
+                            cosign sign --yes --use-signing-config=false --tlog-upload=false --key "$COSIGN_KEY" "$reference"
+                            cosign verify \
+                              --key /etc/cosign/cosign.pub \
+                              --insecure-ignore-tlog=true \
+                              "$reference" > "$WORKSPACE/cosign-verification.json"
+
+                            printf '%s' "$reference" > "$WORKSPACE/publication-reference"
+                            printf '%s' "$digest" > "$WORKSPACE/publication-digest"
+                            printf 'SERVICE_DIGEST=%s\n' "$digest"
+                        '''
+                    }
+                }
+                publishedReference = readFile('publication-reference').trim()
+                publishedDigest = readFile('publication-digest').trim()
+                publishedPullReference = "__REGISTRY_PULL_ENDPOINT__/__SERVICE_IMAGE__@${publishedDigest}"
+                archiveArtifacts(
+                    artifacts: 'remote-index.json,cosign-verification.json,publication-digest',
+                    fingerprint: true
+                )
+            }
+        }
+    }
+}
+
+podTemplate(yaml: """
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  imagePullSecrets:
+    - name: faang-registry-pull
+  securityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: service
+      image: ${publishedPullReference}
+      imagePullPolicy: Always
+      command: ["sleep"]
+      args: ["600"]
+      workingDir: /home/jenkins/agent
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+""") {
+    node(POD_LABEL) {
+        stage('Native amd64 verification') {
+            container('service') {
+                sh "java -XshowSettings:properties -version 2>&1 | grep -F 'os.arch = amd64'"
+            }
+        }
+    }
+}
+
+podTemplate(yaml: """
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/arch: arm64
+  imagePullSecrets:
+    - name: faang-registry-pull
+  securityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: service
+      image: ${publishedPullReference}
+      imagePullPolicy: Always
+      command: ["sleep"]
+      args: ["600"]
+      workingDir: /home/jenkins/agent
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+""") {
+    node(POD_LABEL) {
+        stage('Native arm64 verification') {
+            container('service') {
+                sh "java -XshowSettings:properties -version 2>&1 | grep -F 'os.arch = aarch64'"
+            }
+        }
+    }
+}
+
+echo "SERVICE DELIVERY PASS ${publishedDigest}"

@@ -1,4 +1,6 @@
 import importlib.util
+import os
+import shutil
 import subprocess
 import sys
 import unittest
@@ -52,6 +54,18 @@ class DeploymentPolicyTests(unittest.TestCase):
 
 
 class ConfigurationOwnershipTests(unittest.TestCase):
+    IMAGE_DIGESTS = {
+        "faang-account-service": "213416966dcc8bfb3868ccff50dbfe68e9c569af9fccaa6d5e3347cfb42ba7b7",
+        "faang-achievement-service": "63784d8b37fa8b04b2d604eb8b79b5abb64a953fd16458cd167df872979d7ade",
+        "faang-analytics-service": "10e664a2c6e73fcf49a973034365e5eef2ecdd9826b7130e14bfd48021ef4c32",
+        "faang-notification-service": "bc641f79f47e1698b8eec84b48e31222f43d19b011f8eaf3143555a264b7ff9c",
+        "faang-payment-service": "70d1d360bda34f8ddeb77205bd29e1f7369c277a4ceb4335225c7bf183709453",
+        "faang-post-service": "baaed043ac00969c5e6bd9fc9410fd10033dcce728d256a556e8bdcc2fe94f39",
+        "faang-project-service": "eba9b42b8a4a13b7bef5e0cbc7e0a9e171dcd087b687085928899ee8adffb20c",
+        "faang-url-shortener-service": "7e5559e885b8582e5442de97caf5da8c47ab6cedbbb36d8f43096634a877418f",
+        "faang-user-service": "8d6b9101716726af0e04b5176c3c5f3586594421041367907f994d5acead20f7",
+    }
+
     def render(self, path: Path) -> str:
         result = subprocess.run(
             ["kubectl", "kustomize", str(path)],
@@ -107,6 +121,95 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             script = (ROOT / script_name).read_text(encoding="utf-8")
             self.assertIn("kubectl apply -k k8s/overlays/homelab", script)
             self.assertNotIn("BASE_DOMAIN", script)
+
+    def test_all_application_images_render_at_verified_digests(self):
+        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        documents = {
+            VALIDATOR.resource_identity(document): document
+            for document in VALIDATOR.split_documents(rendered)
+        }
+        for service, digest in self.IMAGE_DIGESTS.items():
+            deployment = documents[("Deployment", service)]
+            self.assertIn(
+                f"image: docker-registry:5000/{service}@sha256:{digest}",
+                deployment,
+            )
+
+    def test_changing_one_digest_changes_only_its_deployment(self):
+        original = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        old_digest = self.IMAGE_DIGESTS["faang-account-service"]
+        new_digest = "f" * 64
+        temporary_root = ROOT / ".cache" / "validation-tests"
+        temporary_root.mkdir(parents=True, exist_ok=True)
+        test_directory = temporary_root / f"one-service-diff-{os.getpid()}"
+        if test_directory.exists():
+            shutil.rmtree(test_directory)
+        try:
+            copied_root = test_directory / "k8s"
+            shutil.copytree(ROOT / "k8s", copied_root)
+            kustomization = copied_root / "overlays" / "homelab" / "kustomization.yaml"
+            text = kustomization.read_text(encoding="utf-8")
+            self.assertEqual(1, text.count(old_digest))
+            kustomization.write_text(text.replace(old_digest, new_digest), encoding="utf-8")
+            changed = self.render(copied_root / "overlays" / "homelab")
+        finally:
+            if test_directory.exists():
+                shutil.rmtree(test_directory)
+
+        original_documents = {
+            VALIDATOR.resource_identity(document): document
+            for document in VALIDATOR.split_documents(original)
+        }
+        changed_documents = {
+            VALIDATOR.resource_identity(document): document
+            for document in VALIDATOR.split_documents(changed)
+        }
+        changed_resources = {
+            identity
+            for identity in original_documents
+            if original_documents[identity] != changed_documents[identity]
+        }
+        self.assertEqual({("Deployment", "faang-account-service")}, changed_resources)
+
+    def test_all_application_deployments_have_safe_runtime_defaults(self):
+        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        deployments = [
+            document
+            for document in VALIDATOR.split_documents(rendered)
+            if VALIDATOR.resource_identity(document)[0] == "Deployment"
+        ]
+        self.assertEqual(9, len(deployments))
+        required_fragments = (
+            "automountServiceAccountToken: false",
+            "terminationGracePeriodSeconds: 60",
+            "runAsNonRoot: true",
+            "runAsUser: 10001",
+            "readOnlyRootFilesystem: true",
+            "allowPrivilegeEscalation: false",
+            "type: RuntimeDefault",
+            "drop:\n            - ALL",
+            "requests:\n            cpu: 250m\n            memory: 512Mi",
+            'limits:\n            cpu: "1"\n            memory: 2Gi',
+            "startupProbe:",
+            "maxUnavailable: 0",
+            "topologySpreadConstraints:",
+            "name: SERVER_SHUTDOWN\n          value: graceful",
+            "name: SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE\n          value: 45s",
+            "mountPath: /tmp",
+            "sizeLimit: 256Mi",
+        )
+        for deployment in deployments:
+            for fragment in required_fragments:
+                self.assertIn(fragment, deployment, VALIDATOR.resource_identity(deployment))
+
+        documents = {
+            VALIDATOR.resource_identity(document): document
+            for document in deployments
+        }
+        user = documents[("Deployment", "faang-user-service")]
+        self.assertEqual(3, user.count("tcpSocket:"))
+        for service in self.IMAGE_DIGESTS.keys() - {"faang-user-service"}:
+            self.assertEqual(3, documents[("Deployment", service)].count("httpGet:"), service)
 
 
 class BootstrapContractTests(unittest.TestCase):
