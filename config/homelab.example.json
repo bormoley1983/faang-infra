@@ -4,5 +4,27 @@
     "port": 5000,
     "dnsName": "registry.home.example",
     "storageNode": "node-with-persistent-storage"
+  },
+  "dependencies": {
+    "postgresql": {
+      "address": "192.0.2.31",
+      "port": 5432
+    },
+    "redis": {
+      "address": "192.0.2.32",
+      "port": 6379
+    },
+    "elasticsearch": {
+      "address": "192.0.2.33",
+      "port": 9200
+    },
+    "kafka": {
+      "address": "192.0.2.34",
+      "port": 9092
+    },
+    "minio": {
+      "address": "192.0.2.35",
+      "port": 9000
+    }
   }
 }

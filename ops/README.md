@@ -7,6 +7,18 @@ This directory contains the necessary manifests to set up a full CI/CD pipeline 
 The authenticated persistent POC registry is installed from the repository root with `install-registry.ps1`. Its real endpoint and storage-node mapping are held only in ignored `config/homelab.local.json`. See `k8s/registry/README.md`; the old unauthenticated `emptyDir` registry has been removed.
 
 ## 2. ArgoCD Application
+
+Before the temporary public-overlay POC is synced, configure stable aliases for existing external stateful nodes:
+
+```powershell
+Copy-Item config/homelab.example.json config/homelab.local.json # first use only
+# Edit the ignored local file with the real registry and dependency mappings.
+.\install-external-dependencies.ps1 -ValidateOnly
+.\install-external-dependencies.ps1
+```
+
+The installer creates selectorless Services and EndpointSlices in `faang`; it never writes physical addresses to tracked files. These objects are annotated as locally managed and are not pruned by the manual Argo workflow. This is a bootstrap bridge only. The final delivery path moves the same mappings into a separate private environment repository and protects credentials with SOPS/age (DEP-040 through DEP-043).
+
 To enable GitOps sync for the whole system:
 1. Ensure your local `k8s/overlays/homelab/kustomization.yaml` is correct.
 2. If the `faang-infra` repository becomes private, configure its read-only repository credential in Argo CD. Do not commit that credential.

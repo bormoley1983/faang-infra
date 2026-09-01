@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 import shutil
 import subprocess
@@ -90,6 +91,23 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         )
         for value in forbidden:
             self.assertNotIn(value, rendered)
+
+    def test_local_dependency_mapping_contract_is_safe_and_complete(self):
+        example = json.loads((ROOT / "config" / "homelab.example.json").read_text(encoding="utf-8"))
+        expected = {"postgresql", "redis", "elasticsearch", "kafka", "minio"}
+        self.assertEqual(expected, set(example["dependencies"]))
+        for dependency in example["dependencies"].values():
+            self.assertIn(dependency["address"].split(".")[0:3], (["192", "0", "2"], ["198", "51", "100"], ["203", "0", "113"]))
+            self.assertGreater(dependency["port"], 0)
+            self.assertLessEqual(dependency["port"], 65535)
+
+        gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+        self.assertIn("/config/homelab.local.json", gitignore)
+        installer = (ROOT / "install-external-dependencies.ps1").read_text(encoding="utf-8")
+        for service in ("postgres-main", "redis-main", "elasticsearch-main", "kafka-main", "minio-main"):
+            self.assertIn(service, installer)
+        self.assertIn('kind = "EndpointSlice"', installer)
+        self.assertIn('"IgnoreExtraneous"', installer)
 
     def test_homelab_has_one_configmap_and_all_ingress_hosts(self):
         rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
