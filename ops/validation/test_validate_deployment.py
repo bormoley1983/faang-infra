@@ -56,15 +56,15 @@ class DeploymentPolicyTests(unittest.TestCase):
 
 class ConfigurationOwnershipTests(unittest.TestCase):
     IMAGE_DIGESTS = {
-        "faang-account-service": "213416966dcc8bfb3868ccff50dbfe68e9c569af9fccaa6d5e3347cfb42ba7b7",
-        "faang-achievement-service": "63784d8b37fa8b04b2d604eb8b79b5abb64a953fd16458cd167df872979d7ade",
-        "faang-analytics-service": "10e664a2c6e73fcf49a973034365e5eef2ecdd9826b7130e14bfd48021ef4c32",
-        "faang-notification-service": "bc641f79f47e1698b8eec84b48e31222f43d19b011f8eaf3143555a264b7ff9c",
-        "faang-payment-service": "70d1d360bda34f8ddeb77205bd29e1f7369c277a4ceb4335225c7bf183709453",
-        "faang-post-service": "baaed043ac00969c5e6bd9fc9410fd10033dcce728d256a556e8bdcc2fe94f39",
-        "faang-project-service": "eba9b42b8a4a13b7bef5e0cbc7e0a9e171dcd087b687085928899ee8adffb20c",
-        "faang-url-shortener-service": "7e5559e885b8582e5442de97caf5da8c47ab6cedbbb36d8f43096634a877418f",
-        "faang-user-service": "8d6b9101716726af0e04b5176c3c5f3586594421041367907f994d5acead20f7",
+        "faang-account-service": "1e9c90ae1eab06072f292f5d01e6017c9e3bdb6660909f8f8f34219d0b311a74",
+        "faang-achievement-service": "3ffa5b01c0b77434bf0fa5dd869cc10d248331e79e893c6106ca81607d059d5f",
+        "faang-analytics-service": "cee9071971a94f44bbeaee27155118d0a0ac0e65f0c3670624528a651cb617e2",
+        "faang-notification-service": "06489a7c9c34055cd3bce182e27c2b5def27054b7bced5d1c95b7ab9c1d5feda",
+        "faang-payment-service": "d82cafd7736a2f0267f285a44a20f93749a5656c29ecb331eb255cace81c5f86",
+        "faang-post-service": "8c7a22a115da9ea907714a0e1b8e1294a30b2e543bf58c8a3c50f1e51bb83989",
+        "faang-project-service": "ee5c1bcf48ff8c7a6d8b1f380b5174482da40facf58efa458ac8a6eda66b69e8",
+        "faang-url-shortener-service": "342dea20b24a4a14286a2d6b54cf0472094d77d5135c0d247b3ad667e1d88ba5",
+        "faang-user-service": "aa68174163ae0f5117f7be541ec04d2f3b2e4314467baedf814a7ed7a1d02d5d",
     }
 
     def render(self, path: Path) -> str:
