@@ -139,3 +139,14 @@ Do not install or run this job from a local-only revision. First review, commit,
 push, and merge the infrastructure changes. Substitute the fixed repository and
 bot-identity placeholders only in the trusted Jenkins job definition; never
 write credentials or private environment mappings into this repository.
+
+## Plugin and JCasC update policy
+
+`values/controller-hardening.yaml` is an exact 74-plugin lock. An update-center
+notification is not authorization to change individual pins: review Jenkins
+core compatibility, transitive dependency changes, backup/rollback, and the
+full CI acceptance suite in a separate upgrade change.
+
+The Shared Library retriever uses the current `gitSource` JCasC symbol. The old
+`git` alias is obsolete and must not be reintroduced. A focused regression test
+checks both this schema field and the unchanged 74-entry lock.

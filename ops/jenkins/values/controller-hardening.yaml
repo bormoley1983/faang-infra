@@ -106,5 +106,5 @@ controller:
                 retriever:
                   modernSCM:
                     scm:
-                      git:
+                      gitSource:
                         remote: https://github.com/bormoley1983/faang-infra.git
