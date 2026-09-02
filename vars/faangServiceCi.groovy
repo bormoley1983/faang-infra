@@ -209,7 +209,7 @@ spec:
     kubernetes.io/arch: amd64
   securityContext:
     fsGroup: 1000
-    fsGroupChangePolicy: OnRootMismatch
+    fsGroupChangePolicy: Always
     seccompProfile:
       type: RuntimeDefault
   containers:
@@ -252,7 +252,6 @@ ${dependencyContainers}  volumes:
     - name: grype-db-cache
       persistentVolumeClaim:
         claimName: faang-grype-db-cache
-        readOnly: true
 ${dependencyVolumes}""") {
         node(POD_LABEL) {
             timeout(time: 30, unit: 'MINUTES') {
