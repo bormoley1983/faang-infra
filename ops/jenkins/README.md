@@ -21,7 +21,9 @@ The untrusted library pipeline:
 3. runs `clean build`, which includes unit tests and the repository's JaCoCo
    verification policy;
 4. runs `integrationTest` only for services that define that task;
-5. archives XML test results and build reports even when the gate fails.
+5. runs pinned SpotBugs/FindSecBugs source analysis and a pinned Grype scan of
+   the built dependency archive;
+6. archives XML test results and security/build reports even when a gate fails.
 
 Untrusted builds use an `emptyDir` Gradle home. They do not share the trusted
 delivery cache, mount registry configuration, or bind Jenkins credentials.
@@ -40,13 +42,9 @@ Remaining acceptance work:
 
 - Enable and prove repository webhooks when Jenkins has an approved inbound
   endpoint. Until then, use authenticated manual or periodic indexing.
-- Add and prove a common source static-analysis/dependency-vulnerability gate.
-  The existing trusted delivery image scan remains mandatory but does not by
-  itself satisfy this source-validation item.
-- Commit, push, and independently prove the pending Account, Achievement, and
-  Analytics `integrationTest` task wiring and disposable dependency path.
-  Until Jenkins executes the tagged suites and archives their XML reports, the
-  last pushed `NO-SOURCE` results remain the acceptance record.
+- Commit, push, and prove the pending common source-security gate across all
+  nine untrusted jobs. The existing trusted delivery image scan remains
+  mandatory and unchanged.
 
 The pending implementation keeps dependencies inside the affected short-lived
 agent Pod. Only the three wrappers opt in to digest-pinned PostgreSQL, Redis,
@@ -57,12 +55,17 @@ account token mounting, and binds no runtime or publication credential.
 Developer execution retains Testcontainers; Jenkins selects explicit same-Pod
 endpoints through a CI-only flag and fails if a required endpoint is missing.
 
-The first exact-revision run proved all dependency containers healthy but also
-found that Jenkins durable shell steps cannot start inside those service
-containers. Account build 3 failed before Gradle; Achievement and Analytics
-build 3 were stopped after confirming the same condition. No integration report
-was claimed, and all agent Pods were removed. The pending correction keeps the
-sidecars unchanged and runs bounded localhost port checks from the JDK container,
-whose pinned image includes the required probe utility.
+The reviewed readiness correction runs bounded localhost port checks from the
+JDK container. Account build 4 passed 42 integration tests, Achievement build 4
+passed three, and Analytics build 5 passed 12. All corresponding XML suites are
+archived, and none of those tasks was `NO-SOURCE`, skipped, or up-to-date.
+
+The pending common security gate applies SpotBugs 4.10.4 through the pinned
+6.5.11 Gradle plugin plus FindSecBugs 1.14.0. Maximum-effort analysis fails on
+medium-or-higher confidence findings. Grype 0.116.1 is checksum-verified before
+execution, consumes the existing read-only vulnerability database cache, scans
+the built application archive, and fails on High or Critical dependencies.
+Both reports are archived. The vulnerability cache contains no credentials and
+is refreshed independently every six hours.
 
 Do not add publication credentials to `faang-untrusted` to make a test pass.

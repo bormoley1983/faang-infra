@@ -222,6 +222,10 @@ spec:
       env:
         - name: GRADLE_USER_HOME
           value: /home/jenkins/agent/.gradle${integrationEnvironment}
+        - name: GRYPE_DB_CACHE_DIR
+          value: /home/jenkins/agent/.grype
+        - name: GRYPE_DB_AUTO_UPDATE
+          value: "false"
       resources:
         requests:
           cpu: 250m
@@ -238,16 +242,29 @@ spec:
       volumeMounts:
         - name: untrusted-gradle-cache
           mountPath: /home/jenkins/agent/.gradle
+        - name: grype-db-cache
+          mountPath: /home/jenkins/agent/.grype
+          readOnly: true
 ${dependencyContainers}  volumes:
     - name: untrusted-gradle-cache
       emptyDir:
         sizeLimit: 2Gi
+    - name: grype-db-cache
+      persistentVolumeClaim:
+        claimName: faang-grype-db-cache
+        readOnly: true
 ${dependencyVolumes}""") {
         node(POD_LABEL) {
             timeout(time: 30, unit: 'MINUTES') {
+                String securityInitPath = "${pwd(tmp: true)}/faang-spotbugs.init.gradle"
+
                 stage('Checkout') {
                     deleteDir()
                     checkout scm
+                    writeFile(
+                        file: securityInitPath,
+                        text: libraryResource('faang-spotbugs.init.gradle')
+                    )
                 }
 
                 stage('Validate wrapper') {
@@ -292,6 +309,48 @@ ${dependencyVolumes}""") {
                                 fingerprint: true
                             )
                         }
+                    }
+                }
+
+                stage('Source and dependency security') {
+                    int spotbugsStatus = 1
+                    int grypeStatus = 1
+                    try {
+                        container('jdk') {
+                            spotbugsStatus = sh(
+                                returnStatus: true,
+                                script: "./gradlew spotbugsMain --init-script '${securityInitPath}' --no-daemon --stacktrace"
+                            )
+                            grypeStatus = sh(
+                                returnStatus: true,
+                                script: '''
+                                    set -eu
+                                    security_tool_dir="$(mktemp -d)"
+                                    security_report_dir="$WORKSPACE/build/reports/security"
+                                    mkdir -p "$security_report_dir"
+                                    wget -q \
+                                      https://github.com/anchore/grype/releases/download/v0.116.1/grype_0.116.1_linux_amd64.tar.gz \
+                                      -O "$security_tool_dir/grype.tar.gz"
+                                    echo '0122df7b655981abe547ad3d2190d65551dac6a2bfc80b4dc2a989b5d0587458  '"$security_tool_dir/grype.tar.gz" | sha256sum -c -
+                                    tar -xzf "$security_tool_dir/grype.tar.gz" -C "$security_tool_dir" grype
+                                    "$security_tool_dir/grype" version > "$security_report_dir/grype-version.txt"
+                                    "$security_tool_dir/grype" \
+                                      "dir:$WORKSPACE/build/libs" \
+                                      --fail-on high \
+                                      --output sarif \
+                                      > "$security_report_dir/grype-dependencies.sarif.json"
+                                '''
+                            )
+                        }
+                    } finally {
+                        archiveArtifacts(
+                            artifacts: 'build/reports/spotbugs/**,build/reports/security/**',
+                            allowEmptyArchive: true,
+                            fingerprint: true
+                        )
+                    }
+                    if (spotbugsStatus != 0 || grypeStatus != 0) {
+                        error("Source security gate failed: spotbugs=${spotbugsStatus}, dependencies=${grypeStatus}")
                     }
                 }
             }
