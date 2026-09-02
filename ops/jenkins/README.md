@@ -35,21 +35,21 @@ The reviewed plugin lock, controller restart, Shared Library, and nine
 multibranch jobs are live. Each SCM source uses the dedicated
 `github-app-faang-ci` GitHub App credential with inferred-repository/read-only
 contents access. All nine current `dev-local` revisions pass the common Jenkins
-build/integration baseline and archive reports. Achievement build 6 also passes
-the new source-security gate at exact infrastructure revision
-`943542128fa256085c22a36cd3cedda281990757`. The untrusted folder has no
-credentials, and its job definitions reference no registry, signing, or
-publication identity.
+build, integration, source-analysis, and dependency-vulnerability baseline at
+exact infrastructure revision `7bbde68edb973ba7d0dc4d4c1951956e31af8c48`
+and archive their reports. The final runs are Account build 6, Achievement
+build 7, Analytics build 7, Notification build 4, Payment build 4, Post build
+4, Project build 3, URL Shortener build 3, and User build 3. The untrusted
+folder has no credentials, and its job definitions reference no registry,
+signing, or publication identity.
 
 Remaining acceptance work:
 
 - Enable and prove repository webhooks when Jenkins has an approved inbound
   endpoint. Until then, use authenticated manual or periodic indexing.
-- Commit/push the reviewed source remediations and trusted exclusion policy,
-  then rerun the seven failed exact-revision jobs and repeat the nine-job
-  credential-isolation negative test. Achievement build 6 and URL Shortener
-  build 2 already pass the complete gate. The existing trusted delivery image
-  scan remains mandatory and unchanged.
+- Keep authenticated manual/periodic indexing available while webhook delivery
+  is deferred. The existing trusted delivery image scan remains mandatory and
+  unchanged.
 
 The pending implementation keeps dependencies inside the affected short-lived
 agent Pod. Only the three wrappers opt in to digest-pinned PostgreSQL, Redis,
@@ -96,5 +96,20 @@ for response/event collections and multipart bytes, explicit null handling,
 fixed-string logging at tainted boundaries, static constants, private entity
 state, and exceptions instead of process termination. No finding threshold or
 trusted image policy is weakened.
+
+The final exact-revision rerun passed all nine jobs. Every `spotbugsMain` task
+executed rather than being `NO-SOURCE`, skipped, or up-to-date and archived zero
+findings. Every Grype High/Critical threshold passed; lower-severity advisories
+remain visible in the affected SARIF reports. Account build 6 passed 42 tagged
+integration tests across seven suites, Achievement build 7 passed three in one
+suite, and Analytics build 7 passed 12 across two suites, all with zero
+failures/errors/skips and archived XML. A repeated live negative test found the
+read-only SCM identity as the sole global credential, zero credentials in the
+untrusted folder, exactly that identity in all 9/9 definitions, no publication
+stage, and zero remaining agent Pods.
+
+Inbound webhook delivery remains deferred because Jenkins has no approved
+inbound endpoint. This condition is not counted as passed, so DEP-031 remains
+In Progress; authenticated manual and periodic indexing are the interim paths.
 
 Do not add publication credentials to `faang-untrusted` to make a test pass.
