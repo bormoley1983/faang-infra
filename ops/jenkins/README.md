@@ -27,25 +27,34 @@ Untrusted builds use an `emptyDir` Gradle home. They do not share the trusted
 delivery cache, mount registry configuration, or bind Jenkins credentials.
 Publication remains a later trusted job and cannot run when validation fails.
 
-## DEP-031 remaining acceptance work
+## DEP-031 acceptance status
 
-- Install the reviewed exact plugin lock and validate Jenkins restart/recovery.
-- Create nine multibranch jobs in `faang-untrusted`, with branch and pull-request
-  discovery and repository webhooks.
-- Configure a dedicated GitHub App credential for SCM discovery and webhook
-  delivery. Grant only Commit statuses read/write, Contents read-only, Metadata
-  read-only, and Pull requests read-only; restrict untrusted token use to the
-  inferred repository with read-only contents. Do not reuse or copy the trusted
-  delivery token into `faang-untrusted`.
+The reviewed plugin lock, controller restart, Shared Library, and nine
+multibranch jobs are live. Each SCM source uses the dedicated
+`github-app-faang-ci` GitHub App credential with inferred-repository/read-only
+contents access. All nine current `dev-local` revisions pass the common Jenkins
+gate and archive reports. The untrusted folder has no credentials, and its job
+definitions reference no registry, signing, or publication identity.
+
+Remaining acceptance work:
+
+- Enable and prove repository webhooks when Jenkins has an approved inbound
+  endpoint. Until then, use authenticated manual or periodic indexing.
 - Add and prove a common source static-analysis/dependency-vulnerability gate.
   The existing trusted delivery image scan remains mandatory but does not by
   itself satisfy this source-validation item.
-- Adapt the Account, Achievement, and Analytics integration suites to a
-  reviewed disposable-agent dependency path. They currently launch
-  Testcontainers and cannot run in the socket-free untrusted Pod. Do not mount
-  a host Docker/containerd socket or introduce privileged Docker-in-Docker to
-  bypass this gate.
-- Run the nine `dev-local` jobs and a credential-isolation negative test, then
-  retain the reports as acceptance evidence.
+- Commit, push, and independently prove the pending Account, Achievement, and
+  Analytics `integrationTest` task wiring and disposable dependency path.
+  Until Jenkins executes the tagged suites and archives their XML reports, the
+  last pushed `NO-SOURCE` results remain the acceptance record.
+
+The pending implementation keeps dependencies inside the affected short-lived
+agent Pod. Only the three wrappers opt in to digest-pinned PostgreSQL, Redis,
+or Kafka sidecars. They use bounded CPU/memory and size-limited `emptyDir`
+storage, and Pod termination is the cleanup boundary. The Pod mounts no host
+runtime socket or host path, uses no privileged container, disables service
+account token mounting, and binds no runtime or publication credential.
+Developer execution retains Testcontainers; Jenkins selects explicit same-Pod
+endpoints through a CI-only flag and fails if a required endpoint is missing.
 
 Do not add publication credentials to `faang-untrusted` to make a test pass.
