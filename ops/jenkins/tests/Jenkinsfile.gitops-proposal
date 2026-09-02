@@ -1,0 +1,282 @@
+def allowedServices = [
+    'faang-account-service',
+    'faang-achievement-service',
+    'faang-analytics-service',
+    'faang-notification-service',
+    'faang-payment-service',
+    'faang-post-service',
+    'faang-project-service',
+    'faang-url-shortener-service',
+    'faang-user-service'
+]
+
+properties([
+    disableConcurrentBuilds(),
+    parameters([
+        choice(name: 'SERVICE_IMAGE', choices: allowedServices, description: 'Allowlisted service image'),
+        string(name: 'SERVICE_REVISION', description: 'Exact 40-character service Git revision'),
+        string(name: 'PUBLICATION_DIGEST', description: 'Verified immutable sha256 digest')
+    ])
+])
+
+if (!allowedServices.contains(params.SERVICE_IMAGE)) {
+    error('Service image is not allowlisted')
+}
+if (!(params.SERVICE_REVISION ==~ /[0-9a-f]{40}/)) {
+    error('Service revision must be exactly 40 lowercase hexadecimal characters')
+}
+if (!(params.PUBLICATION_DIGEST ==~ /sha256:[0-9a-f]{64}/)) {
+    error('Publication digest must be lowercase sha256:<64 hexadecimal characters>')
+}
+
+podTemplate(yaml: '''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  activeDeadlineSeconds: 900
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  securityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: git
+      image: alpine/git:v2.54.0@sha256:8478c2c09b9ac52a74783c3008cf6a24f05119228f6867be9566f98dc26aa240
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["900"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: HOME
+          value: /home/jenkins/agent
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: temporary
+          mountPath: /tmp
+    - name: python
+      image: python:3.14.7-alpine3.24@sha256:5e0ede45886712ce95b0e66232f743cc3d69ff6c2f62cc0d63778e1e894f8bd4
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["900"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: HOME
+          value: /home/jenkins/agent
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: temporary
+          mountPath: /tmp
+  volumes:
+    - name: temporary
+      emptyDir:
+        sizeLimit: 64Mi
+''') {
+    node(POD_LABEL) {
+        try {
+            timeout(time: 12, unit: 'MINUTES') {
+                stage('Checkout protected GitOps base') {
+                    dir('gitops') {
+                        deleteDir()
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '*/dev-local']],
+                            userRemoteConfigs: [[
+                                url: '__GITOPS_REPOSITORY_URL__',
+                                credentialsId: 'faang-gitops-proposer'
+                            ]]
+                        ])
+                        stash(
+                            name: 'protected-gitops-tools',
+                            includes: 'ops/gitops/update_image_digest.py,' +
+                                      'ops/gitops/create_or_reuse_pull_request.py,' +
+                                      'ops/images/service-images.json'
+                        )
+                        withCredentials([usernamePassword(
+                            credentialsId: 'faang-gitops-proposer',
+                            usernameVariable: 'GITOPS_USERNAME',
+                            passwordVariable: 'GITOPS_TOKEN'
+                        )]) {
+                            container('git') {
+                                sh '''
+                                set +x
+                                askpass="$WORKSPACE/.gitops-askpass"
+                                trap 'rm -f "$askpass"' EXIT
+                                cat > "$askpass" <<'EOF'
+#!/bin/sh
+case "$1" in
+  *Username*) printf '%s\n' "$GITOPS_USERNAME" ;;
+  *) printf '%s\n' "$GITOPS_TOKEN" ;;
+esac
+EOF
+                                chmod 0700 "$askpass"
+                                export GIT_ASKPASS="$askpass"
+                                export GIT_TERMINAL_PROMPT=0
+
+                                git fetch origin refs/heads/dev-local:refs/remotes/origin/dev-local
+                                git config user.name '__GITOPS_BOT_NAME__'
+                                git config user.email '__GITOPS_BOT_EMAIL__'
+                                proposal_ref="$(git ls-remote --heads origin refs/heads/gitops/promotions)"
+                                if [ -n "$proposal_ref" ]; then
+                                  git fetch origin refs/heads/gitops/promotions:refs/remotes/origin/gitops/promotions
+                                  git switch -C gitops/promotions refs/remotes/origin/gitops/promotions
+                                  git merge --no-edit refs/remotes/origin/dev-local
+                                else
+                                  git switch -C gitops/promotions refs/remotes/origin/dev-local
+                                fi
+                                '''
+                            }
+                        }
+                    }
+                    dir('protected-gitops-tools') {
+                        deleteDir()
+                        unstash 'protected-gitops-tools'
+                    }
+                }
+
+                stage('Update exactly one digest') {
+                    dir('gitops') {
+                        container('python') {
+                            sh '''
+                                python3 "$WORKSPACE/protected-gitops-tools/ops/gitops/update_image_digest.py" \
+                                  "$SERVICE_IMAGE" \
+                                  "$PUBLICATION_DIGEST" \
+                                  --kustomization "$WORKSPACE/gitops/k8s/overlays/homelab/kustomization.yaml" \
+                                  --inventory "$WORKSPACE/protected-gitops-tools/ops/images/service-images.json"
+                            '''
+                        }
+                        container('git') {
+                            script {
+                                String status = sh(
+                                    returnStdout: true,
+                                    script: 'git status --porcelain --untracked-files=all'
+                                ).trim()
+                                if (!status) {
+                                    int ahead = sh(
+                                        returnStdout: true,
+                                        script: 'git rev-list --count refs/remotes/origin/dev-local..HEAD'
+                                    ).trim().toInteger()
+                                    env.GITOPS_PROPOSAL_REQUIRED = ahead > 0 ? 'true' : 'false'
+                                    env.GITOPS_COMMIT_REQUIRED = 'false'
+                                } else if (status == 'M k8s/overlays/homelab/kustomization.yaml' ||
+                                           status == ' M k8s/overlays/homelab/kustomization.yaml') {
+                                    env.GITOPS_PROPOSAL_REQUIRED = 'true'
+                                    env.GITOPS_COMMIT_REQUIRED = 'true'
+                                } else {
+                                    error("Unexpected GitOps workspace change: ${status}")
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (env.GITOPS_PROPOSAL_REQUIRED == 'true') {
+                    if (env.GITOPS_COMMIT_REQUIRED == 'true') {
+                        stage('Commit and push proposal') {
+                            dir('gitops') {
+                                withCredentials([usernamePassword(
+                                    credentialsId: 'faang-gitops-proposer',
+                                    usernameVariable: 'GITOPS_USERNAME',
+                                    passwordVariable: 'GITOPS_TOKEN'
+                                )]) {
+                                    container('git') {
+                                        sh '''
+                                    set +x
+                                    askpass="$WORKSPACE/.gitops-askpass"
+                                    trap 'rm -f "$askpass"' EXIT
+                                    cat > "$askpass" <<'EOF'
+#!/bin/sh
+case "$1" in
+  *Username*) printf '%s\n' "$GITOPS_USERNAME" ;;
+  *) printf '%s\n' "$GITOPS_TOKEN" ;;
+esac
+EOF
+                                    chmod 0700 "$askpass"
+                                    export GIT_ASKPASS="$askpass"
+                                    export GIT_TERMINAL_PROMPT=0
+
+                                    git diff --check
+                                    git add -- k8s/overlays/homelab/kustomization.yaml
+                                    git commit \
+                                      -m "chore(gitops): promote $SERVICE_IMAGE" \
+                                      -m "Service-Revision: $SERVICE_REVISION" \
+                                      -m "Image-Digest: $PUBLICATION_DIGEST"
+                                    test "$(git diff --name-only refs/remotes/origin/dev-local...HEAD)" = \
+                                      'k8s/overlays/homelab/kustomization.yaml'
+                                    git push origin HEAD:refs/heads/gitops/promotions
+                                        '''
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    stage('Create or reuse review PR') {
+                        dir('gitops') {
+                            withCredentials([usernamePassword(
+                                credentialsId: 'faang-gitops-proposer',
+                                usernameVariable: 'GITOPS_USERNAME',
+                                passwordVariable: 'GITOPS_TOKEN'
+                            )]) {
+                                container('python') {
+                                    sh '''
+                                    python3 "$WORKSPACE/protected-gitops-tools/ops/gitops/create_or_reuse_pull_request.py" \
+                                      --repository '__GITOPS_REPOSITORY_SLUG__' \
+                                      --owner '__GITOPS_REPOSITORY_OWNER__' \
+                                      > "$WORKSPACE/gitops-pull-request"
+                                    '''
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            writeFile(
+                file: 'gitops-proposal-evidence.txt',
+                text: "service=${params.SERVICE_IMAGE}\n" +
+                      "serviceRevision=${params.SERVICE_REVISION}\n" +
+                      "digest=${params.PUBLICATION_DIGEST}\n" +
+                      "proposalRequired=${env.GITOPS_PROPOSAL_REQUIRED ?: 'unknown'}\n" +
+                      "commitRequired=${env.GITOPS_COMMIT_REQUIRED ?: 'unknown'}\n"
+            )
+            archiveArtifacts(
+                artifacts: 'gitops-proposal-evidence.txt,gitops-pull-request',
+                allowEmptyArchive: true,
+                fingerprint: true
+            )
+        }
+    }
+}

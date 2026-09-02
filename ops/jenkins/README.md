@@ -113,3 +113,29 @@ Optional webhook automation remains undelivered and is tracked as deferred
 DEP-033; it must not expose the Jenkins UI/controller surface when revisited.
 
 Do not add publication credentials to `faang-untrusted` to make a test pass.
+
+## DEP-032 GitOps proposal boundary
+
+The staged `tests/Jenkinsfile.gitops-proposal` is a separate trusted job for
+reviewable desired-state proposals. It serializes all nine services onto one
+rolling `gitops/promotions` branch, updates exactly one immutable digest, and
+creates or reuses one pull request to protected `dev-local`. It never merges the
+pull request and never invokes Kubernetes or Argo CD.
+
+The job must receive a dedicated `faang-gitops-proposer` credential stored only
+in `faang-trusted`. Scope its identity to the infrastructure repository with
+metadata read, contents read/write, and pull requests read/write. Do not reuse
+the service checkout, registry publisher, signing, or untrusted GitHub App
+identities. The job's Pod has no service-account token or deploy capability.
+
+The job runs the updater, inventory, and pull-request client stashed from the
+protected base revision, not code from the mutable proposal branch. Git and
+Python run in separate digest-pinned, non-privileged containers. A
+non-fast-forward update fails visibly and is retried normally; no force push is
+used. Every commit records the exact service revision and published digest, and
+the job archives proposal evidence even when a post-publication Git step fails.
+
+Do not install or run this job from a local-only revision. First review, commit,
+push, and merge the infrastructure changes. Substitute the fixed repository and
+bot-identity placeholders only in the trusted Jenkins job definition; never
+write credentials or private environment mappings into this repository.
