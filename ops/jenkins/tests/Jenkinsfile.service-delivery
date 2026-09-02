@@ -362,4 +362,24 @@ spec:
     }
 }
 
+stage('Propose GitOps update') {
+    def proposalBuild = build(
+        job: 'gitops-proposal',
+        parameters: [
+            string(name: 'SERVICE_IMAGE', value: '__SERVICE_IMAGE__'),
+            string(name: 'SERVICE_REVISION', value: env.OCI_REVISION),
+            string(name: 'PUBLICATION_DIGEST', value: publishedDigest)
+        ],
+        wait: true,
+        propagate: false
+    )
+    if (proposalBuild.result != 'SUCCESS') {
+        error(
+            "Image publication and native verification succeeded, but GitOps proposal " +
+            "build ${proposalBuild.number} finished ${proposalBuild.result}. " +
+            "Retry gitops-proposal with the archived publication-digest and service revision."
+        )
+    }
+}
+
 echo "SERVICE DELIVERY PASS ${publishedDigest}"
