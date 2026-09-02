@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Spring owns this shared, thread-safe data-access collaborator. -->
+    <Match>
+        <Class name="faang.school.accountservice.config.context.ClusterLease"/>
+        <Field name="jdbcTemplate"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- These listeners share Spring's fully configured ObjectMapper singleton. -->
+    <Match>
+        <Class name="~faang\.school\.notificationservice\.listener\.(CommentEventListener|EventStartEventListener|LikeEventListener)"/>
+        <Field name="objectMapper"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- These configuration/metrics objects are application-scoped collaborators by design. -->
+    <Match>
+        <Class name="faang.school.paymentservice.service.currency.CurrencyRateFetcher"/>
+        <Field name="~(config|meterRegistry)"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Hibernate requires its managed entity collections to remain mutable. -->
+    <Match>
+        <Class name="faang.school.postservice.model.Post"/>
+        <Field name="~(likes|resources)"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-- Spring owns these shared, configured HTTP/configuration collaborators. -->
+    <Match>
+        <Class name="faang.school.postservice.service.SpellCheckerService"/>
+        <Field name="~(restTemplate|spellerConfig)"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- The template name is constant and the HTML template enables auto-escaping. -->
+    <Match>
+        <Class name="faang.school.projectservice.service.PdfReportGeneratorService"/>
+        <Method name="generateHtmlReport"/>
+        <Bug pattern="TEMPLATE_INJECTION_FREEMARKER"/>
+    </Match>
+
+    <!-- jsonschema2pojo output is regenerated and is not hand-written application code. -->
+    <Match>
+        <Class name="~com\.json\.student\..*"/>
+    </Match>
+
+    <!-- The singleton aspect intentionally retains Spring-managed scoped proxies. -->
+    <Match>
+        <Class name="school.faang.user_service.aspect.ProfileViewAspect"/>
+        <Field name="~(userContext|userService)"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>

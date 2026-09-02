@@ -8,10 +8,20 @@ initscript {
     }
 }
 
+import org.gradle.api.GradleException
 import com.github.spotbugs.snom.Confidence
 import com.github.spotbugs.snom.Effort
 import com.github.spotbugs.snom.SpotBugsPlugin
 import com.github.spotbugs.snom.SpotBugsTask
+
+def exclusionPath = System.getProperty('faang.spotbugs.exclude')
+if (exclusionPath == null || exclusionPath.isBlank()) {
+    throw new GradleException('Trusted SpotBugs exclusion path is required')
+}
+def exclusionFile = new File(exclusionPath)
+if (!exclusionFile.isFile()) {
+    throw new GradleException('Trusted SpotBugs exclusion file is missing')
+}
 
 allprojects { project ->
     project.plugins.withId('java') {
@@ -24,6 +34,8 @@ allprojects { project ->
             effort = Effort.valueOf('MAX')
             reportLevel = Confidence.valueOf('MEDIUM')
             maxHeapSize = '1g'
+
+            excludeFilter = exclusionFile
         }
 
         project.dependencies {

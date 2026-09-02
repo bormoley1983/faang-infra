@@ -255,7 +255,9 @@ ${dependencyContainers}  volumes:
 ${dependencyVolumes}""") {
         node(POD_LABEL) {
             timeout(time: 30, unit: 'MINUTES') {
-                String securityInitPath = "${pwd(tmp: true)}/faang-spotbugs.init.gradle"
+                String securityResourceDir = pwd(tmp: true)
+                String securityInitPath = "${securityResourceDir}/faang-spotbugs.init.gradle"
+                String securityExcludePath = "${securityResourceDir}/faang-spotbugs-exclude.xml"
 
                 stage('Checkout') {
                     deleteDir()
@@ -263,6 +265,10 @@ ${dependencyVolumes}""") {
                     writeFile(
                         file: securityInitPath,
                         text: libraryResource('faang-spotbugs.init.gradle')
+                    )
+                    writeFile(
+                        file: securityExcludePath,
+                        text: libraryResource('faang-spotbugs-exclude.xml')
                     )
                 }
 
@@ -318,7 +324,7 @@ ${dependencyVolumes}""") {
                         container('jdk') {
                             spotbugsStatus = sh(
                                 returnStatus: true,
-                                script: "./gradlew spotbugsMain --init-script '${securityInitPath}' --no-daemon --stacktrace"
+                                script: "./gradlew spotbugsMain --init-script '${securityInitPath}' -Dfaang.spotbugs.exclude='${securityExcludePath}' --no-daemon --stacktrace"
                             )
                             grypeStatus = sh(
                                 returnStatus: true,
