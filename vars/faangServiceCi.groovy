@@ -264,18 +264,18 @@ ${dependencyVolumes}""") {
                 if (!dependencySet.isEmpty()) {
                     stage('Wait for disposable dependencies') {
                         if (dependencySet.contains('postgres')) {
-                            container('postgres') {
-                                sh 'for attempt in $(seq 1 120); do pg_isready -U ci_test -d ci_test && exit 0; sleep 1; done; exit 1'
+                            container('jdk') {
+                                sh 'for attempt in $(seq 1 120); do nc -z 127.0.0.1 5432 && exit 0; sleep 1; done; exit 1'
                             }
                         }
                         if (dependencySet.contains('redis')) {
-                            container('redis') {
-                                sh 'for attempt in $(seq 1 120); do redis-cli ping | grep -q PONG && exit 0; sleep 1; done; exit 1'
+                            container('jdk') {
+                                sh 'for attempt in $(seq 1 120); do nc -z 127.0.0.1 6379 && exit 0; sleep 1; done; exit 1'
                             }
                         }
                         if (dependencySet.contains('kafka')) {
-                            container('kafka') {
-                                sh 'for attempt in $(seq 1 180); do /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list && exit 0; sleep 1; done; exit 1'
+                            container('jdk') {
+                                sh 'for attempt in $(seq 1 180); do nc -z 127.0.0.1 9092 && exit 0; sleep 1; done; exit 1'
                             }
                         }
                     }

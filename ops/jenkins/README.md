@@ -57,4 +57,12 @@ account token mounting, and binds no runtime or publication credential.
 Developer execution retains Testcontainers; Jenkins selects explicit same-Pod
 endpoints through a CI-only flag and fails if a required endpoint is missing.
 
+The first exact-revision run proved all dependency containers healthy but also
+found that Jenkins durable shell steps cannot start inside those service
+containers. Account build 3 failed before Gradle; Achievement and Analytics
+build 3 were stopped after confirming the same condition. No integration report
+was claimed, and all agent Pods were removed. The pending correction keeps the
+sidecars unchanged and runs bounded localhost port checks from the JDK container,
+whose pinned image includes the required probe utility.
+
 Do not add publication credentials to `faang-untrusted` to make a test pass.
