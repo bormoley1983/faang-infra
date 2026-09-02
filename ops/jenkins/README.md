@@ -43,13 +43,12 @@ build 7, Analytics build 7, Notification build 4, Payment build 4, Post build
 folder has no credentials, and its job definitions reference no registry,
 signing, or publication identity.
 
-Remaining acceptance work:
+Deferred follow-up:
 
-- Enable and prove repository webhooks when Jenkins has an approved inbound
-  endpoint. Until then, use authenticated manual or periodic indexing.
-- Keep authenticated manual/periodic indexing available while webhook delivery
-  is deferred. The existing trusted delivery image scan remains mandatory and
-  unchanged.
+- Optional repository webhook automation is tracked separately as DEP-033 and
+  remains deferred while Jenkins is private. Authenticated manual or periodic
+  indexing is the accepted DEP-031 trigger model. The existing trusted delivery
+  image scan remains mandatory and unchanged.
 
 The pending implementation keeps dependencies inside the affected short-lived
 agent Pod. Only the three wrappers opt in to digest-pinned PostgreSQL, Redis,
@@ -108,8 +107,9 @@ read-only SCM identity as the sole global credential, zero credentials in the
 untrusted folder, exactly that identity in all 9/9 definitions, no publication
 stage, and zero remaining agent Pods.
 
-Inbound webhook delivery remains deferred because Jenkins has no approved
-inbound endpoint. This condition is not counted as passed, so DEP-031 remains
-In Progress; authenticated manual and periodic indexing are the interim paths.
+DEP-031 is accepted without inbound webhook exposure: authenticated manual and
+periodic indexing provide change discovery for the private Jenkins deployment.
+Optional webhook automation remains undelivered and is tracked as deferred
+DEP-033; it must not expose the Jenkins UI/controller surface when revisited.
 
 Do not add publication credentials to `faang-untrusted` to make a test pass.

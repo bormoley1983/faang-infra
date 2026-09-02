@@ -7,7 +7,7 @@ spec:
   project: faang
   source:
     repoURL: 'https://github.com/bormoley1983/faang-infra.git'
-    targetRevision: dev-local
+    targetRevision: refs/heads/dev-local
     path: k8s/overlays/homelab
   destination:
     server: 'https://kubernetes.default.svc'
