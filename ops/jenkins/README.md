@@ -140,6 +140,23 @@ push, and merge the infrastructure changes. Substitute the fixed repository and
 bot-identity placeholders only in the trusted Jenkins job definition; never
 write credentials or private environment mappings into this repository.
 
+The standalone proposal acceptance used only successful archived publications.
+Proposal build 5 created the first one-service change and review request. Builds
+6 and 7 were submitted back-to-back, executed serially, preserved the Account
+and Achievement changes in one rolling branch, and reused exactly one review
+request. The merged protected revision was then applied by one exact-revision
+manual no-prune Argo CD sync; the application reported `Synced/Healthy` and both
+affected Deployments became Ready at their intended digests. Automated sync
+remained disabled.
+
+`tests/Jenkinsfile.service-delivery` now hands the archived image name, exact
+service revision, and immutable publication digest to `gitops-proposal` only
+after both native architecture checks pass. It waits for the proposal result
+without transferring any credential. A failed proposal turns the delivery run
+red with an explicit retry instruction while retaining the already archived
+publication evidence. Install this handoff into the nine trusted delivery jobs
+only from its reviewed protected infrastructure revision.
+
 ## Plugin and JCasC update policy
 
 `values/controller-hardening.yaml` is an exact 74-plugin lock. An update-center
