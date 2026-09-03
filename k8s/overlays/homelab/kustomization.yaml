@@ -4,6 +4,11 @@ resources:
   - namespace.yaml
   - ../../base
   - ../../bootstrap
+  - ../../components/dependencies/postgresql/external
+  - ../../components/dependencies/redis/external
+  - ../../components/dependencies/elasticsearch/external
+  - ../../components/dependencies/kafka/external
+  - ../../components/dependencies/minio/internal
 
 patches:
   - path: configmap.yaml

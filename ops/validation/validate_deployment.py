@@ -141,8 +141,13 @@ def validate_rendered(rendered: str, contracts: dict[str, object]) -> list[Issue
                 if image.endswith(":latest") or image.endswith(":bootstrap") or ":latest@" in image:
                     issues.add(Issue("POL002", location, f"mutable or placeholder image {image}"))
 
-        if kind in {"Deployment", "StatefulSet"} and STATEFUL_NAME_PATTERN.search(name) and re.search(r"(?m)^\s*emptyDir:\s*", document):
-            issues.add(Issue("POL003", location, "persistent service uses emptyDir"))
+        if kind in {"Deployment", "StatefulSet"} and STATEFUL_NAME_PATTERN.search(name):
+            has_empty_dir = re.search(r"(?m)^\s*emptyDir:\s*", document)
+            has_persistent_storage = re.search(
+                r"(?m)^\s*(?:persistentVolumeClaim|volumeClaimTemplates):\s*", document
+            )
+            if has_empty_dir and not has_persistent_storage:
+                issues.add(Issue("POL003", location, "persistent service uses emptyDir without persistent storage"))
 
         for reference_type, referenced_name, key in references(document):
             referenced_kind = "ConfigMap" if reference_type == "configMapKeyRef" else "Secret"

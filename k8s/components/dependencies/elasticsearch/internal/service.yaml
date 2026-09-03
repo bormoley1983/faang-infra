@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-main
+  namespace: faang
+  labels:
+    app.kubernetes.io/part-of: faang-dependencies
+    faang.io/dependency: elasticsearch
+    faang.io/dependency-mode: internal
+  annotations:
+    argocd.argoproj.io/sync-wave: "-49"
+spec:
+  selector:
+    faang.io/dependency: elasticsearch
+  ports:
+    - name: https
+      port: 9200
+      targetPort: 9200
+      protocol: TCP

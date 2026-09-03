@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-main
+  namespace: faang
+  labels:
+    app.kubernetes.io/part-of: faang-dependencies
+    faang.io/dependency: kafka
+    faang.io/dependency-mode: internal
+  annotations:
+    argocd.argoproj.io/sync-wave: "-49"
+spec:
+  selector:
+    faang.io/dependency: kafka
+  ports:
+    - name: broker
+      port: 9092
+      targetPort: 9092
+      protocol: TCP

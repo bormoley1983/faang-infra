@@ -6,9 +6,11 @@ metadata:
   labels:
     app.kubernetes.io/name: minio
     app.kubernetes.io/component: object-storage
-    app.kubernetes.io/managed-by: faang-local-topology
+    app.kubernetes.io/managed-by: argocd
+    faang.io/dependency: minio
+    faang.io/dependency-mode: internal
   annotations:
-    argocd.argoproj.io/compare-options: IgnoreExtraneous
+    argocd.argoproj.io/sync-wave: "-49"
 spec:
   selector:
     app.kubernetes.io/name: minio
@@ -28,9 +30,11 @@ metadata:
   labels:
     app.kubernetes.io/name: minio
     app.kubernetes.io/component: object-storage
-    app.kubernetes.io/managed-by: faang-local-topology
+    app.kubernetes.io/managed-by: argocd
+    faang.io/dependency: minio
+    faang.io/dependency-mode: internal
   annotations:
-    argocd.argoproj.io/compare-options: IgnoreExtraneous
+    argocd.argoproj.io/sync-wave: "-49"
 spec:
   serviceName: minio-main
   replicas: 1

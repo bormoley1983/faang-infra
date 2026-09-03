@@ -17,7 +17,8 @@ This matrix is the human-readable companion to `service-contracts.json`. Kuberne
 ## Shared naming rules
 
 - `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, and `DATABASE_SCHEMA` are the application-facing PostgreSQL contract. Kubernetes assembles these from `POSTGRES_*` configuration and Secret keys.
-- `REDIS_URL` currently means a hostname for Spring Redis clients; `REDIS_PORT` is separate. DEP-040 may introduce a better logical endpoint name while preserving service compatibility.
+- `POSTGRES_HOST`, `REDIS_URL`, `KAFKA_SERVERS`, `ELASTICSEARCH_URL`, `MINIO_URL`, and `S3_ENDPOINT` resolve through the stable Services `postgres-main`, `redis-main`, `kafka-main`, `elasticsearch-main`, and `minio-main`. Internal/external placement does not alter application configuration.
+- `REDIS_URL` currently means a hostname for Spring Redis clients; `REDIS_PORT` is separate.
 - `KAFKA_SERVERS` is a comma-separated bootstrap-server list.
 - `PROJECT_SERVICE_HOST`, `PAYMENT_SERVICE_HOST`, and `USER_SERVICE_HOST` are hostname-only values. Their ports are separate.
 - Post Service consumes `MINIO_*`; Project and User consume `S3_*`. Kubernetes maps both conventions to the same `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` Secret keys, so credentials are not duplicated.
@@ -43,4 +44,8 @@ python -m unittest discover -s ops/validation -p "test_*.py"
 python ops/validation/validate_deployment.py
 ```
 
-The validator checks required environment variables, ports, probes, ConfigMap/Secret references, schemas, and known deployment debt. Service compilation/tests remain owned by the individual service repository pipelines.
+The validators check required environment variables, ports, probes,
+ConfigMap/Secret references, schemas, known deployment debt, exactly-one
+dependency placement, stable endpoints, and explicit topology/TLS/credential
+policy. Service compilation/tests remain owned by the individual service
+repository pipelines.
