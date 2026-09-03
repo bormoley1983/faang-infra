@@ -20,7 +20,7 @@
       },
       "tlsModes": ["disabled", "verify-full"],
       "credentialModes": ["none", "secret"],
-      "requiredSecretKeys": []
+      "requiredSecretKeys": ["REDIS_PASSWORD"]
     },
     "elasticsearch": {
       "serviceName": "elasticsearch-main",

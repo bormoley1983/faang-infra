@@ -163,6 +163,30 @@ class DependencySelectionTests(unittest.TestCase):
                         allow_documentation_addresses=True,
                     )
 
+    def test_redis_secret_mode_requires_its_password_key(self):
+        modes = {name: "external" for name in DEPENDENCIES}
+        topology = topology_for(modes)
+        topology["dependencies"]["redis"]["credentials"] = {
+            "mode": "secret",
+            "secretName": "faang-secrets",
+            "keys": ["REDIS_PASSWORD"],
+        }
+        VALIDATOR.validate_topology(
+            modes,
+            topology,
+            CONTRACTS,
+            allow_documentation_addresses=True,
+        )
+
+        topology["dependencies"]["redis"]["credentials"]["keys"] = []
+        with self.assertRaises(VALIDATOR.SelectionError):
+            VALIDATOR.validate_topology(
+                modes,
+                topology,
+                CONTRACTS,
+                allow_documentation_addresses=True,
+            )
+
     def test_switching_minio_changes_only_its_connection_and_workload_resources(self):
         external = documents(render(ROOT / "k8s" / "environments" / "examples" / "all-external"))
         mixed = documents(render(ROOT / "k8s" / "environments" / "examples" / "mixed"))
