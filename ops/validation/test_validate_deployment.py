@@ -149,6 +149,23 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertIn('"IgnoreExtraneous"', installer)
         self.assertIn("validate_dependency_selection.py", installer)
 
+        external_service_ports = {
+            "postgresql": ("postgres-main", "postgresql"),
+            "redis": ("redis-main", "redis"),
+            "elasticsearch": ("elasticsearch-main", "https"),
+            "kafka": ("kafka-main", "broker"),
+            "minio": ("minio-main", "api"),
+        }
+        for dependency, (service, port_name) in external_service_ports.items():
+            self.assertIn(
+                f'ConfigKey = "{dependency}"; ServiceName = "{service}"; PortName = "{port_name}"',
+                installer,
+            )
+            service_manifest = (
+                ROOT / "k8s" / "components" / "dependencies" / dependency / "external" / "service.yaml"
+            ).read_text(encoding="utf-8")
+            self.assertIn(f"- name: {port_name}", service_manifest)
+
         secret_example = (ROOT / "k8s" / "overlays" / "homelab" / "secret.example.yaml").read_text(encoding="utf-8")
         self.assertIn("namespace: faang", secret_example)
 
