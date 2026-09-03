@@ -18,7 +18,8 @@ clients have shorter connection/request limits, and the runner observes one
 dependency at a time so failures retain their logs before the Job deadline. The
 PowerShell runner also removes its exact Jobs, ConfigMap, and ServiceAccount in
 a `finally` block unless `-KeepResources` is explicitly requested for bounded
-diagnosis. Runs must be serialized.
+diagnosis. Repository attributes enforce LF endings for shell scripts because
+the files are mounted verbatim from ConfigMap data. Runs must be serialized.
 
 After a reviewed revision is merged, validate the ignored topology and run:
 

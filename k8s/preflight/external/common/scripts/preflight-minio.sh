@@ -1,4 +1,5 @@
 #!/bin/sh
+# Kubernetes executes this file from ConfigMap data; Git must preserve LF endings.
 set -eu
 
 : "${MINIO_URL:?MINIO_URL is required}"
