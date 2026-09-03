@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - common
+  - postgresql-job.yaml
+  - redis-job.yaml
+  - elasticsearch-job.yaml
+  - kafka-job.yaml
+  - minio-job.yaml

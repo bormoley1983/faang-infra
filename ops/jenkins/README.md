@@ -102,6 +102,12 @@ validation reported no findings. Jenkins archived `revision.txt`,
 fingerprints. The expected read-only commit-status denial was non-fatal and the
 pipeline finished successfully without publication, deployment, or Argo action.
 
+DEP-041 adds five opt-in external-dependency preflight Jobs. The untrusted
+infrastructure pipeline renders and schema-checks them with
+`--schema-overlay k8s/preflight/external`; it does not run them or receive
+runtime credentials. Their live, read-only execution remains an explicit
+post-merge operator action from the application namespace.
+
 Do not refresh or sync Argo CD from a feature revision. For future contract
 changes, merge through protected `dev-local`, run the independent
 infrastructure job against that exact protected revision, and retain its
