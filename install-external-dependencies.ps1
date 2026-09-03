@@ -34,7 +34,7 @@ if ($null -eq $localConfig.dependencies) {
 $dependencyContract = @(
     @{ ConfigKey = "postgresql"; ServiceName = "postgres-main"; PortName = "postgresql"; DefaultPort = 5432 },
     @{ ConfigKey = "redis"; ServiceName = "redis-main"; PortName = "redis"; DefaultPort = 6379 },
-    @{ ConfigKey = "elasticsearch"; ServiceName = "elasticsearch-main"; PortName = "http"; DefaultPort = 9200 },
+    @{ ConfigKey = "elasticsearch"; ServiceName = "elasticsearch-main"; PortName = "https"; DefaultPort = 9200 },
     @{ ConfigKey = "kafka"; ServiceName = "kafka-main"; PortName = "broker"; DefaultPort = 9092 },
     @{ ConfigKey = "minio"; ServiceName = "minio-main"; PortName = "api"; DefaultPort = 9000 }
 )
