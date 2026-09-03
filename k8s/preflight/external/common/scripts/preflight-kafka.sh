@@ -2,7 +2,11 @@
 set -euo pipefail
 
 : "${KAFKA_BOOTSTRAP_SERVERS:?KAFKA_BOOTSTRAP_SERVERS is required}"
-topics="$(/opt/kafka/bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" --list)"
+cat > /tmp/client.properties <<'PROPERTIES'
+request.timeout.ms=10000
+default.api.timeout.ms=30000
+PROPERTIES
+topics="$(/opt/kafka/bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" --command-config /tmp/client.properties --list)"
 
 while IFS= read -r topic; do
   grep -Fx -- "$topic" <<<"$topics" >/dev/null || { echo "Required Kafka topic is missing: $topic" >&2; exit 1; }

@@ -4,7 +4,7 @@ set -eu
 : "${REDIS_HOST:?REDIS_HOST is required}"
 : "${REDIS_PORT:?REDIS_PORT is required}"
 
-set -- -h "$REDIS_HOST" -p "$REDIS_PORT" --no-auth-warning
+set -- -h "$REDIS_HOST" -p "$REDIS_PORT" --connect-timeout 10 --no-auth-warning
 if [ -n "${REDIS_PASSWORD:-}" ]; then
   set -- "$@" -a "$REDIS_PASSWORD"
 fi

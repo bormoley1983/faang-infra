@@ -6,7 +6,7 @@ set -eu
 : "${ELASTICSEARCH_USERNAME:?ELASTICSEARCH_USERNAME is required}"
 : "${ELASTICSEARCH_PASSWORD:?ELASTICSEARCH_PASSWORD is required}"
 
-set -- --fail --silent --show-error --user "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD"
+set -- --fail --silent --show-error --connect-timeout 10 --max-time 30 --user "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD"
 case "$ELASTICSEARCH_TLS_INSECURE" in
   true) set -- "$@" --insecure ;;
   false) ;;

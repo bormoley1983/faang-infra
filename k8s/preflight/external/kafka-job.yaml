@@ -8,7 +8,7 @@ metadata:
     faang.io/dependency: kafka
 spec:
   backoffLimit: 0
-  activeDeadlineSeconds: 300
+  activeDeadlineSeconds: 330
   ttlSecondsAfterFinished: 600
   template:
     metadata:

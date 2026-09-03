@@ -37,6 +37,22 @@ if ($LASTEXITCODE -ne 0) { throw "The target namespace does not exist." }
 
 $root = Join-Path $PSScriptRoot "k8s/preflight/external"
 $createdJobs = [System.Collections.Generic.List[string]]::new()
+function Wait-PreflightJob {
+    param([Parameter(Mandatory)][string]$JobName)
+
+    $deadline = [DateTimeOffset]::UtcNow.AddSeconds($TimeoutSeconds)
+    while ([DateTimeOffset]::UtcNow -lt $deadline) {
+        $jobJson = kubectl -n $Namespace get job $JobName -o json
+        if ($LASTEXITCODE -ne 0) { throw "Unable to inspect preflight Job status." }
+        $jobState = $jobJson | ConvertFrom-Json
+        $trueConditions = @($jobState.status.conditions | Where-Object { $_.status -eq "True" } | ForEach-Object { $_.type })
+        if ($trueConditions -contains "Complete") { return $true }
+        if ($trueConditions -contains "Failed") { return $false }
+        Start-Sleep -Seconds 2
+    }
+    return $false
+}
+
 foreach ($name in $selected) {
     $contract = $contracts[$name]
     $active = kubectl -n $Namespace get job $contract.Job -o "jsonpath={.status.active}" --ignore-not-found
@@ -57,14 +73,10 @@ try {
         kubectl apply -n $Namespace -f (Join-Path $root $contract.File) | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "Unable to create the $name preflight Job." }
         $createdJobs.Add($contract.Job)
-    }
-
-    foreach ($name in $selected) {
-        $job = $contracts[$name].Job
-        kubectl -n $Namespace wait --for=condition=complete "job/$job" --timeout="${TimeoutSeconds}s" | Out-Null
-        $waitStatus = $LASTEXITCODE
+        $job = $contract.Job
+        $completed = Wait-PreflightJob -JobName $job
         kubectl -n $Namespace logs "job/$job" --all-containers=true
-        if ($waitStatus -ne 0) {
+        if (-not $completed) {
             kubectl -n $Namespace describe "job/$job"
             throw "$name external dependency preflight failed."
         }
