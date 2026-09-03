@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-external-preflight-postgresql
+  labels:
+    app.kubernetes.io/name: faang-external-preflight
+    app.kubernetes.io/component: preflight
+    faang.io/dependency: postgresql
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: faang-external-preflight
+        app.kubernetes.io/component: preflight
+        faang.io/dependency: postgresql
+    spec:
+      serviceAccountName: faang-external-preflight
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: preflight
+          image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+          command: ["/bin/sh", "/scripts/preflight-postgresql.sh"]
+          env:
+            - name: HOME
+              value: /tmp
+            - name: POSTGRES_HOST
+              valueFrom: {configMapKeyRef: {name: faang-config, key: POSTGRES_HOST}}
+            - name: POSTGRES_PORT
+              valueFrom: {configMapKeyRef: {name: faang-config, key: POSTGRES_PORT}}
+            - name: POSTGRES_DB
+              valueFrom: {configMapKeyRef: {name: faang-config, key: POSTGRES_DB}}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: faang-secrets, key: POSTGRES_USER}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: faang-secrets, key: POSTGRES_PASSWORD}}
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - {name: scripts, mountPath: /scripts, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: scripts
+          configMap: {name: faang-external-preflight-scripts, defaultMode: 0555}
+        - name: tmp
+          emptyDir: {sizeLimit: 16Mi}

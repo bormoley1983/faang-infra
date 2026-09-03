@@ -346,6 +346,13 @@ def parse_arguments() -> argparse.Namespace:
         type=Path,
         help="Newline-delimited git-tracked YAML paths supplied by the checkout environment",
     )
+    parser.add_argument(
+        "--schema-overlay",
+        action="append",
+        default=[],
+        type=Path,
+        help="Additional Kustomize overlay to render and schema-check without applying runtime policy",
+    )
     parser.add_argument("--strict", action="store_true", help="Reject all findings instead of honoring the known-debt baseline")
     parser.add_argument("--skip-schema", action="store_true", help="Skip kubeconform; intended only for unit tests or offline diagnosis")
     parser.add_argument("--print-fingerprints", action="store_true", help="Print current finding fingerprints as JSON")
@@ -379,6 +386,14 @@ def main() -> int:
     try:
         if not arguments.skip_schema:
             validate_schema(render.stdout)
+            for schema_overlay in arguments.schema_overlay:
+                additional = run(["kubectl", "kustomize", str(schema_overlay.resolve())])
+                if additional.returncode != 0:
+                    raise RuntimeError(
+                        additional.stderr.strip()
+                        or f"Kustomize rendering failed for {schema_overlay}"
+                    )
+                validate_schema(additional.stdout)
         valid = evaluate_baseline(issues, arguments.baseline, arguments.strict)
     except RuntimeError as exc:
         print(f"Validation error: {exc}", file=sys.stderr)

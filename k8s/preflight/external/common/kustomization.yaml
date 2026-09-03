@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - service-account.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/name: faang-external-preflight
+    app.kubernetes.io/component: preflight
+configMapGenerator:
+  - name: faang-external-preflight-scripts
+    files:
+      - scripts/preflight-postgresql.sh
+      - scripts/preflight-redis.sh
+      - scripts/preflight-elasticsearch.sh
+      - scripts/preflight-kafka.sh
+      - scripts/preflight-minio.sh

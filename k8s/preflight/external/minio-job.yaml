@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-external-preflight-minio
+  labels:
+    app.kubernetes.io/name: faang-external-preflight
+    app.kubernetes.io/component: preflight
+    faang.io/dependency: minio
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: faang-external-preflight
+        app.kubernetes.io/component: preflight
+        faang.io/dependency: minio
+    spec:
+      serviceAccountName: faang-external-preflight
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: preflight
+          image: minio/mc:RELEASE.2025-04-16T18-13-26Z@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3
+          command: ["/bin/sh", "/scripts/preflight-minio.sh"]
+          env:
+            - name: HOME
+              value: /tmp
+            - name: MINIO_URL
+              valueFrom: {configMapKeyRef: {name: faang-config, key: MINIO_URL}}
+            - name: MINIO_BUCKET_NAME
+              valueFrom: {configMapKeyRef: {name: faang-config, key: MINIO_BUCKET_NAME}}
+            - name: S3_AVATAR_BUCKET_NAME
+              valueFrom: {configMapKeyRef: {name: faang-config, key: S3_AVATAR_BUCKET_NAME}}
+            - name: MINIO_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: faang-secrets, key: MINIO_ACCESS_KEY}}
+            - name: MINIO_SECRET_KEY
+              valueFrom: {secretKeyRef: {name: faang-secrets, key: MINIO_SECRET_KEY}}
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - {name: scripts, mountPath: /scripts, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: scripts
+          configMap: {name: faang-external-preflight-scripts, defaultMode: 0555}
+        - name: tmp
+          emptyDir: {sizeLimit: 16Mi}

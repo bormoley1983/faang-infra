@@ -20,3 +20,8 @@ all-internal, and mixed selection rendering. They are contract examples, not
 deployable production environments. Validate a selection and its separate
 topology policy with `ops/validation/validate_dependency_selection.py` before
 any environment-specific implementation or sync.
+
+After bootstrap, use the disposable read-only checks documented under
+`k8s/preflight/external` to validate only the dependencies selected as
+external. The preflights resolve these stable Services and never embed their
+physical endpoints.

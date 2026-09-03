@@ -50,7 +50,14 @@ python ops/validation/validate_deployment.py
 Strict mode ignores the baseline and must pass before final delivery:
 
 ```powershell
-python ops/validation/validate_deployment.py --strict
+python ops/validation/validate_deployment.py --strict `
+  --schema-overlay k8s/preflight/external
 ```
+
+`--schema-overlay` renders and schema-checks an additional opt-in resource set
+without treating references to environment-owned ConfigMaps or Secrets as part
+of the homelab desired-state policy. Jenkins uses it for the external
+dependency preflight Jobs, which are deliberately excluded from Argo desired
+state.
 
 Do not add a baseline entry merely to make CI green. Each entry must map to an existing DEVPLAN defect and must be removed in the change that resolves that defect.

@@ -113,6 +113,7 @@ exit $status
 set +x
 python3 ops/validation/validate_deployment.py --strict \
   --tracked-source-list .ci-evidence/tracked-manifests.txt \
+  --schema-overlay k8s/preflight/external \
   > .ci-evidence/deployment-validation.log 2>&1
 status=$?
 cat .ci-evidence/deployment-validation.log
