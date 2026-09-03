@@ -29,12 +29,19 @@ class InfrastructurePipelineTests(unittest.TestCase):
             "agent any",
             "timestamps()",
             "withCredentials",
+            "credentialsId",
+            "checkout scm",
             "REGISTRY_PASSWORD",
             "COSIGN_KEY",
             "argocd",
             "kubectl apply",
         ):
             self.assertNotIn(forbidden, script)
+
+        self.assertIn("env.BRANCH_NAME != 'dev-local'", script)
+        self.assertIn("branches: [[name: 'refs/heads/dev-local']]", script)
+        self.assertIn("+refs/heads/dev-local:refs/remotes/origin/dev-local", script)
+        self.assertIn("https://github.com/bormoley1983/faang-infra.git", script)
 
     def test_pipeline_archives_revision_and_both_validation_logs(self):
         script = JENKINSFILE.read_text(encoding="utf-8")

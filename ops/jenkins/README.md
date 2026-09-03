@@ -75,6 +75,17 @@ set does not include its optional provider. GitHub commit-status update failures
 are also expected from the read-only discovery App and are not a reason to
 broaden that App; retained Jenkins build evidence is the acceptance record.
 
+The installed GitHub Branch Source version is affected by open upstream issue
+JENKINS-76287 when repository-inferred App permissions cross the
+controller/agent remoting boundary. Keep the App's inferred-repository and
+read-only strategies unchanged. Since this repository is intentionally public
+and contains no private topology, the infrastructure pipeline uses that App
+only for controller-side discovery and performs a shallow anonymous checkout
+of exactly `refs/heads/dev-local` inside the disposable agent. It validates and
+archives the resulting 40-character revision. If this repository becomes
+private, replace this workaround only with a reviewed upstream fix or an
+equally repository-scoped read-only checkout mechanism.
+
 Do not refresh or sync Argo CD from a feature revision. After owner review and
 merge through protected `dev-local`, run the independent infrastructure job
 against that exact protected revision and record its archived result before

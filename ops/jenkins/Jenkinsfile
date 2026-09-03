@@ -55,7 +55,24 @@ spec:
             try {
                 stage('Checkout') {
                     deleteDir()
-                    def checkoutState = checkout scm
+                    if (env.BRANCH_NAME != 'dev-local') {
+                        error('Infrastructure validation is restricted to dev-local')
+                    }
+                    def checkoutState = checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: 'refs/heads/dev-local']],
+                        extensions: [[
+                            $class: 'CloneOption',
+                            depth: 1,
+                            honorRefspec: true,
+                            noTags: true,
+                            shallow: true
+                        ]],
+                        userRemoteConfigs: [[
+                            refspec: '+refs/heads/dev-local:refs/remotes/origin/dev-local',
+                            url: 'https://github.com/bormoley1983/faang-infra.git'
+                        ]]
+                    ])
                     def revision = checkoutState.GIT_COMMIT ?: ''
                     if (!(revision ==~ /[0-9a-f]{40}/)) {
                         error('Checkout did not return an exact Git revision')
