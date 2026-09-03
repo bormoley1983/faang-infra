@@ -311,6 +311,30 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         for service in self.IMAGE_DIGESTS.keys() - {"faang-user-service"}:
             self.assertEqual(3, documents[("Deployment", service)].count("httpGet:"), service)
 
+    def test_redis_consumers_receive_optional_secret_backed_authentication(self):
+        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        consumers = [
+            document
+            for document in VALIDATOR.split_documents(rendered)
+            if VALIDATOR.resource_identity(document)[0] == "Deployment"
+            and "name: REDIS_URL" in document
+        ]
+        self.assertEqual(6, len(consumers))
+        credential_reference = (
+            "name: SPRING_DATA_REDIS_PASSWORD\n"
+            "          valueFrom:\n"
+            "            secretKeyRef:\n"
+            "              key: REDIS_PASSWORD\n"
+            "              name: faang-secrets\n"
+            "              optional: true"
+        )
+        for deployment in consumers:
+            self.assertIn(
+                credential_reference,
+                deployment,
+                VALIDATOR.resource_identity(deployment),
+            )
+
 
 class BootstrapContractTests(unittest.TestCase):
     def render_homelab(self) -> str:

@@ -64,6 +64,12 @@ spec:
                 configMapKeyRef:
                   name: faang-config
                   key: REDIS_PORT
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: REDIS_PASSWORD
+                  optional: true
             - name: URL_SHORTENER_BASE_URL
               valueFrom:
                 configMapKeyRef:
