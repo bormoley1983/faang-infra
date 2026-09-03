@@ -2,6 +2,23 @@
 
 The service dependency and environment-variable mapping is documented in `runtime-contracts.md`; its machine-readable required-input subset is `service-contracts.json`.
 
+Dependency placement is a separate one-of-two contract. Its policy is defined
+in `dependency-contracts.json` and enforced by
+`validate_dependency_selection.py`. The public topology example deliberately
+uses documentation-only addresses, so validating that example requires the
+explicit test-only allowance:
+
+```powershell
+python ops/validation/validate_dependency_selection.py `
+  --kustomization k8s/overlays/homelab/kustomization.yaml `
+  --topology config/homelab.example.json `
+  --configmap k8s/overlays/homelab/configmap.yaml `
+  --allow-documentation-addresses
+```
+
+Never use `--allow-documentation-addresses` for a real environment mapping.
+The local installer invokes the same validator without that flag.
+
 Run from the `faang-infra` repository root:
 
 ```powershell
@@ -18,6 +35,11 @@ The validator:
 - rejects unresolved `${...}` tokens, mutable/placeholder workload images, selected persistent workloads using `emptyDir`, and tracked plaintext Secret manifests;
 - checks ConfigMap/Secret references and the per-service environment/port/probe contract;
 - compares findings with `baseline.json`, failing on new findings or stale baseline entries.
+
+The unit suite also renders all ten dependency profiles plus the all-internal,
+all-external, and mixed examples; rejects zero/double selection and incomplete
+topology, TLS, or credential policy; and proves that switching one dependency
+does not modify application Deployments.
 
 Normal CI mode allows only the exact known debt listed in `baseline.json`:
 

@@ -14,6 +14,18 @@ if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
     throw "Missing local topology mapping '$ConfigPath'. Copy config/homelab.example.json to config/homelab.local.json and set local values."
 }
 
+$validatorPath = Join-Path $PSScriptRoot "ops/validation/validate_dependency_selection.py"
+$selectionPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/kustomization.yaml"
+$configMapPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/configmap.yaml"
+$resolvedConfigPath = (Resolve-Path -LiteralPath $ConfigPath).Path
+& python $validatorPath `
+    --kustomization $selectionPath `
+    --topology $resolvedConfigPath `
+    --configmap $configMapPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Dependency selection contract validation failed."
+}
+
 $localConfig = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
 if ($null -eq $localConfig.dependencies) {
     throw "The local topology mapping must contain the 'dependencies' object from config/homelab.example.json."
@@ -87,11 +99,21 @@ foreach ($contract in $dependencyContract) {
         throw "dependencies.$($contract.ConfigKey).port must be between 1 and 65535"
     }
 
-    $labels = @{
+    $serviceLabels = @{
+        "app.kubernetes.io/part-of" = "faang-dependencies"
+        "faang.io/dependency" = $contract.ConfigKey
+        "faang.io/dependency-mode" = "external"
+    }
+    $serviceAnnotations = @{
+        "argocd.argoproj.io/sync-wave" = "-49"
+    }
+    $endpointLabels = @{
         "app.kubernetes.io/managed-by" = "faang-local-topology"
         "faang.io/dependency" = $contract.ConfigKey
+        "faang.io/dependency-mode" = "external"
+        "kubernetes.io/service-name" = $contract.ServiceName
     }
-    $annotations = @{
+    $endpointAnnotations = @{
         "argocd.argoproj.io/compare-options" = "IgnoreExtraneous"
         "faang.io/topology-source" = "ignored-local-config"
     }
@@ -102,8 +124,8 @@ foreach ($contract in $dependencyContract) {
         metadata = @{
             name = $contract.ServiceName
             namespace = $Namespace
-            labels = $labels
-            annotations = $annotations
+            labels = $serviceLabels
+            annotations = $serviceAnnotations
         }
         spec = @{
             ports = @(
@@ -123,8 +145,8 @@ foreach ($contract in $dependencyContract) {
         metadata = @{
             name = "$($contract.ServiceName)-external"
             namespace = $Namespace
-            labels = $labels + @{ "kubernetes.io/service-name" = $contract.ServiceName }
-            annotations = $annotations
+            labels = $endpointLabels
+            annotations = $endpointAnnotations
         }
         addressType = if ($parsedAddress.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork) { "IPv4" } else { "IPv6" }
         ports = @(

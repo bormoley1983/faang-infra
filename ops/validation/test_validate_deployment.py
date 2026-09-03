@@ -40,6 +40,25 @@ class DeploymentPolicyTests(unittest.TestCase):
     def test_persistent_emptydir_is_rejected(self):
         self.assert_has_code("persistent-emptydir.yaml", "POL003")
 
+    def test_bounded_scratch_is_allowed_when_state_is_persistent(self):
+        rendered = """apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio-main
+spec:
+  template:
+    spec:
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+"""
+        issues = VALIDATOR.validate_rendered(rendered, {})
+        self.assertNotIn("POL003", {issue.code for issue in issues})
+
     def test_plaintext_secret_is_rejected(self):
         fixture = FIXTURES / "plaintext-secret.yaml"
         issues = VALIDATOR.validate_source_text(Path("secret.yaml"), fixture.read_text(encoding="utf-8"))
@@ -57,8 +76,8 @@ class DeploymentPolicyTests(unittest.TestCase):
 
 class ConfigurationOwnershipTests(unittest.TestCase):
     IMAGE_DIGESTS = {
-        "faang-account-service": "1e9c90ae1eab06072f292f5d01e6017c9e3bdb6660909f8f8f34219d0b311a74",
-        "faang-achievement-service": "3ffa5b01c0b77434bf0fa5dd869cc10d248331e79e893c6106ca81607d059d5f",
+        "faang-account-service": "e798f0fe66b559eaa2a677058b495b559f9fd9f1239c8587c2b7f144ce43cbb5",
+        "faang-achievement-service": "c1af5cb2a6b989cf9f8fb6637c95b67108f267bfd7ae43faee4bba1370639f5b",
         "faang-analytics-service": "cee9071971a94f44bbeaee27155118d0a0ac0e65f0c3670624528a651cb617e2",
         "faang-notification-service": "09bf7e990fca2e506052109b072a968658d2be8ed98d2daae1b9a5e659c80f8b",
         "faang-payment-service": "d82cafd7736a2f0267f285a44a20f93749a5656c29ecb331eb255cace81c5f86",
@@ -100,9 +119,11 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertEqual("internal", example["dependencies"]["minio"]["mode"])
         for name, dependency in example["dependencies"].items():
             self.assertIn(dependency["mode"], {"external", "internal"})
+            self.assertIn("mode", dependency["tls"])
+            self.assertIn("mode", dependency["credentials"])
             if dependency["mode"] == "internal":
-                self.assertEqual("minio", name)
                 self.assertNotIn("address", dependency)
+                self.assertNotIn("port", dependency)
                 continue
             self.assertIn(dependency["address"].split(".")[0:3], (["192", "0", "2"], ["198", "51", "100"], ["203", "0", "113"]))
             self.assertGreater(dependency["port"], 0)
@@ -115,6 +136,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             self.assertIn(service, installer)
         self.assertIn('kind = "EndpointSlice"', installer)
         self.assertIn('"IgnoreExtraneous"', installer)
+        self.assertIn("validate_dependency_selection.py", installer)
 
         secret_example = (ROOT / "k8s" / "overlays" / "homelab" / "secret.example.yaml").read_text(encoding="utf-8")
         self.assertIn("namespace: faang", secret_example)

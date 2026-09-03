@@ -50,6 +50,23 @@ Deferred follow-up:
   indexing is the accepted DEP-031 trigger model. The existing trusted delivery
   image scan remains mandatory and unchanged.
 
+## DEP-040 infrastructure validation
+
+The infrastructure job's existing unit-test discovery now covers the paired
+internal/external dependency selection contract. It renders all ten profiles
+and the all-internal, all-external, and mixed examples; rejects zero/double
+selection, topology-mode disagreement, invalid connectivity, and missing
+TLS/credential policy; and proves a one-dependency placement change leaves all
+application Deployments unchanged. The normal desired-state stage continues to
+run the pinned Kubernetes schema and strict policy checks over the selected
+homelab overlay.
+
+Do not refresh or sync Argo CD from a feature revision. After owner review and
+merge through protected `dev-local`, run the independent infrastructure job
+against that exact protected revision and record its archived result before
+resolving DEP-040. The contract change itself requires no Jenkins controller
+configuration mutation.
+
 The pending implementation keeps dependencies inside the affected short-lived
 agent Pod. Only the three wrappers opt in to digest-pinned PostgreSQL, Redis,
 or Kafka sidecars. They use bounded CPU/memory and size-limited `emptyDir`

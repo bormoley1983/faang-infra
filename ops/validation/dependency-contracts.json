@@ -1,0 +1,57 @@
+{
+  "dependencies": {
+    "postgresql": {
+      "serviceName": "postgres-main",
+      "servicePort": 5432,
+      "config": {
+        "POSTGRES_HOST": "postgres-main",
+        "POSTGRES_PORT": "5432"
+      },
+      "tlsModes": ["disabled", "verify-full"],
+      "credentialModes": ["secret"],
+      "requiredSecretKeys": ["POSTGRES_USER", "POSTGRES_PASSWORD"]
+    },
+    "redis": {
+      "serviceName": "redis-main",
+      "servicePort": 6379,
+      "config": {
+        "REDIS_HOST": "redis-main",
+        "REDIS_PORT": "6379"
+      },
+      "tlsModes": ["disabled", "verify-full"],
+      "credentialModes": ["none", "secret"],
+      "requiredSecretKeys": []
+    },
+    "elasticsearch": {
+      "serviceName": "elasticsearch-main",
+      "servicePort": 9200,
+      "config": {
+        "ELASTICSEARCH_URL": "https://elasticsearch-main:9200"
+      },
+      "tlsModes": ["insecure", "verify-full"],
+      "credentialModes": ["secret"],
+      "requiredSecretKeys": ["ELASTICSEARCH_USERNAME", "ELASTICSEARCH_PASSWORD"]
+    },
+    "kafka": {
+      "serviceName": "kafka-main",
+      "servicePort": 9092,
+      "config": {
+        "KAFKA_BOOTSTRAP_SERVERS": "kafka-main:9092"
+      },
+      "tlsModes": ["disabled", "verify-full"],
+      "credentialModes": ["none", "secret"],
+      "requiredSecretKeys": []
+    },
+    "minio": {
+      "serviceName": "minio-main",
+      "servicePort": 9000,
+      "config": {
+        "MINIO_URL": "http://minio-main:9000",
+        "S3_ENDPOINT": "http://minio-main:9000"
+      },
+      "tlsModes": ["disabled", "verify-full"],
+      "credentialModes": ["secret"],
+      "requiredSecretKeys": ["MINIO_ACCESS_KEY", "MINIO_SECRET_KEY"]
+    }
+  }
+}
