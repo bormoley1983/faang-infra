@@ -94,10 +94,18 @@ parent-traversal, and non-YAML entries, and applies the same tracked-manifest
 policy used by local Git-backed validation. The inventory is archived with the
 revision and validation logs.
 
-Do not refresh or sync Argo CD from a feature revision. After owner review and
-merge through protected `dev-local`, run the independent infrastructure job
-against that exact protected revision and record its archived result before
-resolving DEP-040. The contract change itself requires no Jenkins controller
+Acceptance completed in `faang-infra-ci` build 5 from protected revision
+`09c35f9db79df73d2a5d2b977dc8817da27a0757`: all 31 tests passed, all 38
+rendered resources passed schema validation, and strict policy/contract
+validation reported no findings. Jenkins archived `revision.txt`,
+`tracked-manifests.txt`, `tests.log`, and `deployment-validation.log` with
+fingerprints. The expected read-only commit-status denial was non-fatal and the
+pipeline finished successfully without publication, deployment, or Argo action.
+
+Do not refresh or sync Argo CD from a feature revision. For future contract
+changes, merge through protected `dev-local`, run the independent
+infrastructure job against that exact protected revision, and retain its
+archived result. This contract change required no Jenkins controller
 configuration mutation.
 
 The pending implementation keeps dependencies inside the affected short-lived
