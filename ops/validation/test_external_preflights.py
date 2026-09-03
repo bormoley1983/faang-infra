@@ -88,6 +88,13 @@ class ExternalPreflightTests(unittest.TestCase):
         ):
             self.assertIn(required, scripts)
 
+    def test_shell_scripts_are_lf_only_for_configmap_execution(self):
+        attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+        self.assertIn("*.sh text eol=lf", attributes.splitlines())
+
+        for path in sorted((PREFLIGHT / "common" / "scripts").glob("*.sh")):
+            self.assertNotIn(b"\r\n", path.read_bytes(), str(path.relative_to(ROOT)))
+
     def test_runner_selects_only_external_modes_and_cleans_exact_resources(self):
         runner = (ROOT / "run-external-preflights.ps1").read_text(encoding="utf-8")
         self.assertIn('mode -eq "external"', runner)

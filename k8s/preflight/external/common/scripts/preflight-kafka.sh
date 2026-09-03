@@ -1,4 +1,5 @@
 #!/bin/bash
+# Kubernetes executes this file from ConfigMap data; Git must preserve LF endings.
 set -euo pipefail
 
 : "${KAFKA_BOOTSTRAP_SERVERS:?KAFKA_BOOTSTRAP_SERVERS is required}"

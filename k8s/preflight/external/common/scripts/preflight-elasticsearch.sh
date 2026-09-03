@@ -1,4 +1,5 @@
 #!/bin/sh
+# Kubernetes executes this file from ConfigMap data; Git must preserve LF endings.
 set -eu
 
 : "${ELASTICSEARCH_URL:?ELASTICSEARCH_URL is required}"
