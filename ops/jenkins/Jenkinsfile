@@ -1,36 +1,108 @@
-pipeline {
-    agent any
+properties([
+    disableConcurrentBuilds(abortPrevious: true)
+])
 
-    options {
-        skipDefaultCheckout(true)
-        disableConcurrentBuilds(abortPrevious: true)
-        timeout(time: 10, unit: 'MINUTES')
-        timestamps()
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-                script {
-                    env.INFRA_DIR = fileExists('faang-infra/k8s') ? 'faang-infra' : '.'
+podTemplate(yaml: '''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  activeDeadlineSeconds: 900
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  securityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: validation
+      image: python:3.14.7-alpine3.24@sha256:5e0ede45886712ce95b0e66232f743cc3d69ff6c2f62cc0d63778e1e894f8bd4
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["900"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: HOME
+          value: /home/jenkins/agent
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: temporary
+          mountPath: /tmp
+  volumes:
+    - name: temporary
+      emptyDir:
+        sizeLimit: 128Mi
+''') {
+    node(POD_LABEL) {
+        timeout(time: 10, unit: 'MINUTES') {
+            try {
+                stage('Checkout') {
+                    deleteDir()
+                    def checkoutState = checkout scm
+                    def revision = checkoutState.GIT_COMMIT ?: ''
+                    if (!(revision ==~ /[0-9a-f]{40}/)) {
+                        error('Checkout did not return an exact Git revision')
+                    }
+                    dir('.ci-evidence') {
+                        writeFile(file: 'revision.txt', text: "${revision}\n")
+                    }
                 }
-            }
-        }
 
-        stage('Test Deployment Policies') {
-            steps {
-                dir(env.INFRA_DIR) {
-                    sh 'python3 -m unittest discover -s ops/validation -p "test_*.py" -v'
-                }
-            }
-        }
+                container('validation') {
+                    stage('Install pinned kubectl') {
+                        sh '''#!/bin/sh
+set -eu
+set +x
+python3 ops/validation/install_kubectl.py \
+  --output "$WORKSPACE/.cache/tools/kubectl-v1.36.0-linux-amd64/kubectl"
+'''
+                    }
 
-        stage('Validate Homelab Desired State') {
-            steps {
-                dir(env.INFRA_DIR) {
-                    sh 'python3 ops/validation/validate_deployment.py'
+                    withEnv(["PATH=${env.WORKSPACE}/.cache/tools/kubectl-v1.36.0-linux-amd64:${env.PATH}"]) {
+                        stage('Test Deployment Policies') {
+                            sh '''#!/bin/sh
+set +x
+python3 -m unittest discover -s ops/validation -p "test_*.py" -v > .ci-evidence/tests.log 2>&1
+status=$?
+cat .ci-evidence/tests.log
+exit $status
+'''
+                        }
+
+                        stage('Validate Homelab Desired State') {
+                            sh '''#!/bin/sh
+set +x
+python3 ops/validation/validate_deployment.py --strict > .ci-evidence/deployment-validation.log 2>&1
+status=$?
+cat .ci-evidence/deployment-validation.log
+exit $status
+'''
+                        }
+                    }
                 }
+            } finally {
+                archiveArtifacts(
+                    artifacts: '.ci-evidence/**',
+                    allowEmptyArchive: true,
+                    fingerprint: true
+                )
             }
         }
     }

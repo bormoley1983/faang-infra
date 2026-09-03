@@ -61,6 +61,20 @@ application Deployments unchanged. The normal desired-state stage continues to
 run the pinned Kubernetes schema and strict policy checks over the selected
 homelab overlay.
 
+The infrastructure Jenkinsfile runs on a short-lived amd64 Kubernetes Pod with
+a digest-pinned Python image, no service-account token, no privilege, a
+read-only root filesystem, bounded resources/lifetime, and size-limited scratch
+space. It downloads kubectl 1.36.0 only from the official release endpoint and
+verifies the pinned SHA-256 before execution. It archives the exact checkout
+revision, unit-test log, and strict deployment-validation log. It binds no
+Jenkins credential and contains no publication, signing, Git-write, Argo, or
+cluster-apply step.
+
+Do not add the `timestamps()` Pipeline option: the deliberately locked plugin
+set does not include its optional provider. GitHub commit-status update failures
+are also expected from the read-only discovery App and are not a reason to
+broaden that App; retained Jenkins build evidence is the acceptance record.
+
 Do not refresh or sync Argo CD from a feature revision. After owner review and
 merge through protected `dev-local`, run the independent infrastructure job
 against that exact protected revision and record its archived result before
