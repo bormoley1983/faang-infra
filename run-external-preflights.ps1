@@ -48,6 +48,18 @@ function Wait-PreflightJob {
         $trueConditions = @($jobState.status.conditions | Where-Object { $_.status -eq "True" } | ForEach-Object { $_.type })
         if ($trueConditions -contains "Complete") { return $true }
         if ($trueConditions -contains "Failed") { return $false }
+        $podJson = kubectl -n $Namespace get pods -l "job-name=$JobName" -o json
+        if ($LASTEXITCODE -ne 0) { throw "Unable to inspect preflight Pod status." }
+        $pods = $podJson | ConvertFrom-Json
+        foreach ($pod in @($pods.items)) {
+            foreach ($container in @($pod.status.containerStatuses)) {
+                $waitingReason = [string]$container.state.waiting.reason
+                if ($waitingReason -in @("CreateContainerConfigError", "CreateContainerError", "InvalidImageName", "ErrImagePull", "ImagePullBackOff")) {
+                    Write-Warning "Preflight container could not start: $waitingReason"
+                    return $false
+                }
+            }
+        }
         Start-Sleep -Seconds 2
     }
     return $false
@@ -77,7 +89,7 @@ try {
         $completed = Wait-PreflightJob -JobName $job
         kubectl -n $Namespace logs "job/$job" --all-containers=true
         if (-not $completed) {
-            kubectl -n $Namespace describe "job/$job"
+            kubectl -n $Namespace get pods -l "job-name=$job" -o "custom-columns=NAME:.metadata.name,PHASE:.status.phase,WAITING:.status.containerStatuses[0].state.waiting.reason"
             throw "$name external dependency preflight failed."
         }
     }

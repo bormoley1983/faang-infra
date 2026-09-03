@@ -11,7 +11,8 @@ schemas, Redis `PING`, the thirteen Kafka topics, the Elasticsearch version and
 databases, schemas, topics, indices, buckets, or application resources.
 
 Each Job uses a pinned client image, a tokenless ServiceAccount, restricted
-container security, bounded CPU/memory/scratch space, no host mount, no
+container security with an explicit numeric non-root UID/GID, bounded
+CPU/memory/scratch space, no host mount, no
 privilege, a bounded deadline, no retry, and automatic TTL cleanup. Network
 clients have shorter connection/request limits, and the runner observes one
 dependency at a time so failures retain their logs before the Job deadline. The
