@@ -86,6 +86,14 @@ archives the resulting 40-character revision. If this repository becomes
 private, replace this workaround only with a reviewed upstream fix or an
 equally repository-scoped read-only checkout mechanism.
 
+The lightweight validation image intentionally contains neither Git nor a
+package manager mutation step. The checkout container produces a newline-only
+inventory with `git ls-files` after the exact checkout; the Python validator
+accepts that inventory through `--tracked-source-list`, rejects absolute,
+parent-traversal, and non-YAML entries, and applies the same tracked-manifest
+policy used by local Git-backed validation. The inventory is archived with the
+revision and validation logs.
+
 Do not refresh or sync Argo CD from a feature revision. After owner review and
 merge through protected `dev-local`, run the independent infrastructure job
 against that exact protected revision and record its archived result before

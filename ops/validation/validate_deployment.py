@@ -190,13 +190,21 @@ def validate_source_text(relative_path: Path, text: str) -> list[Issue]:
     return issues
 
 
-def validate_tracked_sources() -> list[Issue]:
-    result = run(["git", "-C", str(ROOT), "ls-files", "*.yaml", "*.yml"])
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or "Unable to list tracked manifests")
+def validate_tracked_sources(relative_names: list[str] | None = None) -> list[Issue]:
+    if relative_names is None:
+        result = run(["git", "-C", str(ROOT), "ls-files", "*.yaml", "*.yml"])
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or "Unable to list tracked manifests")
+        relative_names = result.stdout.splitlines()
     issues: list[Issue] = []
-    for relative_name in result.stdout.splitlines():
+    for relative_name in relative_names:
         relative_path = Path(relative_name)
+        if (
+            relative_path.is_absolute()
+            or ".." in relative_path.parts
+            or relative_path.suffix.lower() not in {".yaml", ".yml"}
+        ):
+            raise RuntimeError("Tracked source list contains an invalid manifest path")
         if ".example." in relative_path.name or relative_path.parts[:3] == ("ops", "validation", "fixtures"):
             continue
         path = ROOT / relative_path
@@ -333,6 +341,11 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--overlay", type=Path, default=DEFAULT_OVERLAY)
     parser.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)
     parser.add_argument("--contracts", type=Path, default=DEFAULT_CONTRACTS)
+    parser.add_argument(
+        "--tracked-source-list",
+        type=Path,
+        help="Newline-delimited git-tracked YAML paths supplied by the checkout environment",
+    )
     parser.add_argument("--strict", action="store_true", help="Reject all findings instead of honoring the known-debt baseline")
     parser.add_argument("--skip-schema", action="store_true", help="Skip kubeconform; intended only for unit tests or offline diagnosis")
     parser.add_argument("--print-fingerprints", action="store_true", help="Print current finding fingerprints as JSON")
@@ -348,8 +361,17 @@ def main() -> int:
         return 1
 
     contracts = load_json(arguments.contracts)
-    issues = validate_rendered(render.stdout, contracts) + validate_tracked_sources()
-    issues = sorted(set(issues))
+    try:
+        tracked_names = (
+            arguments.tracked_source_list.read_text(encoding="utf-8").splitlines()
+            if arguments.tracked_source_list
+            else None
+        )
+        issues = validate_rendered(render.stdout, contracts) + validate_tracked_sources(tracked_names)
+        issues = sorted(set(issues))
+    except (OSError, RuntimeError) as exc:
+        print(f"Validation error: {exc}", file=sys.stderr)
+        return 1
     if arguments.print_fingerprints:
         print(json.dumps([issue.fingerprint for issue in issues], indent=2))
         return 0
