@@ -8,6 +8,8 @@ set -eu
 : "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
 
 export PGPASSWORD="$POSTGRES_PASSWORD"
+export PGCONNECT_TIMEOUT=10
+export PGOPTIONS="-c statement_timeout=15000"
 psql_query() {
   psql -X -v ON_ERROR_STOP=1 -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"
 }

@@ -12,7 +12,9 @@ databases, schemas, topics, indices, buckets, or application resources.
 
 Each Job uses a pinned client image, a tokenless ServiceAccount, restricted
 container security, bounded CPU/memory/scratch space, no host mount, no
-privilege, a five-minute deadline, no retry, and automatic TTL cleanup. The
+privilege, a bounded deadline, no retry, and automatic TTL cleanup. Network
+clients have shorter connection/request limits, and the runner observes one
+dependency at a time so failures retain their logs before the Job deadline. The
 PowerShell runner also removes its exact Jobs, ConfigMap, and ServiceAccount in
 a `finally` block unless `-KeepResources` is explicitly requested for bounded
 diagnosis. Runs must be serialized.

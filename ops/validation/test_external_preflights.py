@@ -45,7 +45,7 @@ class ExternalPreflightTests(unittest.TestCase):
         for job in jobs:
             self.assertIn("automountServiceAccountToken: false", job)
             self.assertIn("backoffLimit: 0", job)
-            self.assertIn("activeDeadlineSeconds: 300", job)
+            self.assertIn("activeDeadlineSeconds: 330", job)
             self.assertIn("ttlSecondsAfterFinished: 600", job)
             self.assertIn("runAsNonRoot: true", job)
             self.assertIn("readOnlyRootFilesystem: true", job)
@@ -77,6 +77,12 @@ class ExternalPreflightTests(unittest.TestCase):
             "hashtags_index",
             "required_topics=13",
             "required_buckets=2",
+            "PGCONNECT_TIMEOUT=10",
+            "statement_timeout=15000",
+            "--connect-timeout 10 --max-time 30",
+            "--connect-timeout 10 --no-auth-warning",
+            "request.timeout.ms=10000",
+            "default.api.timeout.ms=30000",
         ):
             self.assertIn(required, scripts)
 
@@ -85,6 +91,8 @@ class ExternalPreflightTests(unittest.TestCase):
         self.assertIn('mode -eq "external"', runner)
         self.assertIn("validate_dependency_selection.py", runner)
         self.assertIn("concurrent runs are not allowed", runner)
+        self.assertIn("Wait-PreflightJob", runner)
+        self.assertIn('$trueConditions -contains "Failed"', runner)
         self.assertIn("finally", runner)
         self.assertIn("delete job", runner)
         self.assertIn("delete configmap faang-external-preflight-scripts", runner)
