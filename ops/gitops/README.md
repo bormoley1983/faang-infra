@@ -53,6 +53,15 @@ the job never force-pushes and can be retried with the same published evidence.
 The pull request remains a human review boundary, and Jenkins never merges it
 or asks Argo CD to sync.
 
+Configure the infrastructure repository to delete merged pull-request head
+branches automatically. This is required because protected `dev-local` uses a
+linear-history merge strategy: after the review request is merged, the fixed
+`gitops/promotions` head must disappear so the next serialized proposal starts
+from the latest protected base. Never delete it while its review request is
+open. If automatic cleanup is unavailable, delete only that exact head after
+verifying the request is merged and protected `dev-local` contains its change;
+never substitute a force push.
+
 The Jenkinsfile contains installation placeholders for the fixed repository
 URL/slug/owner and bot commit name/email. Substitute them only in the trusted
 job definition after this revision is pushed. Do not put local mappings,

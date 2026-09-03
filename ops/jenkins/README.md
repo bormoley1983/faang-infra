@@ -157,6 +157,19 @@ red with an explicit retry instruction while retaining the already archived
 publication evidence. Install this handoff into the nine trusted delivery jobs
 only from its reviewed protected infrastructure revision.
 
+Protected revision `41d7006f3c13b0c01a86d00bec974f9334f229d6`
+supplied the reviewed handoff installed in all nine trusted delivery jobs.
+Account delivery build 9 proved the complete runtime path: Gradle, both
+architecture vulnerability gates, publication/signing, and native amd64/arm64
+execution passed before GitOps proposal build 8 was invoked. The downstream
+build preserved the exact archived revision/digest pair and created a
+one-service review request. Its protected merge revision
+`c639d7836162911508f97f9d3ce9a4a11242f53b` completed an exact-revision manual
+no-prune sync; Argo CD reported `Synced/Healthy`, Account became Ready at the
+intended digest with zero restarts, and automated sync remained disabled. The
+merged proposal head was deleted, preventing linear-history commits from
+accumulating into the next promotion cycle.
+
 ## Plugin and JCasC update policy
 
 `values/controller-hardening.yaml` is an exact 74-plugin lock. An update-center
