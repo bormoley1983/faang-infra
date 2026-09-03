@@ -64,6 +64,17 @@ spec:
         issues = VALIDATOR.validate_source_text(Path("secret.yaml"), fixture.read_text(encoding="utf-8"))
         self.assertIn("SEC001", {issue.code for issue in issues})
 
+    def test_supplied_tracked_source_list_rejects_unsafe_paths(self):
+        with self.assertRaises(RuntimeError):
+            VALIDATOR.validate_tracked_sources(["../secret.yaml"])
+
+    def test_supplied_tracked_source_list_works_without_git(self):
+        issues = VALIDATOR.validate_tracked_sources([
+            "k8s/overlays/homelab/namespace.yaml",
+            "k8s/overlays/homelab/secret.example.yaml",
+        ])
+        self.assertEqual([], issues)
+
     def test_missing_required_environment_is_rejected(self):
         rendered = (FIXTURES / "mutable-image.yaml").read_text(encoding="utf-8")
         contracts = {"services": {"broken-image": {"containerPort": 8080, "requiredEnv": ["REQUIRED_VALUE"]}}}

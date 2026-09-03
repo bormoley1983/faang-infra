@@ -77,8 +77,13 @@ spec:
                     if (!(revision ==~ /[0-9a-f]{40}/)) {
                         error('Checkout did not return an exact Git revision')
                     }
+                    def trackedManifests = sh(
+                        script: 'git ls-files "*.yaml" "*.yml"',
+                        returnStdout: true
+                    ).trim()
                     dir('.ci-evidence') {
                         writeFile(file: 'revision.txt', text: "${revision}\n")
+                        writeFile(file: 'tracked-manifests.txt', text: "${trackedManifests}\n")
                     }
                 }
 
@@ -106,7 +111,9 @@ exit $status
                         stage('Validate Homelab Desired State') {
                             sh '''#!/bin/sh
 set +x
-python3 ops/validation/validate_deployment.py --strict > .ci-evidence/deployment-validation.log 2>&1
+python3 ops/validation/validate_deployment.py --strict \
+  --tracked-source-list .ci-evidence/tracked-manifests.txt \
+  > .ci-evidence/deployment-validation.log 2>&1
 status=$?
 cat .ci-evidence/deployment-validation.log
 exit $status
