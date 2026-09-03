@@ -82,12 +82,17 @@ class ExternalPreflightTests(unittest.TestCase):
             "PGCONNECT_TIMEOUT=10",
             "statement_timeout=15000",
             "--connect-timeout 10 --max-time 30",
-            "-t 10 --no-auth-warning",
+            "-t 10",
+            'REDISCLI_AUTH="$REDIS_PASSWORD"',
+            "Redis authentication failed or conflicts with the declared credential policy",
+            "Redis ACL denied the read-only PING command",
+            "Redis TLS negotiation failed or conflicts with the declared TLS policy",
             "request.timeout.ms=10000",
             "default.api.timeout.ms=30000",
         ):
             self.assertIn(required, scripts)
         self.assertNotIn("--connect-timeout 10 --no-auth-warning", scripts)
+        self.assertNotIn('-a "$REDIS_PASSWORD"', scripts)
 
     def test_shell_scripts_are_lf_only_for_configmap_execution(self):
         attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
