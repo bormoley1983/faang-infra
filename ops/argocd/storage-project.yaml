@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang-storage
+  namespace: argocd
+spec:
+  description: Restricted platform-storage boundary for Longhorn
+  sourceRepos:
+    - 'https://charts.longhorn.io'
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: longhorn-system
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  orphanedResources:
+    warn: true

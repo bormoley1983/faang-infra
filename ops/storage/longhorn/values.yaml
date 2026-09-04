@@ -1,0 +1,33 @@
+# Longhorn 1.12.1 public, non-secret policy. Physical node/disk mappings and
+# backup target material are deliberately supplied through ignored bootstrap
+# inputs after their independent acceptance gates pass.
+global:
+  nodeSelector:
+    storage.faang.io/longhorn-node: "true"
+
+preUpgradeChecker:
+  jobEnabled: false
+
+persistence:
+  createStorageClass: false
+
+defaultSettings:
+  createDefaultDiskLabeledNodes: true
+  replicaSoftAntiAffinity: false
+  replicaAutoBalance: least-effort
+  storageOverProvisioningPercentage: 100
+  storageMinimalAvailablePercentage: 25
+  storageReservedPercentageForDefaultDisk: 30
+  systemManagedComponentsNodeSelector: "storage.faang.io/longhorn-node:true"
+  allowVolumeCreationWithDegradedAvailability: false
+  v1DataEngine: true
+  v2DataEngine: false
+  upgradeChecker: false
+  allowCollectingLonghornUsageMetrics: false
+  deletingConfirmationFlag: false
+
+service:
+  ui:
+    type: ClusterIP
+  manager:
+    type: ClusterIP

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "provider": "seaweedfs",
+  "version": "4.45",
+  "artifact": {
+    "name": "linux_amd64.tar.gz",
+    "sha256": "c408894668aeaa74d4f251e20b350fd72195cbe596ddc3f48658709714f7be36"
+  },
+  "endpoint": "",
+  "bucket": "",
+  "region": "us-east-1",
+  "caFile": "",
+  "accessKeyFile": "",
+  "secretKeyFile": ""
+}
