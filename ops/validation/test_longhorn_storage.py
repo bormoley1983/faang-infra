@@ -33,8 +33,20 @@ class LonghornStorageContractTests(unittest.TestCase):
         self.assertIn("$values/ops/storage/longhorn/values.yaml", text)
         self.assertIn("path: ops/storage/longhorn/manifests", text)
         self.assertIn("namespace: longhorn-system", text)
+        self.assertIn("kind: ConfigMap", text)
+        self.assertIn("name: longhorn-default-resource", text)
+        self.assertIn("- /data/default-resource.yaml", text)
+        self.assertIn("- RespectIgnoreDifferences=true", text)
         self.assertNotIn("automated:", text)
         self.assertNotIn("prune:", text)
+
+    def test_runtime_backup_target_drift_is_narrowly_ignored(self):
+        text = APPLICATION.read_text(encoding="utf-8")
+        self.assertEqual(1, text.count("ignoreDifferences:"))
+        self.assertEqual(1, text.count("kind: ConfigMap"))
+        self.assertEqual(1, text.count("name: longhorn-default-resource"))
+        self.assertEqual(1, text.count("- /data/default-resource.yaml"))
+        self.assertNotIn("kind: Secret", text)
 
     def test_project_isolated_to_storage_sources_and_destination(self):
         text = PROJECT.read_text(encoding="utf-8")
