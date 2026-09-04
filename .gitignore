@@ -35,5 +35,7 @@ faang-secrets.yaml
 
 # Workstation/homelab topology (copy from the tracked example)
 /config/homelab.local.json
+/config/longhorn-storage.local.json
+/config/longhorn-backup.local.json
 /k8s/registry/tests/*.local.yaml
 /artifacts/
