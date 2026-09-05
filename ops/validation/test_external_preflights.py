@@ -32,7 +32,7 @@ class ExternalPreflightTests(unittest.TestCase):
         jobs = [document for document in documents if VALIDATOR.resource_identity(document)[0] == "Job"]
         self.assertEqual(5, len(jobs))
         self.assertEqual(
-            {"postgresql", "redis", "elasticsearch", "kafka", "minio"},
+            {"postgresql", "redis", "elasticsearch", "kafka", "s3"},
             {
                 next(
                     line.split(":", 1)[1].strip()

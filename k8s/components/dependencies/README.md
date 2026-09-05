@@ -2,12 +2,12 @@
 
 Each dependency exposes the same cluster-local Service name in both modes. An
 environment must include exactly one `internal` or `external` profile for each
-of PostgreSQL, Redis, Elasticsearch, Kafka, and MinIO.
+of PostgreSQL, Redis, Elasticsearch, Kafka, and S3.
 
 External profiles own only selectorless Services. Physical addresses and
 EndpointSlices are environment-private data and must never be committed here.
 Internal profiles own Services with selectors. DEP-042 will add persistent
-workloads, backup/restore, placement, and upgrade contracts; the existing MinIO
+workloads, backup/restore, placement, and upgrade contracts; the existing S3
 POC is the only internal profile that currently includes a workload.
 
 Every profile also emits one deterministic selection ConfigMap containing its

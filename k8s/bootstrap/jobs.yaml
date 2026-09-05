@@ -165,9 +165,9 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: faang-bootstrap-minio-v1
+  name: faang-bootstrap-s3-v1
   labels:
-    app.kubernetes.io/name: faang-bootstrap-minio
+    app.kubernetes.io/name: faang-bootstrap-s3
     app.kubernetes.io/component: bootstrap
     faang.io/bootstrap-contract: v1
   annotations:
@@ -178,7 +178,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: faang-bootstrap-minio
+        app.kubernetes.io/name: faang-bootstrap-s3
         app.kubernetes.io/component: bootstrap
     spec:
       serviceAccountName: faang-bootstrap
@@ -186,35 +186,36 @@ spec:
       restartPolicy: Never
       containers:
         - name: bootstrap
-          image: minio/mc:RELEASE.2025-04-16T18-13-26Z@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3
+          image: amazon/aws-cli@sha256:b6aeb95d19d7f5a8cae4eb814cb16739b6b2a4f2f46f427ada6a8c9a20d9881d
           imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "/scripts/init-minio.sh"]
+          entrypoint: ["sh", "-c"]
+          command: ["/scripts/init-s3.sh"]
           env:
-            - name: MINIO_URL
+            - name: S3_ENDPOINT
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: MINIO_URL
-            - name: MINIO_BUCKET_NAME
+                  key: S3_ENDPOINT
+            - name: S3_BUCKET_NAME
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: MINIO_BUCKET_NAME
+                  key: S3_BUCKET_NAME
             - name: S3_AVATAR_BUCKET_NAME
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
                   key: S3_AVATAR_BUCKET_NAME
-            - name: MINIO_ACCESS_KEY
+            - name: S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_ACCESS_KEY
-            - name: MINIO_SECRET_KEY
+                  key: S3_ACCESS_KEY
+            - name: S3_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_SECRET_KEY
+                  key: S3_SECRET_KEY
           volumeMounts:
             - name: scripts
               mountPath: /scripts

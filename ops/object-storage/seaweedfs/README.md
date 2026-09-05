@@ -1,6 +1,6 @@
 # SeaweedFS application object storage
 
-This is the DEP-042B replacement for the unsupported in-cluster MinIO POC.
+This is the DEP-042B in-cluster application object store.
 It is a separate SeaweedFS S3 service backed by retained Longhorn volumes; it
 is not the external SeaweedFS service used for Longhorn backups.
 
@@ -23,7 +23,7 @@ reuse the Longhorn-backup credential or its bucket.
 Validate without mutation:
 
 ```powershell
-./validate-seaweedfs-app-s3.ps1
+./validate-seaweedfs-app-s3.p
 ./configure-seaweedfs-app-s3.ps1
 ```
 
@@ -47,11 +47,11 @@ AppProject/Application explicitly. Keep automated sync absent and use only an
 exact-revision manual sync with pruning disabled. This order prevents the S3
 gateway from ever starting without its required identity configuration.
 
-Do not change the active MinIO profile or application endpoint in the same
+Do not change the active S3 profile or application endpoint in the same
 operation as the first SeaweedFS installation. Verify the SeaweedFS components,
 three Longhorn replicas per persistent volume, authenticated required-bucket
 access, and unauthorized denial first. A later approved change may redirect
-applications and retire the known-empty MinIO POC.
+applications and retire the legacy in-cluster object store workload.
 
 For a failed initial installation, do not delete the Argo Application as a
 substitute for data cleanup. Confirm no application traffic or bucket data is

@@ -30,13 +30,13 @@ external address, or omitted TLS/credential policy before touching the
 cluster.
 
 The currently selected mixed profile keeps PostgreSQL, Redis, Elasticsearch,
-and Kafka external and deploys MinIO internally as a restricted, digest-pinned
+and Kafka external and deploys S3 internally as a restricted, digest-pinned
 StatefulSet with a 20 GiB `local-path` PVC and credentials from
 `faang-secrets`. Other internal profiles currently establish the stable
 Service contract only; their persistent workloads are intentionally deferred
 to DEP-042 and must not be selected for a live environment yet.
 
-The local-path MinIO profile survives Pod and same-node restarts, but it is not resilient to loss of the PVC's node or disk. Treat it as the POC profile until DEP-042 adds backup/restore and reviewed failure-domain storage. The final delivery path moves environment selection and physical topology into a separate private environment repository and protects credentials with SOPS/age (DEP-041 through DEP-043).
+The local-path S3 profile survives Pod and same-node restarts, but it is not resilient to loss of the PVC's node or disk. Treat it as the POC profile until DEP-042 adds backup/restore and reviewed failure-domain storage. The final delivery path moves environment selection and physical topology into a separate private environment repository and protects credentials with SOPS/age (DEP-041 through DEP-043).
 
 Runtime credentials belong to `faang/faang-secrets`. Copy `k8s/overlays/homelab/secret.example.yaml` to the ignored `faang-secrets.yaml`, set real values, and apply it with `kubectl -n faang apply -f k8s/overlays/homelab/faang-secrets.yaml`. The manifest also declares `metadata.namespace: faang` so an omitted CLI namespace cannot silently update `default/faang-secrets`.
 

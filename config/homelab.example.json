@@ -10,45 +10,68 @@
       "mode": "external",
       "address": "192.0.2.31",
       "port": 5432,
-      "tls": { "mode": "disabled" },
+      "tls": {
+        "mode": "disabled"
+      },
       "credentials": {
         "mode": "secret",
         "secretName": "faang-secrets",
-        "keys": ["POSTGRES_USER", "POSTGRES_PASSWORD"]
+        "keys": [
+          "POSTGRES_USER",
+          "POSTGRES_PASSWORD"
+        ]
       }
     },
     "redis": {
       "mode": "external",
       "address": "192.0.2.32",
       "port": 6379,
-      "tls": { "mode": "disabled" },
-      "credentials": { "mode": "none" }
+      "tls": {
+        "mode": "disabled"
+      },
+      "credentials": {
+        "mode": "none"
+      }
     },
     "elasticsearch": {
       "mode": "external",
       "address": "192.0.2.33",
       "port": 9200,
-      "tls": { "mode": "insecure" },
+      "tls": {
+        "mode": "insecure"
+      },
       "credentials": {
         "mode": "secret",
         "secretName": "faang-secrets",
-        "keys": ["ELASTICSEARCH_USERNAME", "ELASTICSEARCH_PASSWORD"]
+        "keys": [
+          "ELASTICSEARCH_USERNAME",
+          "ELASTICSEARCH_PASSWORD"
+        ]
       }
     },
     "kafka": {
       "mode": "external",
       "address": "192.0.2.34",
       "port": 9092,
-      "tls": { "mode": "disabled" },
-      "credentials": { "mode": "none" }
+      "tls": {
+        "mode": "disabled"
+      },
+      "credentials": {
+        "mode": "none"
+      }
     },
-    "minio": {
+    "s3": {
       "mode": "internal",
-      "tls": { "mode": "disabled" },
+      "tls": {
+        "mode": "disabled"
+      },
       "credentials": {
         "mode": "secret",
         "secretName": "faang-secrets",
-        "keys": ["MINIO_ACCESS_KEY", "MINIO_SECRET_KEY"]
+        "keys": [
+          "S3_ACCESS_KEY",
+          "S3_SECRET_KEY"
+        ]
       }
     }
   }

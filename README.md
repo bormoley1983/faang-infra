@@ -13,7 +13,7 @@ The system is designed for an optimized homelab environment where the entire CI/
 
 ## Project Structure
 - `k8s/base/`: Standard Kubernetes manifests (Generic, tracked in Git).
-- `k8s/bootstrap/`: Versioned, idempotent PostgreSQL, Kafka, Elasticsearch, and MinIO bootstrap Jobs.
+- `k8s/bootstrap/`: Versioned, idempotent PostgreSQL, Kafka, Elasticsearch, and S3 bootstrap Jobs.
 - `k8s/components/dependencies/`: Paired internal/external profiles that preserve stable dependency Service names.
 - `k8s/environments/examples/`: Render-only all-internal, all-external, and mixed selection proofs without private topology.
 - `k8s/overlays/homelab/`: Kustomize patches for your specific domain and environment.
@@ -64,6 +64,6 @@ If you need to bypass CI/CD and deploy from your workstation:
 
 - `k8s/base` contains portable resource structure and deliberately non-routable dependency/ingress defaults.
 - `k8s/overlays/homelab` is now a generic `home.arpa` example and selects exactly one internal/external profile per dependency. It must not contain real domains, LAN addresses, node names, or external-node mappings.
-- Stable names (`postgres-main`, `redis-main`, `kafka-main`, `elasticsearch-main`, and `minio-main`) isolate applications from physical placement changes.
+- Stable names (`postgres-main`, `redis-main`, `kafka-main`, `elasticsearch-main`, and `s3-main`) isolate applications from physical placement changes.
 - Real topology belongs in a separate private environment repository before Argo CD workload sync. Ignored workstation mappings are bootstrap-only.
 - Credentials remain outside ConfigMaps and plaintext Git. Runtime secret delivery is implemented separately under DEP-043.

@@ -243,11 +243,10 @@ nodes meeting the storage floor, and four selected nodes; do not record names.
 ## External backup gate
 
 The backup target must be an independently hosted, TLS-only S3-compatible
-service with a dedicated bucket and least-privilege credential. The current
-MinIO community repository is archived, so MinIO is not selected automatically.
+service with a dedicated bucket and least-privilege credential.
 The owner must approve either a maintained distribution with acceptable
 license/support/upgrade terms or the documented NFSv4 fallback before service
-deployment. Do not use the in-cluster application MinIO or an NFS filesystem
+deployment. Do not use the in-cluster application S3 or an NFS filesystem
 under an object-store process.
 
 The owner selected SeaweedFS under Apache-2.0 on 2026-09-04. Pin release `4.45`
@@ -387,7 +386,7 @@ removed, and `local-path` is unchanged.
 
 ## Canary, recovery, and rollback
 
-Do not migrate MinIO or any application dependency in DEP-042A. Use only
+Do not migrate the in-cluster application S3 or any application dependency in DEP-042A. Use only
 explicitly named disposable canary resources. Record deterministic original
 and restored checksums, three healthy replicas on three distinct eligible
 workers, pod-replacement persistence, controlled one-worker recovery time,

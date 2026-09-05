@@ -1,50 +1,50 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio-main
+  name: s3-main
   namespace: faang
   labels:
-    app.kubernetes.io/name: minio
+    app.kubernetes.io/name: s3
     app.kubernetes.io/component: object-storage
     app.kubernetes.io/managed-by: argocd
-    faang.io/dependency: minio
+    faang.io/dependency: s3
     faang.io/dependency-mode: internal
   annotations:
     argocd.argoproj.io/sync-wave: "-49"
 spec:
   selector:
-    app.kubernetes.io/name: minio
+    app.kubernetes.io/name: s3
   ports:
     - name: api
       port: 9000
       targetPort: api
-    - name: console
-      port: 9001
-      targetPort: console
+    - name: filer
+      port: 8888
+      targetPort: filer
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: minio-main
+  name: s3-main
   namespace: faang
   labels:
-    app.kubernetes.io/name: minio
+    app.kubernetes.io/name: s3
     app.kubernetes.io/component: object-storage
     app.kubernetes.io/managed-by: argocd
-    faang.io/dependency: minio
+    faang.io/dependency: s3
     faang.io/dependency-mode: internal
   annotations:
     argocd.argoproj.io/sync-wave: "-49"
 spec:
-  serviceName: minio-main
+  serviceName: s3-main
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: minio
+      app.kubernetes.io/name: s3
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: minio
+        app.kubernetes.io/name: s3
         app.kubernetes.io/component: object-storage
     spec:
       automountServiceAccountToken: false
@@ -57,30 +57,28 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-        - name: minio
-          image: minio/minio:RELEASE.2025-04-22T22-12-26Z@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e
+        - name: s3
+          image: chrislusf/seaweedfs:4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
           imagePullPolicy: IfNotPresent
           args:
-            - server
-            - /data
-            - --console-address
-            - :9001
+            - mini
+            - -dir=/data
           env:
-            - name: MINIO_ROOT_USER
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_ACCESS_KEY
-            - name: MINIO_ROOT_PASSWORD
+                  key: S3_ACCESS_KEY
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_SECRET_KEY
+                  key: S3_SECRET_KEY
           ports:
             - name: api
-              containerPort: 9000
-            - name: console
-              containerPort: 9001
+              containerPort: 8333
+            - name: filer
+              containerPort: 8888
           resources:
             requests:
               cpu: 100m
@@ -95,21 +93,18 @@ spec:
               drop:
                 - ALL
           startupProbe:
-            httpGet:
-              path: /minio/health/live
+            tcpSocket:
               port: api
             periodSeconds: 5
             failureThreshold: 30
           readinessProbe:
-            httpGet:
-              path: /minio/health/ready
+            tcpSocket:
               port: api
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           livenessProbe:
-            httpGet:
-              path: /minio/health/live
+            tcpSocket:
               port: api
             periodSeconds: 20
             timeoutSeconds: 3

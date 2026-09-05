@@ -6,4 +6,4 @@ resources:
   - redis-job.yaml
   - elasticsearch-job.yaml
   - kafka-job.yaml
-  - minio-job.yaml
+  - s3-job.yaml

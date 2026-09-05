@@ -111,7 +111,7 @@ post-merge operator action from the application namespace.
 Sanitized DEP-041 live evidence at the protected diagnostic contract passed
 all four dependencies selected as external: Elasticsearch version/index,
 Kafka's 13 required topics, PostgreSQL 18 with `uuidv7()` and seven schemas,
-and authenticated Redis version/PING. Internal MinIO was correctly excluded.
+and authenticated Redis version/PING. Internal S3 was correctly excluded.
 Redis credential propagation into the six consuming Deployments remains a
 reviewed tracked change and must pass exact-revision Jenkins validation plus an
 explicit manual no-prune deployment before runtime acceptance is complete.

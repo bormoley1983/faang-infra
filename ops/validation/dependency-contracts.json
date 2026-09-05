@@ -72,11 +72,10 @@
       ],
       "requiredSecretKeys": []
     },
-    "minio": {
-      "serviceName": "minio-main",
+    "s3": {
+      "serviceName": "s3-main",
       "servicePort": 9000,
       "config": {
-        "MINIO_URL": "http://faang-object-storage-seaweedfs-s3.faang-object-storage.svc.cluster.local:9000",
         "S3_ENDPOINT": "http://faang-object-storage-seaweedfs-s3.faang-object-storage.svc.cluster.local:9000"
       },
       "tlsModes": [
@@ -87,8 +86,8 @@
         "secret"
       ],
       "requiredSecretKeys": [
-        "MINIO_ACCESS_KEY",
-        "MINIO_SECRET_KEY"
+        "S3_ACCESS_KEY",
+        "S3_SECRET_KEY"
       ]
     }
   }

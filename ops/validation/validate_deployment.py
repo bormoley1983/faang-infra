@@ -35,7 +35,7 @@ KUBECONFORM_ASSETS = {
     ("windows", "amd64"): ("kubeconform-windows-amd64.zip", "e3f56102bcf4f50b034a567e2482a1c5330799983ddd655952310211aef73d93"),
     ("windows", "arm64"): ("kubeconform-windows-arm64.zip", "4f3c9889f5f3a1e4aba84f9212f599ad3164d1fb32175fba3a53b505b0fffd0f"),
 }
-STATEFUL_NAME_PATTERN = re.compile(r"(postgres|redis|kafka|elastic|elasticsearch|minio|registry)", re.IGNORECASE)
+STATEFUL_NAME_PATTERN = re.compile(r"(postgres|redis|kafka|elastic|elasticsearch|s3|registry)", re.IGNORECASE)
 
 
 @dataclass(frozen=True, order=True)

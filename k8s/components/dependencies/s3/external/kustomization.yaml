@@ -8,13 +8,13 @@ generatorOptions:
   disableNameSuffixHash: true
   labels:
     app.kubernetes.io/part-of: faang-dependencies
-    faang.io/dependency: minio
+    faang.io/dependency: s3
     faang.io/dependency-mode: external
   annotations:
     argocd.argoproj.io/sync-wave: "-49"
 
 configMapGenerator:
-  - name: faang-dependency-minio-selection
+  - name: faang-dependency-s3-selection
     namespace: faang
     literals:
       - mode=external
