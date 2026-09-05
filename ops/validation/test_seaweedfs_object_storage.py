@@ -27,6 +27,8 @@ class SeaweedFsObjectStorageContractTests(unittest.TestCase):
     def test_all_persistent_state_uses_nondefault_longhorn(self):
         self.assertEqual(3, VALUES.count("storageClass: longhorn-production-retain"))
         self.assertIn('tag: 4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5', VALUES)
+        self.assertIn("name: chrislusf/seaweedfs", VALUES)
+        self.assertNotIn("repository: chrislusf", VALUES)
         self.assertNotIn("storageClass: local-path", VALUES)
 
     def test_s3_is_authenticated_internal_only_and_runtime_secret_backed(self):

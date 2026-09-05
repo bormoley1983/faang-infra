@@ -5,14 +5,12 @@ global:
     createClusterRole: false
     automountServiceAccountToken: false
     image:
-      repository: chrislusf
-      name: seaweedfs
+      name: chrislusf/seaweedfs
     imagePullPolicy: IfNotPresent
     enableReplication: true
     replicationPlacement: "000"
 
 image:
-  repository: chrislusf/seaweedfs
   tag: 4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
 
 master:
