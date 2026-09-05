@@ -1,0 +1,128 @@
+# DEP-042B application object storage. This is intentionally separate from the
+# external SeaweedFS instance used by Longhorn backups.
+global:
+  seaweedfs:
+    createClusterRole: false
+    automountServiceAccountToken: false
+    image:
+      repository: chrislusf
+      name: seaweedfs
+    imagePullPolicy: IfNotPresent
+    enableReplication: true
+    replicationPlacement: "000"
+
+image:
+  repository: chrislusf/seaweedfs
+  tag: 4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
+
+master:
+  replicas: 1
+  defaultReplication: "000"
+  data:
+    type: persistentVolumeClaim
+    size: 1Gi
+    storageClass: longhorn-production-retain
+  logs:
+    type: emptyDir
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+  podSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    capabilities: {drop: ["ALL"]}
+    runAsNonRoot: true
+    seccompProfile: {type: RuntimeDefault}
+
+volume:
+  replicas: 1
+  resizeHook:
+    enabled: false
+  dataDirs:
+    - name: data
+      type: persistentVolumeClaim
+      size: 20Gi
+      storageClass: longhorn-production-retain
+      maxVolumes: 0
+  logs:
+    type: emptyDir
+  resources:
+    requests: {cpu: 250m, memory: 512Mi}
+    limits: {cpu: "2", memory: 2Gi}
+  podSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    capabilities: {drop: ["ALL"]}
+    runAsNonRoot: true
+    seccompProfile: {type: RuntimeDefault}
+
+filer:
+  replicas: 1
+  defaultReplicaPlacement: "000"
+  data:
+    type: persistentVolumeClaim
+    size: 5Gi
+    storageClass: longhorn-production-retain
+  logs:
+    type: emptyDir
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+  podSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    capabilities: {drop: ["ALL"]}
+    runAsNonRoot: true
+    seccompProfile: {type: RuntimeDefault}
+
+s3:
+  enabled: true
+  replicas: 1
+  port: 9000
+  enableAuth: true
+  existingConfigSecret: seaweedfs-app-s3-identity
+  logs:
+    type: emptyDir
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+  podSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    capabilities: {drop: ["ALL"]}
+    runAsNonRoot: true
+    seccompProfile: {type: RuntimeDefault}
+
+admin:
+  enabled: false
+sftp:
+  enabled: false
+worker:
+  enabled: false
+cosi:
+  enabled: false
+allInOne:
+  enabled: false
+
+networkPolicy:
+  enabled: true
+  extraIngress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: faang
+      ports:
+        - protocol: TCP
+          port: 9000
