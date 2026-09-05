@@ -22,6 +22,9 @@ spec:
           - $values/ops/database/postgresql/barman-plugin-values.yaml
     - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
       targetRevision: refs/heads/dev-local
+      path: ops/database/postgresql/manifests
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
       ref: values
   destination:
     server: 'https://kubernetes.default.svc'
@@ -29,3 +32,5 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      # CNPG CRD schemas exceed Kubernetes' client-side apply annotation limit.
+      - ServerSideApply=true
