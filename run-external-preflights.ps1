@@ -27,7 +27,7 @@ $contracts = @{
     redis = @{ Service = "redis-main"; Job = "faang-external-preflight-redis"; File = "redis-job.yaml" }
     elasticsearch = @{ Service = "elasticsearch-main"; Job = "faang-external-preflight-elasticsearch"; File = "elasticsearch-job.yaml" }
     kafka = @{ Service = "kafka-main"; Job = "faang-external-preflight-kafka"; File = "kafka-job.yaml" }
-    minio = @{ Service = "minio-main"; Job = "faang-external-preflight-minio"; File = "minio-job.yaml" }
+    s3 = @{ Service = "s3-main"; Job = "faang-external-preflight-s3"; File = "s3-job.yaml" }
 }
 $selected = @($contracts.Keys | Where-Object { $topology.dependencies.$_.mode -eq "external" } | Sort-Object)
 if ($selected.Count -eq 0) { throw "No external dependency profile is selected." }

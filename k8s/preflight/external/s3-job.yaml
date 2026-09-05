@@ -1,11 +1,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: faang-external-preflight-minio
+  name: faang-external-preflight-s3
   labels:
     app.kubernetes.io/name: faang-external-preflight
     app.kubernetes.io/component: preflight
-    faang.io/dependency: minio
+    faang.io/dependency: s3
 spec:
   backoffLimit: 0
   activeDeadlineSeconds: 330
@@ -15,7 +15,7 @@ spec:
       labels:
         app.kubernetes.io/name: faang-external-preflight
         app.kubernetes.io/component: preflight
-        faang.io/dependency: minio
+        faang.io/dependency: s3
     spec:
       serviceAccountName: faang-external-preflight
       automountServiceAccountToken: false
@@ -27,21 +27,22 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: preflight
-          image: minio/mc:RELEASE.2025-04-16T18-13-26Z@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3
-          command: ["/bin/sh", "/scripts/preflight-minio.sh"]
+          image: amazon/aws-cli@sha256:b6aeb95d19d7f5a8cae4eb814cb16739b6b2a4f2f46f427ada6a8c9a20d9881d
+          entrypoint: ["sh", "-c"]
+          command: ["/scripts/preflight-s3.sh"]
           env:
             - name: HOME
               value: /tmp
-            - name: MINIO_URL
-              valueFrom: {configMapKeyRef: {name: faang-config, key: MINIO_URL}}
-            - name: MINIO_BUCKET_NAME
-              valueFrom: {configMapKeyRef: {name: faang-config, key: MINIO_BUCKET_NAME}}
+            - name: S3_ENDPOINT
+              valueFrom: {configMapKeyRef: {name: faang-config, key: S3_ENDPOINT}}
+            - name: S3_BUCKET_NAME
+              valueFrom: {configMapKeyRef: {name: faang-config, key: S3_BUCKET_NAME}}
             - name: S3_AVATAR_BUCKET_NAME
               valueFrom: {configMapKeyRef: {name: faang-config, key: S3_AVATAR_BUCKET_NAME}}
-            - name: MINIO_ACCESS_KEY
-              valueFrom: {secretKeyRef: {name: faang-secrets, key: MINIO_ACCESS_KEY}}
-            - name: MINIO_SECRET_KEY
-              valueFrom: {secretKeyRef: {name: faang-secrets, key: MINIO_SECRET_KEY}}
+            - name: S3_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: faang-secrets, key: S3_ACCESS_KEY}}
+            - name: S3_SECRET_KEY
+              valueFrom: {secretKeyRef: {name: faang-secrets, key: S3_SECRET_KEY}}
           resources:
             requests: {cpu: 25m, memory: 32Mi}
             limits: {cpu: 250m, memory: 128Mi}

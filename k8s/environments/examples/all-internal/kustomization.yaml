@@ -8,4 +8,4 @@ resources:
   - ../../../components/dependencies/redis/internal
   - ../../../components/dependencies/elasticsearch/internal
   - ../../../components/dependencies/kafka/internal
-  - ../../../components/dependencies/minio/internal
+  - ../../../components/dependencies/s3/internal

@@ -129,12 +129,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_ACCESS_KEY
+                  key: S3_ACCESS_KEY
             - name: S3_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_SECRET_KEY
+                  key: S3_SECRET_KEY
             - name: DICEBEAR_API_URL
               valueFrom:
                 configMapKeyRef:

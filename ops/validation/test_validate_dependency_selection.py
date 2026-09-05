@@ -20,7 +20,7 @@ CONTRACT_PATH = MODULE_PATH.with_name("dependency-contracts.json")
 CONTRACTS = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))["dependencies"]
 EXAMPLE_PATH = ROOT / "config" / "homelab.example.json"
 CONFIGMAP_PATH = ROOT / "k8s" / "overlays" / "homelab" / "configmap.yaml"
-DEPENDENCIES = {"postgresql", "redis", "elasticsearch", "kafka", "minio"}
+DEPENDENCIES = {"postgresql", "redis", "elasticsearch", "kafka", "s3"}
 
 
 def render(path: Path) -> str:
@@ -111,7 +111,7 @@ class DependencySelectionTests(unittest.TestCase):
                 "redis": "external",
                 "elasticsearch": "external",
                 "kafka": "external",
-                "minio": "internal",
+                "s3": "internal",
             },
         }
         for example, modes in cases.items():
@@ -151,7 +151,7 @@ class DependencySelectionTests(unittest.TestCase):
         missing_credentials["dependencies"]["kafka"].pop("credentials")
         mutations.append(missing_credentials)
         wrong_mode = copy.deepcopy(valid)
-        wrong_mode["dependencies"]["minio"]["mode"] = "internal"
+        wrong_mode["dependencies"]["s3"]["mode"] = "internal"
         mutations.append(wrong_mode)
         for topology in mutations:
             with self.subTest(topology=topology):
@@ -187,7 +187,7 @@ class DependencySelectionTests(unittest.TestCase):
                 allow_documentation_addresses=True,
             )
 
-    def test_switching_minio_changes_only_its_connection_and_workload_resources(self):
+    def test_switching_s3_changes_only_its_connection_and_workload_resources(self):
         external = documents(render(ROOT / "k8s" / "environments" / "examples" / "all-external"))
         mixed = documents(render(ROOT / "k8s" / "environments" / "examples" / "mixed"))
         deployment_keys = {key for key in external | mixed if key[0] == "Deployment"}
@@ -201,9 +201,9 @@ class DependencySelectionTests(unittest.TestCase):
         } | (external.keys() ^ mixed.keys())
         self.assertEqual(
             {
-                ("ConfigMap", "faang-dependency-minio-selection"),
-                ("Service", "minio-main"),
-                ("StatefulSet", "minio-main"),
+                ("ConfigMap", "faang-dependency-s3-selection"),
+                ("Service", "s3-main"),
+                ("StatefulSet", "s3-main"),
             },
             changed,
         )

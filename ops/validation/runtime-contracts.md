@@ -9,20 +9,20 @@ This matrix is the human-readable companion to `service-contracts.json`. Kuberne
 | Analytics | 8086 | PostgreSQL, Redis, Kafka | Project | PostgreSQL user/password | None |
 | Notification | 8083 | Kafka | User | SMTP user/password, Telegram token, Vonage key/secret | SMTP, Telegram, and Vonage are configured through the injected delivery contract. |
 | Payment | 8082 | Redis | None | Currency-exchange access key | Currency API URL is non-secret; the access key is Secret-backed. |
-| Post | 8081 | PostgreSQL, Redis, Kafka, S3/MinIO | Project, User, Payment | PostgreSQL, S3/MinIO, moderation credential-bearing URL | Spellchecker URL is non-secret. Moderation no longer has a source-code API key default. |
-| Project | 8082 | PostgreSQL, Redis, S3/MinIO | Payment, User | PostgreSQL and S3/MinIO | Jira and Google Calendar default to explicitly disabled; enabling them requires their protected credentials. |
+| Post | 8081 | PostgreSQL, Redis, Kafka, S3 | Project, User, Payment | PostgreSQL, S3, moderation credential-bearing URL | Spellchecker URL is non-secret. Moderation no longer has a source-code API key default. |
+| Project | 8082 | PostgreSQL, Redis, S3 | Payment, User | PostgreSQL and S3 | Jira and Google Calendar default to explicitly disabled; enabling them requires their protected credentials. |
 | URL Shortener | 18080 | PostgreSQL, Redis | None | PostgreSQL user/password | Base and public redirect URLs are environment-specific ConfigMap values. |
-| User | 8080 | PostgreSQL, Redis, Kafka, S3/MinIO | Payment; Project endpoint reserved by configuration | PostgreSQL and S3/MinIO | DiceBear API URL and the dedicated avatar bucket are configurable. No default S3 credentials remain in source. |
+| User | 8080 | PostgreSQL, Redis, Kafka, S3 | Payment; Project endpoint reserved by configuration | PostgreSQL and S3 | DiceBear API URL and the dedicated avatar bucket are configurable. No default S3 credentials remain in source. |
 
 ## Shared naming rules
 
 - `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, and `DATABASE_SCHEMA` are the application-facing PostgreSQL contract. Kubernetes assembles these from `POSTGRES_*` configuration and Secret keys.
-- `POSTGRES_HOST`, `REDIS_URL`, `KAFKA_SERVERS`, `ELASTICSEARCH_URL`, `MINIO_URL`, and `S3_ENDPOINT` resolve through the stable Services `postgres-main`, `redis-main`, `kafka-main`, `elasticsearch-main`, and `minio-main`. Internal/external placement does not alter application configuration.
+- `POSTGRES_HOST`, `REDIS_URL`, `KAFKA_SERVERS`, `ELASTICSEARCH_URL`, and `S3_ENDPOINT` resolve through the stable Services `postgres-main`, `redis-main`, `kafka-main`, `elasticsearch-main`, and `s3-main`. Internal/external placement does not alter application configuration.
 - `REDIS_URL` currently means a hostname for Spring Redis clients; `REDIS_PORT` is separate.
 - `KAFKA_SERVERS` is a comma-separated bootstrap-server list.
 - `PROJECT_SERVICE_HOST`, `PAYMENT_SERVICE_HOST`, and `USER_SERVICE_HOST` are hostname-only values. Their ports are separate.
-- Post Service consumes `MINIO_*`; Project and User consume `S3_*`. Kubernetes maps both conventions to the same `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` Secret keys, so credentials are not duplicated.
-- `S3_BUCKET_NAME` is the shared application bucket; `S3_AVATAR_BUCKET_NAME` is the User avatar bucket. The MinIO bootstrap Job creates both idempotently.
+- All three services (Post, Project, User) consume the unified `S3_*` environment variables. Kubernetes maps them to the `S3_ACCESS_KEY` and `S3_SECRET_KEY` Secret keys, so credentials are not duplicated.
+- `S3_BUCKET_NAME` is the shared application bucket; `S3_AVATAR_BUCKET_NAME` is the User avatar bucket. The S3 bootstrap Job creates both idempotently.
 - `APP_ENV` selects the User Service Spring profile and is `production` in homelab.
 - `URL_SHORTENER_BASE_URL` and `URL_SHORTENER_PUBLIC_URL` must be externally reachable URLs for the selected environment.
 - External Elasticsearch uses `ELASTICSEARCH_USERNAME` and `ELASTICSEARCH_PASSWORD` from `faang-secrets`. The homelab POC currently sets `ELASTICSEARCH_TLS_INSECURE=true` because the external certificate does not cover the cluster-local Service alias; production must use a trusted CA and a SAN-correct private endpoint.

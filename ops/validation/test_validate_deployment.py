@@ -44,7 +44,7 @@ class DeploymentPolicyTests(unittest.TestCase):
         rendered = """apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: minio-main
+  name: s3-main
 spec:
   template:
     spec:
@@ -116,7 +116,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             "redis-main",
             "kafka-main",
             "elasticsearch-main",
-            "minio-main",
+            "s3-main",
             "smtp.gmail.com",
             "${",
         )
@@ -125,9 +125,9 @@ class ConfigurationOwnershipTests(unittest.TestCase):
 
     def test_local_dependency_mapping_contract_is_safe_and_complete(self):
         example = json.loads((ROOT / "config" / "homelab.example.json").read_text(encoding="utf-8"))
-        expected = {"postgresql", "redis", "elasticsearch", "kafka", "minio"}
+        expected = {"postgresql", "redis", "elasticsearch", "kafka", "s3"}
         self.assertEqual(expected, set(example["dependencies"]))
-        self.assertEqual("internal", example["dependencies"]["minio"]["mode"])
+        self.assertEqual("internal", example["dependencies"]["s3"]["mode"])
         for name, dependency in example["dependencies"].items():
             self.assertIn(dependency["mode"], {"external", "internal"})
             self.assertIn("mode", dependency["tls"])
@@ -143,7 +143,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         self.assertIn("/config/homelab.local.json", gitignore)
         installer = (ROOT / "install-external-dependencies.ps1").read_text(encoding="utf-8")
-        for service in ("postgres-main", "redis-main", "elasticsearch-main", "kafka-main", "minio-main"):
+        for service in ("postgres-main", "redis-main", "elasticsearch-main", "kafka-main", "s3-main"):
             self.assertIn(service, installer)
         self.assertIn('kind = "EndpointSlice"', installer)
         self.assertIn('"IgnoreExtraneous"', installer)
@@ -154,7 +154,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             "redis": ("redis-main", "redis"),
             "elasticsearch": ("elasticsearch-main", "https"),
             "kafka": ("kafka-main", "broker"),
-            "minio": ("minio-main", "api"),
+            "s3": ("s3-main", "api"),
         }
         for dependency, (service, port_name) in external_service_ports.items():
             self.assertIn(
@@ -169,15 +169,14 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         secret_example = (ROOT / "k8s" / "overlays" / "homelab" / "secret.example.yaml").read_text(encoding="utf-8")
         self.assertIn("namespace: faang", secret_example)
 
-    def test_internal_minio_profile_is_persistent_pinned_and_secret_driven(self):
-        rendered = self.render(ROOT / "k8s" / "components" / "dependencies" / "minio" / "internal")
+    def test_internal_s3_profile_is_persistent_pinned_and_secret_driven(self):
+        rendered = self.render(ROOT / "k8s" / "components" / "dependencies" / "s3" / "internal")
         self.assertIn("kind: StatefulSet", rendered)
         self.assertIn("storageClassName: local-path", rendered)
         self.assertIn("storage: 20Gi", rendered)
-        self.assertIn("minio/minio:RELEASE.2025-04-22T22-12-26Z@sha256:", rendered)
-        self.assertNotIn("image: minio/minio:latest", rendered)
-        self.assertIn("key: MINIO_ACCESS_KEY", rendered)
-        self.assertIn("key: MINIO_SECRET_KEY", rendered)
+        self.assertIn("chrislusf/seaweedfs:4.45@sha256:", rendered)
+        self.assertIn("key: S3_ACCESS_KEY", rendered)
+        self.assertIn("key: S3_SECRET_KEY", rendered)
         self.assertNotIn("value: password", rendered)
 
     def test_external_elasticsearch_bootstrap_has_auth_and_explicit_tls_policy(self):
@@ -359,7 +358,7 @@ class BootstrapContractTests(unittest.TestCase):
             "faang-bootstrap-postgres-v1": 'argocd.argoproj.io/sync-wave: "-40"',
             "faang-bootstrap-kafka-v1": 'argocd.argoproj.io/sync-wave: "-39"',
             "faang-bootstrap-elasticsearch-v1": 'argocd.argoproj.io/sync-wave: "-38"',
-            "faang-bootstrap-minio-v1": 'argocd.argoproj.io/sync-wave: "-37"',
+            "faang-bootstrap-s3-v1": 'argocd.argoproj.io/sync-wave: "-37"',
         }
         self.assertEqual(set(expected_waves), set(jobs))
         for name, wave in expected_waves.items():
@@ -381,12 +380,12 @@ class BootstrapContractTests(unittest.TestCase):
         postgres = (scripts / "init-postgres.sh").read_text(encoding="utf-8")
         kafka = (scripts / "init-kafka.sh").read_text(encoding="utf-8")
         elasticsearch = (scripts / "init-elasticsearch.sh").read_text(encoding="utf-8")
-        minio = (scripts / "init-minio.sh").read_text(encoding="utf-8")
+        s3 = (scripts / "init-s3.sh").read_text(encoding="utf-8")
         self.assertIn("CREATE SCHEMA IF NOT EXISTS", postgres)
         self.assertIn("--if-not-exists", kafka)
         self.assertIn("--head", elasticsearch)
-        self.assertIn("--ignore-existing", minio)
-        for script in (postgres, kafka, elasticsearch, minio):
+        self.assertIn("head-bucket", s3)
+        for script in (postgres, kafka, elasticsearch, s3):
             self.assertIn('attempt" -ge 60', script)
 
     def test_legacy_local_bootstrap_paths_are_removed(self):

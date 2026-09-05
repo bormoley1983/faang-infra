@@ -7,13 +7,13 @@ The homelab overlay includes four independent, versioned Kubernetes Jobs:
 | `faang-bootstrap-postgres-v1` | -40 | Creates the `faang` database when absent and the seven schemas used by database-backed services. |
 | `faang-bootstrap-kafka-v1` | -39 | Creates the version-1 topic set with Kafka 4.3.1. |
 | `faang-bootstrap-elasticsearch-v1` | -38 | Creates `hashtags_index` with curl 8.21.0. |
-| `faang-bootstrap-minio-v1` | -37 | Creates the application and user-avatar buckets with `--ignore-existing`. |
+| `faang-bootstrap-s3-v1` | -37 | Creates the application and user-avatar buckets with `--ignore-existing`. |
 
 The namespace is wave -60; the application ConfigMap, script ConfigMap, and dedicated token-free ServiceAccount are wave -50. Application Deployments remain at wave 0. Argo CD therefore waits for each bootstrap Job before advancing. The Jobs are ordinary versioned resources, not hooks: a completed Job remains completed and is not recreated by normal reconciliation.
 
 ## Images and architecture
 
-Jobs use official PostgreSQL, Apache Kafka 4.3.1, curl 8.21.0, and MinIO Client images pinned to immutable multi-platform manifest digests. The selected manifests were verified to contain both `linux/amd64` and `linux/arm64`. The curl image is only the Elasticsearch HTTP bootstrap client; Elasticsearch itself is 9.5.2. No workstation-local bootstrap image is built or required.
+Jobs use official PostgreSQL, Apache Kafka 4.3.1, curl 8.21.0, and the S3 client (`mc`) image pinned to an immutable multi-platform manifest digest. The selected manifests were verified to contain both `linux/amd64` and `linux/arm64`. The curl image is only the Elasticsearch HTTP bootstrap client; Elasticsearch itself is 9.5.2. No workstation-local bootstrap image is built or required.
 
 ## Reconciliation and versioning
 
@@ -36,7 +36,7 @@ kubectl -n faang get jobs -l app.kubernetes.io/component=bootstrap
 kubectl -n faang logs job/faang-bootstrap-postgres-v1
 kubectl -n faang logs job/faang-bootstrap-kafka-v1
 kubectl -n faang logs job/faang-bootstrap-elasticsearch-v1
-kubectl -n faang logs job/faang-bootstrap-minio-v1
+kubectl -n faang logs job/faang-bootstrap-s3-v1
 ```
 
 A failed negative-wave Job blocks later Argo waves. Correct the endpoint, protected credential, dependency health, or script contract; then explicitly delete only the failed versioned Job and request a reviewed Argo sync. Do not delete completed Jobs merely to force routine reruns.

@@ -14,4 +14,4 @@ configMapGenerator:
       - scripts/preflight-redis.sh
       - scripts/preflight-elasticsearch.sh
       - scripts/preflight-kafka.sh
-      - scripts/preflight-minio.sh
+      - scripts/preflight-s3.sh

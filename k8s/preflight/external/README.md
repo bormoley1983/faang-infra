@@ -7,7 +7,7 @@ addresses or credential values.
 
 The checks prove PostgreSQL 18 and `uuidv7()` plus the seven bootstrapped
 schemas, Redis `PING`, the thirteen Kafka topics, the Elasticsearch version and
-`hashtags_index`, and both required MinIO buckets. They do not create or alter
+`hashtags_index`, and both required S3 buckets. They do not create or alter
 databases, schemas, topics, indices, buckets, or application resources.
 
 Each Job uses a pinned client image, a tokenless ServiceAccount, restricted

@@ -16,4 +16,4 @@ configMapGenerator:
       - scripts/init-postgres.sh
       - scripts/init-kafka.sh
       - scripts/init-elasticsearch.sh
-      - scripts/init-minio.sh
+      - scripts/init-s3.sh

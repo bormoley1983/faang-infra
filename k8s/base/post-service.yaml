@@ -75,26 +75,26 @@ spec:
                   name: faang-secrets
                   key: REDIS_PASSWORD
                   optional: true
-            - name: MINIO_SERVICE_HOST
+            - name: S3_ENDPOINT
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: MINIO_URL
-            - name: MINIO_BUCKET_NAME
+                  key: S3_ENDPOINT
+            - name: S3_BUCKET_NAME
               valueFrom:
                 configMapKeyRef:
                   name: faang-config
-                  key: MINIO_BUCKET_NAME
-            - name: MINIO_ACCESS_KEY
+                  key: S3_BUCKET_NAME
+            - name: S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_ACCESS_KEY
-            - name: MINIO_SECRET_KEY
+                  key: S3_ACCESS_KEY
+            - name: S3_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: faang-secrets
-                  key: MINIO_SECRET_KEY
+                  key: S3_SECRET_KEY
             - name: PROJECT_SERVICE_HOST
               valueFrom:
                 configMapKeyRef:

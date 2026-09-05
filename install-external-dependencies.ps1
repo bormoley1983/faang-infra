@@ -36,7 +36,7 @@ $dependencyContract = @(
     @{ ConfigKey = "redis"; ServiceName = "redis-main"; PortName = "redis"; DefaultPort = 6379 },
     @{ ConfigKey = "elasticsearch"; ServiceName = "elasticsearch-main"; PortName = "https"; DefaultPort = 9200 },
     @{ ConfigKey = "kafka"; ServiceName = "kafka-main"; PortName = "broker"; DefaultPort = 9092 },
-    @{ ConfigKey = "minio"; ServiceName = "minio-main"; PortName = "api"; DefaultPort = 9000 }
+    @{ ConfigKey = "s3"; ServiceName = "s3-main"; PortName = "api"; DefaultPort = 9000 }
 )
 
 function Invoke-KubectlApply {
@@ -67,16 +67,16 @@ foreach ($contract in $dependencyContract) {
     }
 
     if ($mode -eq "internal") {
-        if ($contract.ConfigKey -ne "minio") {
+        if ($contract.ConfigKey -ne "s3") {
             throw "Internal mode is not implemented yet for dependencies.$($contract.ConfigKey)"
         }
         if (-not $ValidateOnly) {
             kubectl -n $Namespace delete endpointslice "$($contract.ServiceName)-external" --ignore-not-found
-            if ($LASTEXITCODE -ne 0) { throw "Unable to remove the obsolete external MinIO endpoint" }
-            kubectl apply -k "$PSScriptRoot/k8s/components/dependencies/minio/internal"
-            if ($LASTEXITCODE -ne 0) { throw "Unable to apply the internal MinIO profile" }
-            kubectl -n $Namespace rollout status statefulset/minio-main --timeout=300s
-            if ($LASTEXITCODE -ne 0) { throw "Internal MinIO did not become ready" }
+            if ($LASTEXITCODE -ne 0) { throw "Unable to remove the obsolete external S3 endpoint" }
+            kubectl apply -k "$PSScriptRoot/k8s/components/dependencies/s3/internal"
+            if ($LASTEXITCODE -ne 0) { throw "Unable to apply the internal S3 profile" }
+            kubectl -n $Namespace rollout status statefulset/s3-main --timeout=300s
+            if ($LASTEXITCODE -ne 0) { throw "Internal S3 did not become ready" }
         }
         continue
     }
