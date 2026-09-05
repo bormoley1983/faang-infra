@@ -374,6 +374,9 @@ class BootstrapContractTests(unittest.TestCase):
             "curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13",
             jobs["faang-bootstrap-elasticsearch-v1"],
         )
+        s3_job = jobs["faang-bootstrap-s3-v1"]
+        self.assertRegex(s3_job, r"command:\s*\n\s*- sh\s*\n\s*- /scripts/init-s3\.sh")
+        self.assertNotIn("entrypoint:", s3_job)
 
     def test_bootstrap_scripts_are_bounded_and_idempotent(self):
         scripts = ROOT / "k8s" / "bootstrap" / "scripts"

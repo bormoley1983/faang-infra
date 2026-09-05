@@ -188,8 +188,8 @@ spec:
         - name: bootstrap
           image: amazon/aws-cli@sha256:b6aeb95d19d7f5a8cae4eb814cb16739b6b2a4f2f46f427ada6a8c9a20d9881d
           imagePullPolicy: IfNotPresent
-          entrypoint: ["sh", "-c"]
-          command: ["/scripts/init-s3.sh"]
+          # Kubernetes `command` overrides the image ENTRYPOINT (the AWS CLI binary).
+          command: ["sh", "/scripts/init-s3.sh"]
           env:
             - name: S3_ENDPOINT
               valueFrom:
