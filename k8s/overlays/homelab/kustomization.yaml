@@ -22,13 +22,13 @@ patches:
 
 images:
   - name: docker-registry:5000/faang-account-service
-    digest: sha256:e798f0fe66b559eaa2a677058b495b559f9fd9f1239c8587c2b7f144ce43cbb5
+    digest: sha256:875fae57a5a239286a3eb7b229d439c737657cda5548630b764d10e4df8e71c8
   - name: docker-registry:5000/faang-achievement-service
     digest: sha256:c1af5cb2a6b989cf9f8fb6637c95b67108f267bfd7ae43faee4bba1370639f5b
   - name: docker-registry:5000/faang-analytics-service
     digest: sha256:cee9071971a94f44bbeaee27155118d0a0ac0e65f0c3670624528a651cb617e2
   - name: docker-registry:5000/faang-notification-service
-    digest: sha256:09bf7e990fca2e506052109b072a968658d2be8ed98d2daae1b9a5e659c80f8b
+    digest: sha256:e53a2070f8d9c137380b9dff4da871d31d02ca56ffbb599424308bb9e5df5235
   - name: docker-registry:5000/faang-payment-service
     digest: sha256:d82cafd7736a2f0267f285a44a20f93749a5656c29ecb331eb255cace81c5f86
   - name: docker-registry:5000/faang-post-service
