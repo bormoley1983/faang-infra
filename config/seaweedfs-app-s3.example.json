@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "provider": "seaweedfs",
+  "chartVersion": "4.45.0",
+  "accessKeyFile": "",
+  "secretKeyFile": "",
+  "buckets": ["example-bucket", "example-avatars"]
+}

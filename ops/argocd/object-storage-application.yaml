@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-object-storage
+  namespace: argocd
+spec:
+  project: faang-object-storage
+  sources:
+    - repoURL: 'https://seaweedfs.github.io/seaweedfs/helm'
+      chart: seaweedfs
+      targetRevision: 4.45.0
+      helm:
+        releaseName: faang-object-storage
+        valueFiles:
+          - $values/ops/object-storage/seaweedfs/values.yaml
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: faang-object-storage
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

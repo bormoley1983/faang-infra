@@ -1,0 +1,55 @@
+"""Static contract tests for the DEP-042B SeaweedFS application boundary."""
+
+from pathlib import Path
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[2]
+VALUES = (ROOT / "ops" / "object-storage" / "seaweedfs" / "values.yaml").read_text(encoding="utf-8")
+APPLICATION = (ROOT / "ops" / "argocd" / "object-storage-application.yaml").read_text(encoding="utf-8")
+PROJECT = (ROOT / "ops" / "argocd" / "object-storage-project.yaml").read_text(encoding="utf-8")
+VALIDATOR = (ROOT / "validate-seaweedfs-app-s3.ps1").read_text(encoding="utf-8")
+CONFIGURER = (ROOT / "configure-seaweedfs-app-s3.ps1").read_text(encoding="utf-8")
+GITIGNORE = (ROOT / ".gitignore").read_text(encoding="utf-8")
+
+
+class SeaweedFsObjectStorageContractTests(unittest.TestCase):
+    def test_application_is_manual_and_pinned(self):
+        self.assertIn("chart: seaweedfs", APPLICATION)
+        self.assertIn("targetRevision: 4.45.0", APPLICATION)
+        self.assertNotIn("automated:", APPLICATION)
+        self.assertNotIn("prune:", APPLICATION)
+
+    def test_project_is_restricted_to_the_object_storage_namespace(self):
+        self.assertIn("namespace: faang-object-storage", PROJECT)
+        self.assertIn("https://seaweedfs.github.io/seaweedfs/helm", PROJECT)
+
+    def test_all_persistent_state_uses_nondefault_longhorn(self):
+        self.assertEqual(3, VALUES.count("storageClass: longhorn-production-retain"))
+        self.assertIn('tag: 4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5', VALUES)
+        self.assertNotIn("storageClass: local-path", VALUES)
+
+    def test_s3_is_authenticated_internal_only_and_runtime_secret_backed(self):
+        self.assertIn("enableAuth: true", VALUES)
+        self.assertIn("existingConfigSecret: seaweedfs-app-s3-identity", VALUES)
+        self.assertIn("port: 9000", VALUES)
+        self.assertIn("networkPolicy:", VALUES)
+        self.assertNotIn("ingress:", VALUES)
+
+    def test_unneeded_and_privileged_chart_features_are_disabled(self):
+        self.assertIn("createClusterRole: false", VALUES)
+        self.assertIn("automountServiceAccountToken: false", VALUES)
+        self.assertIn("resizeHook:\n    enabled: false", VALUES)
+        for component in ("admin", "sftp", "worker", "cosi", "allInOne"):
+            self.assertIn(f"{component}:\n  enabled: false", VALUES)
+
+    def test_runtime_identity_is_ignored_validated_and_explicitly_guarded(self):
+        self.assertIn("/config/seaweedfs-app-s3.local.json", GITIGNORE)
+        self.assertIn("Credential and bucket values: suppressed", VALIDATOR)
+        self.assertIn("[switch]$Apply", CONFIGURER)
+        self.assertIn("pass -Apply only after owner approval", CONFIGURER)
+        self.assertIn("--from-file=\"seaweedfs_s3_config=$temporaryFile\"", CONFIGURER)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -37,5 +37,6 @@ faang-secrets.yaml
 /config/homelab.local.json
 /config/longhorn-storage.local.json
 /config/longhorn-backup.local.json
+/config/seaweedfs-app-s3.local.json
 /k8s/registry/tests/*.local.yaml
 /artifacts/

@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang-object-storage
+  namespace: argocd
+spec:
+  description: Restricted S3-compatible application object-storage boundary
+  sourceRepos:
+    - 'https://seaweedfs.github.io/seaweedfs/helm'
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: faang-object-storage
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  orphanedResources:
+    warn: true
