@@ -6,6 +6,10 @@ chart `0.29.0` (application `1.30.0`) and Barman Cloud CNPG-I chart `0.8.0`
 All operator, plugin, and plugin-sidecar images are pinned to multi-architecture
 OCI index digests in the adjacent values files.
 
+The Application declares `cnpg-system` itself and uses server-side apply. CNPG
+CRD schemas are too large for Kubernetes' client-side apply annotation limit;
+do not remove that sync option.
+
 It intentionally does **not** create a CloudNativePG `Cluster`, an `ObjectStore`,
 a database PVC, a backup bucket, a credential, a `postgres-main` selector, or a
 cutover. The active external PostgreSQL profile stays authoritative until a

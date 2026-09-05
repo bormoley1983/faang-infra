@@ -11,6 +11,7 @@ PLUGIN_VALUES = (ROOT / "ops" / "database" / "postgresql" / "barman-plugin-value
 APPLICATION = (ROOT / "ops" / "argocd" / "postgresql-operator-application.yaml").read_text(encoding="utf-8")
 PROJECT = (ROOT / "ops" / "argocd" / "postgresql-project.yaml").read_text(encoding="utf-8")
 README = (ROOT / "ops" / "database" / "postgresql" / "README.md").read_text(encoding="utf-8")
+NAMESPACE = (ROOT / "ops" / "database" / "postgresql" / "manifests" / "namespace.yaml").read_text(encoding="utf-8")
 
 
 class PostgresqlPersistentProfileTests(unittest.TestCase):
@@ -19,6 +20,8 @@ class PostgresqlPersistentProfileTests(unittest.TestCase):
         self.assertIn("targetRevision: 0.29.0", APPLICATION)
         self.assertIn("chart: plugin-barman-cloud", APPLICATION)
         self.assertIn("targetRevision: 0.8.0", APPLICATION)
+        self.assertIn("path: ops/database/postgresql/manifests", APPLICATION)
+        self.assertIn("ServerSideApply=true", APPLICATION)
         self.assertNotIn("automated:", APPLICATION)
         self.assertNotIn("prune:", APPLICATION)
 
@@ -48,6 +51,10 @@ class PostgresqlPersistentProfileTests(unittest.TestCase):
             self.assertNotIn(forbidden, tracked)
         self.assertIsNone(re.search(r"(?m)^kind:\s*(?:Secret|ObjectStore|Cluster)$", tracked))
         self.assertIn("intentionally does **not** create a CloudNativePG `Cluster`", README)
+
+    def test_operator_namespace_is_declared_before_chart_resources(self):
+        self.assertIn("kind: Namespace", NAMESPACE)
+        self.assertIn("name: cnpg-system", NAMESPACE)
 
 
 if __name__ == "__main__":
