@@ -28,6 +28,10 @@ master:
   podSecurityContext:
     enabled: true
     runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
   containerSecurityContext:
     enabled: true
     allowPrivilegeEscalation: false
@@ -53,6 +57,10 @@ volume:
   podSecurityContext:
     enabled: true
     runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
   containerSecurityContext:
     enabled: true
     allowPrivilegeEscalation: false
@@ -75,6 +83,10 @@ filer:
   podSecurityContext:
     enabled: true
     runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
   containerSecurityContext:
     enabled: true
     allowPrivilegeEscalation: false
@@ -96,6 +108,10 @@ s3:
   podSecurityContext:
     enabled: true
     runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
   containerSecurityContext:
     enabled: true
     allowPrivilegeEscalation: false

@@ -1,6 +1,7 @@
 """Static contract tests for the DEP-042B SeaweedFS application boundary."""
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -14,6 +15,21 @@ GITIGNORE = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
 
 class SeaweedFsObjectStorageContractTests(unittest.TestCase):
+    def test_each_component_has_nonroot_identity_and_volume_group(self):
+        # The image defaults to root; runAsNonRoot alone prevents startup.
+        # fsGroup supplies write access to PVC data and emptyDir logs.
+        for component in ("master", "volume", "filer", "s3"):
+            with self.subTest(component=component):
+                block = re.search(rf"(?ms)^{component}:\n(.*?)(?=^\S|\Z)", VALUES).group(1)
+                pod = re.search(r"(?ms)^  podSecurityContext:\n(.*?)(?=^  \S|\Z)", block).group(1)
+                self.assertRegex(pod, r"runAsNonRoot: true")
+                identity = {}
+                for field in ("runAsUser", "runAsGroup", "fsGroup"):
+                    match = re.search(rf"(?m)^    {field}: ([1-9][0-9]*)$", pod)
+                    self.assertIsNotNone(match, f"{component} needs numeric non-root {field}")
+                    identity[field] = int(match.group(1))
+                self.assertEqual(identity["runAsGroup"], identity["fsGroup"])
+
     def test_application_is_manual_and_pinned(self):
         self.assertIn("chart: seaweedfs", APPLICATION)
         self.assertIn("targetRevision: 4.45.0", APPLICATION)
