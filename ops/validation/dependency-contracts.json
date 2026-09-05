@@ -7,9 +7,17 @@
         "POSTGRES_HOST": "postgres-main",
         "POSTGRES_PORT": "5432"
       },
-      "tlsModes": ["disabled", "verify-full"],
-      "credentialModes": ["secret"],
-      "requiredSecretKeys": ["POSTGRES_USER", "POSTGRES_PASSWORD"]
+      "tlsModes": [
+        "disabled",
+        "verify-full"
+      ],
+      "credentialModes": [
+        "secret"
+      ],
+      "requiredSecretKeys": [
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD"
+      ]
     },
     "redis": {
       "serviceName": "redis-main",
@@ -18,9 +26,17 @@
         "REDIS_HOST": "redis-main",
         "REDIS_PORT": "6379"
       },
-      "tlsModes": ["disabled", "verify-full"],
-      "credentialModes": ["none", "secret"],
-      "requiredSecretKeys": ["REDIS_PASSWORD"]
+      "tlsModes": [
+        "disabled",
+        "verify-full"
+      ],
+      "credentialModes": [
+        "none",
+        "secret"
+      ],
+      "requiredSecretKeys": [
+        "REDIS_PASSWORD"
+      ]
     },
     "elasticsearch": {
       "serviceName": "elasticsearch-main",
@@ -28,9 +44,17 @@
       "config": {
         "ELASTICSEARCH_URL": "https://elasticsearch-main:9200"
       },
-      "tlsModes": ["insecure", "verify-full"],
-      "credentialModes": ["secret"],
-      "requiredSecretKeys": ["ELASTICSEARCH_USERNAME", "ELASTICSEARCH_PASSWORD"]
+      "tlsModes": [
+        "insecure",
+        "verify-full"
+      ],
+      "credentialModes": [
+        "secret"
+      ],
+      "requiredSecretKeys": [
+        "ELASTICSEARCH_USERNAME",
+        "ELASTICSEARCH_PASSWORD"
+      ]
     },
     "kafka": {
       "serviceName": "kafka-main",
@@ -38,20 +62,34 @@
       "config": {
         "KAFKA_BOOTSTRAP_SERVERS": "kafka-main:9092"
       },
-      "tlsModes": ["disabled", "verify-full"],
-      "credentialModes": ["none", "secret"],
+      "tlsModes": [
+        "disabled",
+        "verify-full"
+      ],
+      "credentialModes": [
+        "none",
+        "secret"
+      ],
       "requiredSecretKeys": []
     },
     "minio": {
       "serviceName": "minio-main",
       "servicePort": 9000,
       "config": {
-        "MINIO_URL": "http://minio-main:9000",
-        "S3_ENDPOINT": "http://minio-main:9000"
+        "MINIO_URL": "http://faang-object-storage-seaweedfs-s3.faang-object-storage.svc.cluster.local:9000",
+        "S3_ENDPOINT": "http://faang-object-storage-seaweedfs-s3.faang-object-storage.svc.cluster.local:9000"
       },
-      "tlsModes": ["disabled", "verify-full"],
-      "credentialModes": ["secret"],
-      "requiredSecretKeys": ["MINIO_ACCESS_KEY", "MINIO_SECRET_KEY"]
+      "tlsModes": [
+        "disabled",
+        "verify-full"
+      ],
+      "credentialModes": [
+        "secret"
+      ],
+      "requiredSecretKeys": [
+        "MINIO_ACCESS_KEY",
+        "MINIO_SECRET_KEY"
+      ]
     }
   }
 }
