@@ -14,7 +14,7 @@ BACKUP_VALIDATOR = ROOT / "validate-longhorn-backup.ps1"
 
 
 class LonghornStorageContractTests(unittest.TestCase):
-    def test_argocd_boundary_kustomize_parses_all_four_resources(self):
+    def test_argocd_boundary_kustomize_parses_all_resources(self):
         result = subprocess.run(
             ["kubectl", "kustomize", str(ROOT / "ops" / "argocd")],
             text=True,
@@ -22,8 +22,8 @@ class LonghornStorageContractTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(2, result.stdout.count("kind: Application\n"))
-        self.assertEqual(2, result.stdout.count("kind: AppProject\n"))
+        self.assertEqual(3, result.stdout.count("kind: Application\n"))
+        self.assertEqual(3, result.stdout.count("kind: AppProject\n"))
 
     def test_application_is_manual_exact_and_no_prune(self):
         text = APPLICATION.read_text(encoding="utf-8")

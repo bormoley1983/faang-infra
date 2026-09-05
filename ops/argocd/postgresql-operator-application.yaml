@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-postgresql-operator
+  namespace: argocd
+spec:
+  project: faang-postgresql
+  sources:
+    - repoURL: 'https://cloudnative-pg.github.io/charts'
+      chart: cloudnative-pg
+      targetRevision: 0.29.0
+      helm:
+        releaseName: cnpg
+        valueFiles:
+          - $values/ops/database/postgresql/operator-values.yaml
+    - repoURL: 'https://cloudnative-pg.github.io/charts'
+      chart: plugin-barman-cloud
+      targetRevision: 0.8.0
+      helm:
+        releaseName: barman-cloud
+        valueFiles:
+          - $values/ops/database/postgresql/barman-plugin-values.yaml
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: cnpg-system
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
