@@ -16,6 +16,14 @@ image:
 master:
   replicas: 1
   defaultReplication: "000"
+  # Longhorn is installed on workers only; exclude the control-plane CSI-less node.
+  affinity: |
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
   data:
     type: persistentVolumeClaim
     size: 1Gi
@@ -41,6 +49,13 @@ master:
 
 volume:
   replicas: 1
+  affinity: |
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
   resizeHook:
     enabled: false
   dataDirs:
@@ -71,6 +86,13 @@ volume:
 filer:
   replicas: 1
   defaultReplicaPlacement: "000"
+  affinity: |
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
   data:
     type: persistentVolumeClaim
     size: 5Gi
@@ -97,6 +119,13 @@ filer:
 s3:
   enabled: true
   replicas: 1
+  affinity: |
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
   port: 9000
   enableAuth: true
   existingConfigSecret: seaweedfs-app-s3-identity
