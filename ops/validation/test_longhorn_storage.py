@@ -22,7 +22,7 @@ class LonghornStorageContractTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(3, result.stdout.count("kind: Application\n"))
+        self.assertEqual(5, result.stdout.count("kind: Application\n"))
         self.assertEqual(3, result.stdout.count("kind: AppProject\n"))
 
     def test_application_is_manual_exact_and_no_prune(self):

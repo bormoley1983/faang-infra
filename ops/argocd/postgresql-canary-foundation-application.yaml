@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-postgresql-canary-foundation
+  namespace: argocd
+spec:
+  project: faang-postgresql
+  source:
+    repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+    targetRevision: refs/heads/dev-local
+    path: ops/database/postgresql/canary/foundation
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: faang-postgresql-canary
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

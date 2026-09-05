@@ -9,9 +9,15 @@ ROOT = Path(__file__).resolve().parents[2]
 OPERATOR_VALUES = (ROOT / "ops" / "database" / "postgresql" / "operator-values.yaml").read_text(encoding="utf-8")
 PLUGIN_VALUES = (ROOT / "ops" / "database" / "postgresql" / "barman-plugin-values.yaml").read_text(encoding="utf-8")
 APPLICATION = (ROOT / "ops" / "argocd" / "postgresql-operator-application.yaml").read_text(encoding="utf-8")
+CANARY_APPLICATION = (ROOT / "ops" / "argocd" / "postgresql-canary-application.yaml").read_text(encoding="utf-8")
+FOUNDATION_APPLICATION = (ROOT / "ops" / "argocd" / "postgresql-canary-foundation-application.yaml").read_text(encoding="utf-8")
 PROJECT = (ROOT / "ops" / "argocd" / "postgresql-project.yaml").read_text(encoding="utf-8")
 README = (ROOT / "ops" / "database" / "postgresql" / "README.md").read_text(encoding="utf-8")
 NAMESPACE = (ROOT / "ops" / "database" / "postgresql" / "manifests" / "namespace.yaml").read_text(encoding="utf-8")
+CANARY = (ROOT / "ops" / "database" / "postgresql" / "canary" / "cluster.yaml").read_text(encoding="utf-8")
+BACKUP_VALIDATOR = (ROOT / "validate-postgresql-backup.ps1").read_text(encoding="utf-8")
+BACKUP_CONFIGURER = (ROOT / "configure-postgresql-backup.ps1").read_text(encoding="utf-8")
+GITIGNORE = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
 
 class PostgresqlPersistentProfileTests(unittest.TestCase):
@@ -39,7 +45,7 @@ class PostgresqlPersistentProfileTests(unittest.TestCase):
     def test_project_allows_only_required_operator_cluster_resources(self):
         self.assertIn("name: faang-postgresql", PROJECT)
         self.assertIn("namespace: cnpg-system", PROJECT)
-        self.assertNotIn("namespace: faang", PROJECT)
+        self.assertNotIn("namespace: faang\n", PROJECT)
         cluster_whitelist = PROJECT.split("namespaceResourceWhitelist:", maxsplit=1)[0]
         self.assertNotIn("group: '*'", cluster_whitelist)
         for kind in ("CustomResourceDefinition", "ClusterRole", "ClusterRoleBinding", "MutatingWebhookConfiguration", "ValidatingWebhookConfiguration"):
@@ -55,6 +61,26 @@ class PostgresqlPersistentProfileTests(unittest.TestCase):
     def test_operator_namespace_is_declared_before_chart_resources(self):
         self.assertIn("kind: Namespace", NAMESPACE)
         self.assertIn("name: cnpg-system", NAMESPACE)
+
+    def test_canary_is_manual_pinned_and_uses_retained_storage(self):
+        self.assertIn("name: faang-postgresql-canary", CANARY)
+        self.assertIn("instances: 1", CANARY)
+        self.assertIn("postgresql:18.4@sha256:6138f19539304b585c6cafd1af82ca407f184139459a8e06f0880df4556d3588", CANARY)
+        self.assertIn("storageClass: longhorn-production-retain", CANARY)
+        self.assertIn("isWALArchiver: true", CANARY)
+        self.assertIn("barmanObjectName: faang-postgresql-backup", CANARY)
+        self.assertIn("path: ops/database/postgresql/canary", CANARY_APPLICATION)
+        self.assertIn("path: ops/database/postgresql/canary/foundation", FOUNDATION_APPLICATION)
+        self.assertNotIn("automated:", CANARY_APPLICATION + FOUNDATION_APPLICATION)
+
+    def test_backup_configuration_is_private_and_separate_from_existing_s3_identities(self):
+        self.assertIn("/config/postgresql-backup.local.json", GITIGNORE)
+        self.assertIn("PostgreSQL must not reuse Longhorn's backup bucket", BACKUP_VALIDATOR)
+        self.assertIn("PostgreSQL must not reuse an application S3 bucket", BACKUP_VALIDATOR)
+        self.assertIn("runtime and provisioning identity files must be distinct", BACKUP_VALIDATOR)
+        self.assertIn("[switch]$Apply", BACKUP_CONFIGURER)
+        self.assertIn("aws --endpoint-url", BACKUP_CONFIGURER)
+        self.assertIn("kind: ObjectStore", BACKUP_CONFIGURER)
 
 
 if __name__ == "__main__":

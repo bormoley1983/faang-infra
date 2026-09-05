@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "provider": "seaweedfs",
+  "endpoint": "",
+  "bucket": "",
+  "prefix": "cnpg-canary",
+  "region": "us-east-1",
+  "caFile": "",
+  "accessKeyFile": "",
+  "secretKeyFile": "",
+  "provisioningAccessKeyFile": "",
+  "provisioningSecretKeyFile": ""
+}
