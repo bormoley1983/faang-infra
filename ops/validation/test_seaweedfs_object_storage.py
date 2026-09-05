@@ -47,6 +47,13 @@ class SeaweedFsObjectStorageContractTests(unittest.TestCase):
         self.assertNotIn("repository: chrislusf", VALUES)
         self.assertNotIn("storageClass: local-path", VALUES)
 
+    def test_all_components_exclude_the_csi_less_control_plane(self):
+        selector = "key: node-role.kubernetes.io/control-plane\n                operator: DoesNotExist"
+        for component in ("master", "volume", "filer", "s3"):
+            with self.subTest(component=component):
+                block = re.search(rf"(?ms)^{component}:\n(.*?)(?=^\S|\Z)", VALUES).group(1)
+                self.assertIn(selector, block)
+
     def test_s3_is_authenticated_internal_only_and_runtime_secret_backed(self):
         self.assertIn("enableAuth: true", VALUES)
         self.assertIn("existingConfigSecret: seaweedfs-app-s3-identity", VALUES)
