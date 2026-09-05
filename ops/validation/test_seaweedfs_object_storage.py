@@ -7,6 +7,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 VALUES = (ROOT / "ops" / "object-storage" / "seaweedfs" / "values.yaml").read_text(encoding="utf-8")
+RESTORE_VALUES = (ROOT / "ops" / "object-storage" / "seaweedfs" / "restore-values.yaml").read_text(encoding="utf-8")
 APPLICATION = (ROOT / "ops" / "argocd" / "object-storage-application.yaml").read_text(encoding="utf-8")
 PROJECT = (ROOT / "ops" / "argocd" / "object-storage-project.yaml").read_text(encoding="utf-8")
 VALIDATOR = (ROOT / "validate-seaweedfs-app-s3.ps1").read_text(encoding="utf-8")
@@ -74,6 +75,11 @@ class SeaweedFsObjectStorageContractTests(unittest.TestCase):
         self.assertIn("[switch]$Apply", CONFIGURER)
         self.assertIn("pass -Apply only after owner approval", CONFIGURER)
         self.assertIn("--from-file=\"seaweedfs_s3_config=$temporaryFile\"", CONFIGURER)
+
+    def test_restored_filer_claim_is_explicitly_mounted_at_data(self):
+        self.assertIn("claimName: restore-filer", RESTORE_VALUES)
+        self.assertIn("name: restored-filer-data", RESTORE_VALUES)
+        self.assertIn("mountPath: /data", RESTORE_VALUES)
 
 
 if __name__ == "__main__":

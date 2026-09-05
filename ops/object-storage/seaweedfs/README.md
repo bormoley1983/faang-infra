@@ -57,3 +57,15 @@ For a failed initial installation, do not delete the Argo Application as a
 substitute for data cleanup. Confirm no application traffic or bucket data is
 present, then use the chart's documented uninstall path and delete retained
 PVCs/PVs only through an explicitly approved procedure.
+
+## Restore rehearsal
+
+Treat the Master, Filer, and Volume claims as one consistency group. Stop S3
+writers and all SeaweedFS components before taking the three Longhorn
+snapshots, then restore all three claims into an isolated namespace.
+
+For the pinned chart, an `existingClaim` Filer claim is not mounted at
+`/data` automatically. Apply `restore-values.yaml` with the restore-specific
+claim overrides so the Filer receives the restored LevelDB metadata. Restart
+the isolated S3 gateway after the Filer is mounted, then retrieve a known
+pre-backup sentinel and verify its checksum before declaring recovery passed.
