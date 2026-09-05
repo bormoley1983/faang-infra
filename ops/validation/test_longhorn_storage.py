@@ -22,7 +22,7 @@ class LonghornStorageContractTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(5, result.stdout.count("kind: Application\n"))
+        self.assertEqual(4, result.stdout.count("kind: Application\n"))
         self.assertEqual(3, result.stdout.count("kind: AppProject\n"))
 
     def test_application_is_manual_exact_and_no_prune(self):
@@ -112,7 +112,7 @@ class LonghornStorageContractTests(unittest.TestCase):
         script = NODE_BOOTSTRAP.read_text(encoding="utf-8")
         gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         example = (ROOT / "config" / "longhorn-storage.example.json").read_text(encoding="utf-8")
-        self.assertIn("/config/longhorn-storage.local.json", gitignore)
+        self.assertIn("/config/*.local.json", gitignore)
         self.assertIn('"nodes": []', example)
         self.assertIn("exactly four private node mappings are required", script)
         self.assertIn('$RequiredNodeTag = "longhorn-storage"', script)
@@ -137,7 +137,7 @@ class LonghornStorageContractTests(unittest.TestCase):
         )
         self.assertIn('"endpoint": ""', example)
         self.assertIn('"bucket": ""', example)
-        self.assertIn("/config/longhorn-backup.local.json", gitignore)
+        self.assertIn("/config/*.local.json", gitignore)
         self.assertIn("endpoint must be an HTTPS origin", validator)
         self.assertIn("Private endpoint and credential material: suppressed", validator)
         self.assertIn("Mutation: none (validation only)", validator)

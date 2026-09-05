@@ -159,7 +159,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             self.assertLessEqual(dependency["port"], 65535)
 
         gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
-        self.assertIn("/config/homelab.local.json", gitignore)
+        self.assertIn("/config/*.local.json", gitignore)
         installer = (ROOT / "install-external-dependencies.ps1").read_text(encoding="utf-8")
         for service in ("postgres-main", "redis-main", "elasticsearch-main", "kafka-main", "s3-main"):
             self.assertIn(service, installer)
