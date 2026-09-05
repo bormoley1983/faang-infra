@@ -1,0 +1,37 @@
+# DEP-042C: CloudNativePG operator only. This file intentionally creates no
+# PostgreSQL Cluster, backup ObjectStore, credential, or application routing.
+replicaCount: 1
+
+image:
+  repository: ghcr.io/cloudnative-pg/cloudnative-pg
+  tag: 1.30.0@sha256:a2701eb97cdd2a34b1fdb2cb51987f544b706e40bec72ae7146cd8580efefebb
+
+# The operator must watch the application namespace when a later, separately
+# approved Cluster is introduced. Do not install a competing single-namespace
+# operator.
+config:
+  clusterWide: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Keep control-plane scheduling available for Kubernetes control components only.
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
+
+# Prometheus Operator CRDs are not installed; enabling this would make the
+# manual installation fail. Observability is a separate reviewed delivery.
+monitoring:
+  podMonitorEnabled: false
+  grafanaDashboard:
+    create: false
