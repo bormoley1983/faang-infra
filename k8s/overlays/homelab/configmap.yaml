@@ -14,9 +14,12 @@ data:
   # POC bridge for the external node's certificate, whose SAN does not contain the cluster-local alias.
   # DEP-041 must replace this with a trusted CA and a SAN-correct private endpoint.
   ELASTICSEARCH_TLS_INSECURE: "true"
-  MINIO_URL: "http://minio-main:9000"
+  # DEP-042B cutover: application object storage moved from the legacy in-cluster
+  # MinIO POC to the SeaweedFS S3 gateway. The Service is cross-namespace; the
+  # faang namespace is explicitly allowed by the SeaweedFS S3 NetworkPolicy on 9000.
+  MINIO_URL: "http://faang-object-storage-seaweedfs-s3.faang-object-storage.svc.cluster.local:9000"
   MINIO_BUCKET_NAME: "corpbucket"
-  S3_ENDPOINT: "http://minio-main:9000"
+  S3_ENDPOINT: "http://faang-object-storage-seaweedfs-s3.faang-object-storage.svc.cluster.local:9000"
   S3_BUCKET_NAME: "corpbucket"
   S3_AVATAR_BUCKET_NAME: "user-avatars"
   S3_REGION: "us-east-1"
