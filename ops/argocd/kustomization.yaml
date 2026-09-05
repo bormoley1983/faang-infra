@@ -7,3 +7,5 @@ resources:
   - storage-application.yaml
   - postgresql-project.yaml
   - postgresql-operator-application.yaml
+  - postgresql-canary-foundation-application.yaml
+  - postgresql-canary-application.yaml

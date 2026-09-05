@@ -26,3 +26,20 @@ part of this first delivery. A future database Cluster must use only
 `longhorn-production-retain`, a dedicated least-privilege SeaweedFS S3 backup
 identity/prefix, explicit capacity/anti-affinity, and a separately rendered
 recovery manifest.
+
+## Disposable canary order
+
+1. Register the two manual canary Applications after CI; do not sync the
+   Cluster Application yet.
+2. Manually no-prune sync `faang-postgresql-canary-foundation` to create only
+   its namespace.
+3. Copy the example configuration to the ignored local path, supply a new
+   external SeaweedFS bucket/prefix plus distinct runtime and provisioning
+   identities, then validate it. Run `configure-postgresql-backup.ps1 -Apply`
+   only with owner approval; it creates the bucket if necessary and applies
+   only the canary runtime Secret/ObjectStore.
+4. Manually no-prune sync `faang-postgresql-canary`. It creates the one-instance
+   CNPG cluster only after the ObjectStore reports Ready.
+
+The foundation and Cluster Applications intentionally remain separate so a
+missing backup boundary can never be bypassed by a combined first sync.

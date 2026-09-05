@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: faang-postgresql-canary
+  labels:
+    app.kubernetes.io/part-of: faang-postgresql
+    faang.io/environment: canary

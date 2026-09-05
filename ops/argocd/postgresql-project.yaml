@@ -11,6 +11,8 @@ spec:
   destinations:
     - namespace: cnpg-system
       server: 'https://kubernetes.default.svc'
+    - namespace: faang-postgresql-canary
+      server: 'https://kubernetes.default.svc'
   clusterResourceWhitelist:
     - group: ''
       kind: Namespace
