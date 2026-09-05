@@ -1,0 +1,14 @@
+# Restore-only overlay for the pinned SeaweedFS chart.
+#
+# The chart accepts filer.data.type=existingClaim, but does not mount that
+# claim into the filer container.  Keep this explicit mount whenever a
+# restored filer claim is used, otherwise SeaweedFS starts a new empty
+# LevelDB database on the container filesystem and restored buckets vanish.
+filer:
+  extraVolumes: |
+    - name: restored-filer-data
+      persistentVolumeClaim:
+        claimName: restore-filer
+  extraVolumeMounts: |
+    - name: restored-filer-data
+      mountPath: /data
