@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -86,17 +87,34 @@ spec:
 
 
 class ConfigurationOwnershipTests(unittest.TestCase):
-    IMAGE_DIGESTS = {
-        "faang-account-service": "e798f0fe66b559eaa2a677058b495b559f9fd9f1239c8587c2b7f144ce43cbb5",
-        "faang-achievement-service": "c1af5cb2a6b989cf9f8fb6637c95b67108f267bfd7ae43faee4bba1370639f5b",
-        "faang-analytics-service": "cee9071971a94f44bbeaee27155118d0a0ac0e65f0c3670624528a651cb617e2",
-        "faang-notification-service": "09bf7e990fca2e506052109b072a968658d2be8ed98d2daae1b9a5e659c80f8b",
-        "faang-payment-service": "d82cafd7736a2f0267f285a44a20f93749a5656c29ecb331eb255cace81c5f86",
-        "faang-post-service": "8c7a22a115da9ea907714a0e1b8e1294a30b2e543bf58c8a3c50f1e51bb83989",
-        "faang-project-service": "285bd0c3e9699b35fa9c78b44ed3a7083c8d1d76e53908a47e406957a7b63afa",
-        "faang-url-shortener-service": "342dea20b24a4a14286a2d6b54cf0472094d77d5135c0d247b3ad667e1d88ba5",
-        "faang-user-service": "aa68174163ae0f5117f7be541ec04d2f3b2e4314467baedf814a7ed7a1d02d5d",
+    APPLICATION_IMAGES = {
+        "faang-account-service",
+        "faang-achievement-service",
+        "faang-analytics-service",
+        "faang-notification-service",
+        "faang-payment-service",
+        "faang-post-service",
+        "faang-project-service",
+        "faang-url-shortener-service",
+        "faang-user-service",
     }
+    IMAGE_DIGEST_PATTERN = re.compile(
+        r"^[ \t]*- name: docker-registry:5000/(?P<service>faang-[a-z-]+-service)[ \t]*\r?\n"
+        r"^[ \t]*digest: sha256:(?P<digest>[a-f0-9]{64})[ \t]*\r?$",
+        re.MULTILINE,
+    )
+
+    def image_digests(self) -> dict[str, str]:
+        """Read the promoted digests from their single GitOps source of truth."""
+        kustomization = ROOT / "k8s" / "overlays" / "homelab" / "kustomization.yaml"
+        digests = {
+            match.group("service"): match.group("digest")
+            for match in self.IMAGE_DIGEST_PATTERN.finditer(
+                kustomization.read_text(encoding="utf-8")
+            )
+        }
+        self.assertEqual(self.APPLICATION_IMAGES, set(digests), "image promotion inventory")
+        return digests
 
     def render(self, path: Path) -> str:
         result = subprocess.run(
@@ -226,7 +244,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             VALIDATOR.resource_identity(document): document
             for document in VALIDATOR.split_documents(rendered)
         }
-        for service, digest in self.IMAGE_DIGESTS.items():
+        for service, digest in self.image_digests().items():
             deployment = documents[("Deployment", service)]
             self.assertIn(
                 f"image: docker-registry:5000/{service}@sha256:{digest}",
@@ -235,7 +253,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
 
     def test_changing_one_digest_changes_only_its_deployment(self):
         original = self.render(ROOT / "k8s" / "overlays" / "homelab")
-        old_digest = self.IMAGE_DIGESTS["faang-account-service"]
+        old_digest = self.image_digests()["faang-account-service"]
         new_digest = "f" * 64
         temporary_root = ROOT / ".cache" / "validation-tests"
         temporary_root.mkdir(parents=True, exist_ok=True)
@@ -307,7 +325,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         }
         user = documents[("Deployment", "faang-user-service")]
         self.assertEqual(3, user.count("tcpSocket:"))
-        for service in self.IMAGE_DIGESTS.keys() - {"faang-user-service"}:
+        for service in self.APPLICATION_IMAGES - {"faang-user-service"}:
             self.assertEqual(3, documents[("Deployment", service)].count("httpGet:"), service)
 
     def test_redis_consumers_receive_optional_secret_backed_authentication(self):
