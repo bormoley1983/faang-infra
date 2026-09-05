@@ -58,6 +58,9 @@ class ExternalPreflightTests(unittest.TestCase):
             self.assertRegex(job, r"image:\s+[^\s]+@sha256:[0-9a-f]{64}")
             self.assertNotIn("hostPath:", job)
             self.assertNotIn("privileged: true", job)
+        s3_job = next(job for job in jobs if "name: faang-external-preflight-s3" in job)
+        self.assertRegex(s3_job, r"command:\s*\n\s*- sh\s*\n\s*- /scripts/preflight-s3\.sh")
+        self.assertNotIn("entrypoint:", s3_job)
 
     def test_scripts_are_read_only_and_check_bootstrap_state(self):
         scripts = "\n".join(
