@@ -15,6 +15,14 @@ spec:
   nodeSelector:
     workload.faang.io/ci-heavy: "true"
     kubernetes.io/arch: amd64
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              # The control plane is not a build worker and has limited root storage.
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
   imagePullSecrets:
     - name: faang-registry-pull
   securityContext:
@@ -35,9 +43,11 @@ spec:
         requests:
           cpu: 500m
           memory: 1Gi
+          ephemeral-storage: 4Gi
         limits:
           cpu: "2"
           memory: 3Gi
+          ephemeral-storage: 8Gi
       securityContext:
         allowPrivilegeEscalation: false
         runAsUser: 1000
@@ -60,9 +70,11 @@ spec:
         requests:
           cpu: 250m
           memory: 512Mi
+          ephemeral-storage: 8Gi
         limits:
           cpu: "2"
           memory: 2Gi
+          ephemeral-storage: 16Gi
       securityContext:
         allowPrivilegeEscalation: true
         runAsUser: 1000
@@ -95,9 +107,11 @@ spec:
         requests:
           cpu: 100m
           memory: 256Mi
+          ephemeral-storage: 1Gi
         limits:
           cpu: "1"
           memory: 1Gi
+          ephemeral-storage: 2Gi
       securityContext:
         allowPrivilegeEscalation: false
         runAsUser: 1000
@@ -124,7 +138,8 @@ spec:
       persistentVolumeClaim:
         claimName: faang-grype-db-cache
     - name: buildkit-state
-      emptyDir: {}
+      emptyDir:
+        sizeLimit: 12Gi
     - name: buildkit-config
       configMap:
         name: faang-buildkit-config
