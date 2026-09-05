@@ -26,16 +26,16 @@ images:
   - name: docker-registry:5000/faang-achievement-service
     digest: sha256:c1af5cb2a6b989cf9f8fb6637c95b67108f267bfd7ae43faee4bba1370639f5b
   - name: docker-registry:5000/faang-analytics-service
-    digest: sha256:cee9071971a94f44bbeaee27155118d0a0ac0e65f0c3670624528a651cb617e2
+    digest: sha256:ad96fc11e0c99515cfaa90f35ac9885fbf8b5204df1166c7efb24e41d2095599
   - name: docker-registry:5000/faang-notification-service
     digest: sha256:e53a2070f8d9c137380b9dff4da871d31d02ca56ffbb599424308bb9e5df5235
   - name: docker-registry:5000/faang-payment-service
     digest: sha256:d82cafd7736a2f0267f285a44a20f93749a5656c29ecb331eb255cace81c5f86
   - name: docker-registry:5000/faang-post-service
-    digest: sha256:8c7a22a115da9ea907714a0e1b8e1294a30b2e543bf58c8a3c50f1e51bb83989
+    digest: sha256:fd40ebe8669431834e55d1cb58f84e3f4a846402063116083369a90a0bf6958e
   - name: docker-registry:5000/faang-project-service
-    digest: sha256:285bd0c3e9699b35fa9c78b44ed3a7083c8d1d76e53908a47e406957a7b63afa
+    digest: sha256:c9363cf1eac36ae2fff438451d7f748a3def32d7bf3c0df6605ab67ad015961f
   - name: docker-registry:5000/faang-url-shortener-service
-    digest: sha256:342dea20b24a4a14286a2d6b54cf0472094d77d5135c0d247b3ad667e1d88ba5
+    digest: sha256:7712f923c06687c6298272299c50e36d0ba8ba37a72c8572bbb702a2d78d48c3
   - name: docker-registry:5000/faang-user-service
-    digest: sha256:aa68174163ae0f5117f7be541ec04d2f3b2e4314467baedf814a7ed7a1d02d5d
+    digest: sha256:5fadb64932b29088ce4f8e9b5fad12944ef9857d42f06f97ec477e6f99ffd5a4
