@@ -40,6 +40,15 @@ class ServiceDeliveryGitOpsHandoffTests(unittest.TestCase):
         self.assertIn("Image publication and native verification succeeded", self.pipeline)
         self.assertIn("Retry gitops-proposal with the archived publication-digest", self.pipeline)
 
+    def test_buildkit_agents_exclude_control_plane_and_bound_ephemeral_storage(self):
+        self.assertIn('workload.faang.io/ci-heavy: "true"', self.pipeline)
+        self.assertIn('key: node-role.kubernetes.io/control-plane', self.pipeline)
+        self.assertIn('operator: DoesNotExist', self.pipeline)
+        self.assertIn('name: buildkit-state\n      emptyDir:\n        sizeLimit: 12Gi', self.pipeline)
+        for budget in ('ephemeral-storage: 4Gi', 'ephemeral-storage: 8Gi',
+                       'ephemeral-storage: 16Gi', 'ephemeral-storage: 2Gi'):
+            self.assertIn(budget, self.pipeline)
+
 
 if __name__ == "__main__":
     unittest.main()
