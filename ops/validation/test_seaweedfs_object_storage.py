@@ -70,7 +70,7 @@ class SeaweedFsObjectStorageContractTests(unittest.TestCase):
             self.assertIn(f"{component}:\n  enabled: false", VALUES)
 
     def test_runtime_identity_is_ignored_validated_and_explicitly_guarded(self):
-        self.assertIn("/config/seaweedfs-app-s3.local.json", GITIGNORE)
+        self.assertIn("/config/*.local.json", GITIGNORE)
         self.assertIn("Credential and bucket values: suppressed", VALIDATOR)
         self.assertIn("[switch]$Apply", CONFIGURER)
         self.assertIn("pass -Apply only after owner approval", CONFIGURER)
