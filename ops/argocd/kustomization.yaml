@@ -16,3 +16,5 @@ resources:
   - redis-oci-repository.yaml
   - redis-project.yaml
   - redis-canary-application.yaml
+  - secrets-project.yaml
+  - secrets-application.yaml
