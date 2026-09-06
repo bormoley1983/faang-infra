@@ -33,6 +33,7 @@ The validator:
 - renders the homelab overlay with the installed `kubectl` Kustomize version;
 - downloads the pinned kubeconform binary into ignored `.cache/tools`, verifies its official SHA-256 checksum, and validates against the pinned Kubernetes schema version;
 - rejects unresolved `${...}` tokens, mutable/placeholder workload images, selected persistent workloads using `emptyDir`, and tracked plaintext Secret manifests;
+- permits only credential-free Argo CD Helm-OCI repository Secrets under `ops/argocd` (all other tracked plaintext Secrets remain prohibited);
 - checks ConfigMap/Secret references and the per-service environment/port/probe contract;
 - compares findings with `baseline.json`, failing on new findings or stale baseline entries.
 
