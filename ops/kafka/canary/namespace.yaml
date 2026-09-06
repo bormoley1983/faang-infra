@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: faang-kafka-canary
+  labels:
+    app.kubernetes.io/part-of: faang-kafka
+    faang.io/environment: canary

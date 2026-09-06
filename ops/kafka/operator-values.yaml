@@ -1,0 +1,33 @@
+# DEP-042D Phase 1: Strimzi Kafka operator only. This file intentionally creates
+# no Kafka cluster, topic, credential, or application routing.
+replicaCount: 1
+
+image:
+  repository: quay.io/strimzi/operator
+  tag: "1.2.0"
+
+# The operator watches all namespaces for Kafka custom resources. Do not
+# restrict to a single namespace; the canary and future production clusters
+# live in separate namespaces.
+watchAllNamespaces: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Keep control-plane scheduling available for Kubernetes control components only.
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
+
+# Prometheus Operator CRDs are not installed; enabling this would make the
+# manual installation fail. Observability is a separate reviewed delivery.
+prometheusOperatorCRDEnabled: false

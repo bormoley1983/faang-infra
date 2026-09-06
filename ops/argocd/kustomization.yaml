@@ -8,3 +8,5 @@ resources:
   - postgresql-project.yaml
   - postgresql-operator-application.yaml
   - postgresql-canary-application.yaml
+  - kafka-project.yaml
+  - kafka-canary-application.yaml
