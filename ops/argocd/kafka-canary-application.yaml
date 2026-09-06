@@ -33,7 +33,7 @@ spec:
       kind: CustomResourceDefinition
       name: kafkas.kafka.strimzi.io
       jsonPointers:
-        - /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/kafka/properties/clusterSecurity/properties
+        - /spec/versions/0/schema/openAPIV3Schema/properties/status/properties/clusterSecurity/properties
   syncPolicy:
     syncOptions:
       - CreateNamespace=true

@@ -55,7 +55,7 @@ class KafkaPersistentProfileTests(unittest.TestCase):
         self.assertIn("kind: CustomResourceDefinition", APPLICATION)
         self.assertIn("name: kafkas.kafka.strimzi.io", APPLICATION)
         self.assertIn(
-            "/spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/kafka/properties/clusterSecurity/properties",
+            "/spec/versions/0/schema/openAPIV3Schema/properties/status/properties/clusterSecurity/properties",
             APPLICATION,
         )
 
