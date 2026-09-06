@@ -60,6 +60,7 @@ class PostgresqlPersistentProfileTests(unittest.TestCase):
             ("''", "Secret", "barman-cloud-client-tls"),
             ("''", "Secret", "barman-cloud-server-tls"),
             ("barmancloud.cnpg.io", "ObjectStore", "faang-postgresql-backup"),
+            ("postgresql.cnpg.io", "Backup", "canary-base-1"),
         ):
             self.assertIn(f"group: {group}\n        kind: {kind}\n        name: {name}", PROJECT)
 

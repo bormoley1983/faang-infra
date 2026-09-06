@@ -18,4 +18,8 @@ spec:
     - group: '*'
       kind: '*'
   orphanedResources:
-    warn: true
+    # Longhorn creates a large, dynamic control-plane inventory (volumes,
+    # replicas, engines, settings, and recovery objects) outside the Helm
+    # release tree. Keep it visible in Argo, but do not emit an Application
+    # warning for every expected controller object.
+    warn: false

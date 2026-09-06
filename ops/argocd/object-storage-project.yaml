@@ -19,3 +19,9 @@ spec:
       kind: '*'
   orphanedResources:
     warn: true
+    # The separate S3 bootstrap owns this runtime-only identity; credentials
+    # must remain outside Git and outside the SeaweedFS Helm release.
+    ignore:
+      - group: ''
+        kind: Secret
+        name: seaweedfs-app-s3-identity
