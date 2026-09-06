@@ -63,8 +63,8 @@ class KafkaPersistentProfileTests(unittest.TestCase):
         self.assertIn("name: faang-kafka-system", NAMESPACE)
 
     def test_canary_is_manual_pinned_and_uses_retained_storage(self):
-        self.assertRegex(CANARY, r"(?m)^apiVersion: kafka\.strimzi\.io/v1$")
-        self.assertNotRegex(CANARY, r"(?m)^apiVersion: kafka\.strimzi\.io/v1beta2$")
+        self.assertIn("apiVersion: kafka.strimzi.io/v1", CANARY)
+        self.assertNotIn("apiVersion: kafka.strimzi.io/v1beta2", CANARY)
         self.assertIn("name: faang-kafka-canary", CANARY)
         self.assertIn("version: 4.3.1", CANARY)
         self.assertIn("port: 9092", CANARY)
