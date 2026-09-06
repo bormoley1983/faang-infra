@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang-elasticsearch
+  namespace: argocd
+spec:
+  description: Restricted ECK Elasticsearch operator and canary boundary
+  sourceRepos:
+    - 'https://helm.elastic.co'
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: faang-elasticsearch-system
+      server: 'https://kubernetes.default.svc'
+    - namespace: faang-elasticsearch-canary
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  orphanedResources:
+    warn: true

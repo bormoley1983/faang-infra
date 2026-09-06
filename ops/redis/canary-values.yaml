@@ -1,0 +1,48 @@
+# A disposable, isolated Redis canary. Authentication is
+# intentionally disabled because it receives no application routing; do not use
+# this profile as a production security configuration.
+architecture: standalone
+auth:
+  enabled: false
+
+image:
+  # Bitnami's chart defaults to the mutable latest tag. The digest makes this
+  # exact amd64/arm64 image index immutable.
+  tag: latest
+  digest: sha256:ffa455a3ad00bccc24dfde113ef55329dde687da242e9feb6ccd2b30eb93e8f3
+
+master:
+  persistence:
+    enabled: true
+    storageClass: longhorn-production-retain
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+  containerSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
+
+metrics:
+  enabled: false

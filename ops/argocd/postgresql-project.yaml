@@ -31,3 +31,22 @@ spec:
       kind: '*'
   orphanedResources:
     warn: true
+    # These are created by the deliberately separate backup bootstrap and by
+    # the CNPG/Barman Cloud controllers, rather than by either Argo Application.
+    # Keep this list exact so unexpected resources still raise a warning.
+    ignore:
+      - group: ''
+        kind: ConfigMap
+        name: cnpg-default-monitoring
+      - group: ''
+        kind: Secret
+        name: faang-postgresql-backup-s3
+      - group: ''
+        kind: Secret
+        name: barman-cloud-client-tls
+      - group: ''
+        kind: Secret
+        name: barman-cloud-server-tls
+      - group: barmancloud.cnpg.io
+        kind: ObjectStore
+        name: faang-postgresql-backup

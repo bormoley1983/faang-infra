@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-elasticsearch-canary
+  namespace: argocd
+spec:
+  project: faang-elasticsearch
+  sources:
+    - repoURL: 'https://helm.elastic.co'
+      chart: eck-operator
+      targetRevision: 3.4.1
+      helm:
+        releaseName: eck-operator
+        valueFiles:
+          - $values/ops/elasticsearch/operator-values.yaml
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
+      path: ops/elasticsearch/manifests
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
+      path: ops/elasticsearch/canary
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: faang-elasticsearch-system
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

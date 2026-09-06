@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang-redis
+  namespace: argocd
+spec:
+  description: Restricted Bitnami Redis canary boundary
+  sourceRepos:
+    - 'registry-1.docker.io/bitnamicharts'
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: faang-redis-canary
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  orphanedResources:
+    warn: true

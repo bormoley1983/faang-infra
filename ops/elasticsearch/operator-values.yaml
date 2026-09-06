@@ -1,0 +1,35 @@
+# ECK operator only. This file intentionally creates no
+# Elasticsearch workload, credential, service-routing change, or application data.
+installCRDs: true
+replicaCount: 1
+
+image:
+  tag: 3.4.1
+  digest: sha256:8190b4c57156a3f7a8da86db9d474c238a517738368fe18c4762100d73af5d01
+
+# Watch only the canary namespace; the operator itself is installed separately.
+managedNamespaces:
+  - faang-elasticsearch-canary
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
+
+telemetry:
+  disabled: true
+podMonitor:
+  enabled: false
+serviceMonitor:
+  enabled: false

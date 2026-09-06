@@ -11,3 +11,8 @@ resources:
   - strimzi-oci-repository.yaml
   - kafka-project.yaml
   - kafka-canary-application.yaml
+  - elasticsearch-project.yaml
+  - elasticsearch-canary-application.yaml
+  - redis-oci-repository.yaml
+  - redis-project.yaml
+  - redis-canary-application.yaml

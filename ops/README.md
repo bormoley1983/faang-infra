@@ -32,9 +32,11 @@ cluster.
 The currently selected mixed profile keeps PostgreSQL, Redis, Elasticsearch,
 and Kafka external and deploys S3 internally as a restricted, digest-pinned
 StatefulSet with a 20 GiB `local-path` PVC and credentials from
-`faang-secrets`. Other internal profiles currently establish the stable
-Service contract only; their persistent workloads are intentionally deferred
-to DEP-042 and must not be selected for a live environment yet.
+`faang-secrets`. DEP-042D adds isolated manual canaries for Kafka,
+Elasticsearch, and Redis under `ops/kafka`, `ops/elasticsearch`, and
+`ops/redis`. They deliberately do not alter the stable dependency Services or
+the selected external profile, so they must not be treated as a production
+cutover or selected for a live environment yet.
 
 The local-path S3 profile survives Pod and same-node restarts, but it is not resilient to loss of the PVC's node or disk. Treat it as the POC profile until DEP-042 adds backup/restore and reviewed failure-domain storage. The final delivery path moves environment selection and physical topology into a separate private environment repository and protects credentials with SOPS/age (DEP-041 through DEP-043).
 
