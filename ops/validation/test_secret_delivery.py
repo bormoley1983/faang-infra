@@ -22,6 +22,7 @@ class SecretDeliveryContractTests(unittest.TestCase):
         self.assertIn("project: faang-secrets", text)
         self.assertIn("targetRevision: main", text)
         self.assertIn("path: overlays/homelab", text)
+        self.assertIn("name: ksops-v1", text)
         self.assertIn("namespace: faang", text)
         self.assertIn("CreateNamespace=false", text)
         self.assertIn("ServerSideApply=true", text)
