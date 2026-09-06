@@ -181,11 +181,45 @@ def validate_rendered(rendered: str, contracts: dict[str, object]) -> list[Issue
     return sorted(issues)
 
 
+def is_credential_free_argocd_oci_repository_secret(relative_path: Path, text: str) -> bool:
+    """Allow only public Helm OCI repository configuration in Argo's namespace."""
+    if relative_path.parts[:2] != ("ops", "argocd"):
+        return False
+    if not re.search(r"(?m)^kind:[ \t]*Secret[ \t]*$", text):
+        return False
+    if not re.search(r"(?ms)^metadata:[ \t]*$.*?^\s{2}namespace:[ \t]*argocd[ \t]*$", text):
+        return False
+    if not re.search(
+        r"(?ms)^\s{2}labels:[ \t]*$.*?^\s{4}argocd\.argoproj\.io/secret-type:[ \t]*repository[ \t]*$",
+        text,
+    ):
+        return False
+    if re.search(r"(?m)^(?:data|binaryData):[ \t]*$", text):
+        return False
+
+    match = re.search(
+        r"(?m)^stringData:[ \t]*\r?\n(?P<body>(?:^ {2}[A-Za-z0-9]+:[^\r\n]*\r?\n?)*)",
+        text,
+    )
+    if not match:
+        return False
+    values = dict(re.findall(r"(?m)^ {2}([A-Za-z0-9]+):[ \t]*([^\s]+)[ \t]*$", match.group("body")))
+    return (
+        set(values) == {"type", "name", "url", "enableOCI"}
+        and values["type"] == "helm"
+        and values["enableOCI"].strip('"') == "true"
+    )
+
+
 def validate_source_text(relative_path: Path, text: str) -> list[Issue]:
     issues: list[Issue] = []
     for token in sorted(set(re.findall(r"\$\{[A-Za-z_][A-Za-z0-9_]*\}", text))):
         issues.append(Issue("POL001", relative_path.as_posix(), f"unresolved token {token}"))
-    if re.search(r"(?m)^kind:\s*Secret\s*$", text) and not re.search(r"(?m)^sops:\s*$", text):
+    if (
+        re.search(r"(?m)^kind:\s*Secret\s*$", text)
+        and not re.search(r"(?m)^sops:\s*$", text)
+        and not is_credential_free_argocd_oci_repository_secret(relative_path, text)
+    ):
         issues.append(Issue("SEC001", relative_path.as_posix(), "tracked plaintext Secret manifest"))
     return issues
 

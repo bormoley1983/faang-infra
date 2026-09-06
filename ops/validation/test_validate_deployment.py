@@ -65,6 +65,41 @@ spec:
         issues = VALIDATOR.validate_source_text(Path("secret.yaml"), fixture.read_text(encoding="utf-8"))
         self.assertIn("SEC001", {issue.code for issue in issues})
 
+    def test_credential_free_argocd_oci_repository_secret_is_allowed(self):
+        source = """apiVersion: v1
+kind: Secret
+metadata:
+  name: public-oci-helm
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: helm
+  name: public-oci-helm
+  url: quay.io/example-charts
+  enableOCI: \"true\"
+"""
+        issues = VALIDATOR.validate_source_text(Path("ops/argocd/public-oci-helm.yaml"), source)
+        self.assertNotIn("SEC001", {issue.code for issue in issues})
+
+    def test_argocd_oci_repository_secret_with_credentials_is_rejected(self):
+        source = """apiVersion: v1
+kind: Secret
+metadata:
+  name: public-oci-helm
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: helm
+  name: public-oci-helm
+  url: quay.io/example-charts
+  enableOCI: \"true\"
+  password: not-allowed
+"""
+        issues = VALIDATOR.validate_source_text(Path("ops/argocd/public-oci-helm.yaml"), source)
+        self.assertIn("SEC001", {issue.code for issue in issues})
+
     def test_supplied_tracked_source_list_rejects_unsafe_paths(self):
         with self.assertRaises(RuntimeError):
             VALIDATOR.validate_tracked_sources(["../secret.yaml"])

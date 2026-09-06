@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OPERATOR_VALUES = (ROOT / "ops" / "kafka" / "operator-values.yaml").read_text(encoding="utf-8")
 APPLICATION = (ROOT / "ops" / "argocd" / "kafka-canary-application.yaml").read_text(encoding="utf-8")
 PROJECT = (ROOT / "ops" / "argocd" / "kafka-project.yaml").read_text(encoding="utf-8")
+OCI_REPOSITORY = (ROOT / "ops" / "argocd" / "strimzi-oci-repository.yaml").read_text(encoding="utf-8")
 README = (ROOT / "ops" / "kafka" / "README.md").read_text(encoding="utf-8")
 NAMESPACE = (ROOT / "ops" / "kafka" / "manifests" / "namespace.yaml").read_text(encoding="utf-8")
 CANARY = (ROOT / "ops" / "kafka" / "canary" / "cluster.yaml").read_text(encoding="utf-8")
@@ -19,7 +20,8 @@ KUSTOMIZATION = (ROOT / "ops" / "argocd" / "kustomization.yaml").read_text(encod
 
 class KafkaPersistentProfileTests(unittest.TestCase):
     def test_single_canary_application_is_manual_and_pinned(self):
-        self.assertIn("chart: kafka-operator", APPLICATION)
+        self.assertIn("repoURL: 'quay.io/strimzi-helm'", APPLICATION)
+        self.assertIn("chart: strimzi-kafka-operator", APPLICATION)
         self.assertIn("targetRevision: 1.2.0", APPLICATION)
         self.assertIn("path: ops/kafka/manifests", APPLICATION)
         self.assertIn("path: ops/kafka/canary", APPLICATION)
@@ -28,7 +30,7 @@ class KafkaPersistentProfileTests(unittest.TestCase):
         self.assertNotIn("prune:", APPLICATION)
 
     def test_operator_watches_all_namespaces_and_avoids_control_plane(self):
-        self.assertIn("watchAllNamespaces: true", OPERATOR_VALUES)
+        self.assertIn("watchAnyNamespace: true", OPERATOR_VALUES)
         self.assertIn("node-role.kubernetes.io/control-plane", OPERATOR_VALUES)
         self.assertIn("operator: DoesNotExist", OPERATOR_VALUES)
 
@@ -41,6 +43,12 @@ class KafkaPersistentProfileTests(unittest.TestCase):
         self.assertNotIn("group: '*'", cluster_whitelist)
         for kind in ("CustomResourceDefinition", "ClusterRole", "ClusterRoleBinding", "MutatingWebhookConfiguration", "ValidatingWebhookConfiguration"):
             self.assertIn(f"kind: {kind}", PROJECT)
+
+    def test_public_oci_repository_is_declared_for_argocd(self):
+        self.assertIn("argocd.argoproj.io/secret-type: repository", OCI_REPOSITORY)
+        self.assertIn("url: quay.io/strimzi-helm", OCI_REPOSITORY)
+        self.assertIn('enableOCI: "true"', OCI_REPOSITORY)
+        self.assertIn("- 'quay.io/strimzi-helm'", PROJECT)
 
     def test_boundary_has_no_credential_or_application_routing(self):
         tracked = "\n".join((OPERATOR_VALUES, APPLICATION, PROJECT))
@@ -81,6 +89,7 @@ class KafkaPersistentProfileTests(unittest.TestCase):
 
     def test_kafka_resources_are_registered_in_argocd_kustomization(self):
         self.assertIn("- kafka-project.yaml", KUSTOMIZATION)
+        self.assertIn("- strimzi-oci-repository.yaml", KUSTOMIZATION)
         self.assertIn("- kafka-canary-application.yaml", KUSTOMIZATION)
         self.assertFalse((ROOT / "ops" / "argocd" / "kafka-operator-application.yaml").exists())
 
