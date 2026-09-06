@@ -1,0 +1,41 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: faang-kafka-canary-dual-role
+  namespace: faang-kafka-canary
+  annotations:
+    # Submit the node pool after the operator/CRDs and before the Kafka CR.
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/part-of: faang-kafka
+    faang.io/environment: canary
+    strimzi.io/cluster: faang-kafka-canary
+spec:
+  replicas: 1
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    size: 10Gi
+    class: longhorn-production-retain
+    kraftMetadata: shared
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  template:
+    pod:
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 0
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
