@@ -6,8 +6,8 @@ metadata:
 spec:
   project: faang-kafka
   sources:
-    - repoURL: 'https://strimzi.io/charts/'
-      chart: kafka-operator
+    - repoURL: 'quay.io/strimzi-helm'
+      chart: strimzi-kafka-operator
       targetRevision: 1.2.0
       helm:
         releaseName: strimzi
