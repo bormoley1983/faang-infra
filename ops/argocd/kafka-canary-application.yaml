@@ -25,6 +25,15 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: faang-kafka-system
+  ignoreDifferences:
+    # Kubernetes normalizes this preserved-unknown schema node by adding an
+    # empty properties map. The chart omits it, so ignoring only that generated
+    # field keeps the Application comparison meaningful.
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: kafkas.kafka.strimzi.io
+      jsonPointers:
+        - /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/kafka/properties/clusterSecurity/properties
   syncPolicy:
     syncOptions:
       - CreateNamespace=true

@@ -1,0 +1,63 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: faang-elasticsearch-canary
+  namespace: faang-elasticsearch-canary
+  annotations:
+    # CRDs and the ECK operator are rendered in wave 0; wait for them first.
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/part-of: faang-elasticsearch
+    faang.io/environment: canary
+spec:
+  version: 9.5.2
+  image: docker.elastic.co/elasticsearch/elasticsearch:9.5.2@sha256:9c1e1afc2bda921b35025e21c72ec6e392266995aa35ad6a47887363592718be
+  # Preserve the claim if the disposable canary CR is ever deleted. Longhorn's
+  # own reclaim policy is retained as a second protection layer.
+  volumeClaimDeletePolicy: DeleteOnScaledownOnly
+  nodeSets:
+    - name: canary
+      count: 1
+      config:
+        node.store.allow_mmap: false
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            storageClassName: longhorn-production-retain
+            resources:
+              requests:
+                storage: 20Gi
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            fsGroup: 1000
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: DoesNotExist
+          containers:
+            - name: elasticsearch
+              env:
+                - name: ES_JAVA_OPTS
+                  value: -Xms512m -Xmx512m
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 1Gi
+                limits:
+                  cpu: "1"
+                  memory: 2Gi
+              securityContext:
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL

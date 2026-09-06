@@ -51,6 +51,14 @@ class KafkaPersistentProfileTests(unittest.TestCase):
         self.assertIn('enableOCI: "true"', OCI_REPOSITORY)
         self.assertIn("- 'quay.io/strimzi-helm'", PROJECT)
 
+    def test_argocd_ignores_only_kubernetes_normalized_kafka_crd_schema_field(self):
+        self.assertIn("kind: CustomResourceDefinition", APPLICATION)
+        self.assertIn("name: kafkas.kafka.strimzi.io", APPLICATION)
+        self.assertIn(
+            "/spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/kafka/properties/clusterSecurity/properties",
+            APPLICATION,
+        )
+
     def test_boundary_has_no_credential_or_application_routing(self):
         tracked = "\n".join((OPERATOR_VALUES, APPLICATION, PROJECT))
         for forbidden in ("KAFKA_BOOTSTRAP_SERVERS", "kafka-main", "password", "secret"):

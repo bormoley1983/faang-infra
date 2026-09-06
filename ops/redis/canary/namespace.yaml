@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: faang-redis-canary
+  labels:
+    app.kubernetes.io/part-of: faang-redis
+    faang.io/environment: canary

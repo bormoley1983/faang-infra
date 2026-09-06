@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-redis-canary
+  namespace: argocd
+spec:
+  project: faang-redis
+  sources:
+    - repoURL: 'registry-1.docker.io/bitnamicharts'
+      chart: redis
+      targetRevision: 27.0.17
+      helm:
+        releaseName: faang-redis-canary
+        valueFiles:
+          - $values/ops/redis/canary-values.yaml
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
+      path: ops/redis/canary
+    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+      targetRevision: refs/heads/dev-local
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: faang-redis-canary
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

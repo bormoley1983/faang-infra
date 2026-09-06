@@ -52,6 +52,17 @@ class PostgresqlPersistentProfileTests(unittest.TestCase):
         for kind in ("CustomResourceDefinition", "ClusterRole", "ClusterRoleBinding", "MutatingWebhookConfiguration", "ValidatingWebhookConfiguration"):
             self.assertIn(f"kind: {kind}", PROJECT)
 
+    def test_project_ignores_only_expected_controller_and_backup_orphans(self):
+        self.assertIn("warn: true", PROJECT)
+        for group, kind, name in (
+            ("''", "ConfigMap", "cnpg-default-monitoring"),
+            ("''", "Secret", "faang-postgresql-backup-s3"),
+            ("''", "Secret", "barman-cloud-client-tls"),
+            ("''", "Secret", "barman-cloud-server-tls"),
+            ("barmancloud.cnpg.io", "ObjectStore", "faang-postgresql-backup"),
+        ):
+            self.assertIn(f"group: {group}\n        kind: {kind}\n        name: {name}", PROJECT)
+
     def test_boundary_has_no_database_or_credential_configuration(self):
         tracked = "\n".join((OPERATOR_VALUES, PLUGIN_VALUES, APPLICATION, PROJECT))
         for forbidden in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "postgres-main"):
@@ -68,6 +79,7 @@ class PostgresqlPersistentProfileTests(unittest.TestCase):
         self.assertIn("instances: 1", CANARY)
         self.assertIn("postgresql:18.4@sha256:6138f19539304b585c6cafd1af82ca407f184139459a8e06f0880df4556d3588", CANARY)
         self.assertIn("storageClass: longhorn-production-retain", CANARY)
+        self.assertIn("enabled: true", CANARY)
         self.assertIn("isWALArchiver: true", CANARY)
         self.assertIn("barmanObjectName: faang-postgresql-backup", CANARY)
         self.assertIn("path: ops/database/postgresql/canary", CANARY_APPLICATION)
