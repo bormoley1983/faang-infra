@@ -31,3 +31,12 @@ spec:
       kind: '*'
   orphanedResources:
     warn: true
+    # ECK writes controller identity and license metadata outside the Helm
+    # release resource tree. Keep the exceptions exact.
+    ignore:
+      - group: ''
+        kind: ConfigMap
+        name: elastic-licensing
+      - group: ''
+        kind: ConfigMap
+        name: elastic-operator-uuid

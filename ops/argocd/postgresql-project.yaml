@@ -50,3 +50,8 @@ spec:
       - group: barmancloud.cnpg.io
         kind: ObjectStore
         name: faang-postgresql-backup
+      # Completed base-backup evidence is created out-of-band by the approved
+      # recovery rehearsal and is deliberately retained for restore proof.
+      - group: postgresql.cnpg.io
+        kind: Backup
+        name: canary-base-1

@@ -18,3 +18,12 @@ spec:
       kind: '*'
   orphanedResources:
     warn: true
+    # Runtime credentials are supplied outside Git and must not be adopted by
+    # the application delivery boundary.
+    ignore:
+      - group: ''
+        kind: Secret
+        name: faang-secrets
+      - group: ''
+        kind: Secret
+        name: faang-registry-pull
