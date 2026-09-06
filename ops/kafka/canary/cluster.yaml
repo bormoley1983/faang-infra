@@ -1,4 +1,4 @@
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: faang-kafka-canary
@@ -6,14 +6,13 @@ metadata:
   annotations:
     # The operator chart and its CRDs are wave 0. Wait until they are healthy
     # before submitting the Kafka custom resource.
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "2"
   labels:
     app.kubernetes.io/part-of: faang-kafka
     faang.io/environment: canary
 spec:
   kafka:
     version: 4.3.1
-    replicas: 1
     listeners:
       - name: internal
         type: internal
@@ -24,31 +23,6 @@ spec:
       transaction.state.log.replication.factor: 1
       transaction.state.log.min.isr: 1
       log.retention.hours: 72
-    storage:
-      type: persistent-claim
-      size: 10Gi
-      accessModes:
-        - ReadWriteOnce
-      storageClass: longhorn-production-retain
-    resources:
-      requests:
-        cpu: 250m
-        memory: 512Mi
-      limits:
-        cpu: "1"
-        memory: 2Gi
-    template:
-      pod:
-        securityContext:
-          runAsNonRoot: true
-          fsGroup: 0
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: node-role.kubernetes.io/control-plane
-                      operator: DoesNotExist
   entityOperator:
     topicOperator: {}
     userOperator: {}
