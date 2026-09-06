@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Restricted Strimzi Kafka operator and canary boundary
   sourceRepos:
-    - 'https://strimzi.io/charts/'
+    - 'quay.io/strimzi-helm'
     - 'https://github.com/bormoley1983/faang-infra.git'
   destinations:
     - namespace: faang-kafka-system

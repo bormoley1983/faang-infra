@@ -15,11 +15,14 @@ cluster, application topics, credentials, or routing changes.
 
 ## Argo applications
 
-- `faang-kafka-canary` — one multi-source Application: the pinned Strimzi
+- `faang-kafka-canary` — one multi-source Application: the pinned Strimzi OCI
   chart, operator namespace manifest, and canary directory. It deploys the
   operator into `faang-kafka-system` and the Kafka CR into
   `faang-kafka-canary`. Manual sync, no prune. The Kafka CR is sync wave 1, so
   Argo waits for the wave-0 operator resources to be healthy first.
+
+The public OCI registry is registered declaratively as `strimzi-oci-helm` in
+`ops/argocd`; it contains no credentials and enables Argo's Helm OCI support.
 
 ## Cutover boundary
 
