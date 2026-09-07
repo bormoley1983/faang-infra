@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - runtime-foundation-project.yaml
+  - runtime-foundation-application.yaml
+  - selected-dependencies-project.yaml
+  - selected-dependencies-application.yaml
+  - bootstrap-project.yaml
+  - bootstrap-application.yaml
+  - workloads-project.yaml
+  - workloads-application.yaml

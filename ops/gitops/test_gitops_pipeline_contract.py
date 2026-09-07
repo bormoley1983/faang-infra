@@ -39,6 +39,13 @@ class GitOpsPipelineContractTests(unittest.TestCase):
             self.pipeline,
         )
 
+    def test_promotes_only_the_workload_boundary_kustomization(self) -> None:
+        path = "k8s/overlays/homelab/boundaries/workloads/kustomization.yaml"
+        self.assertIn(f'--kustomization "$WORKSPACE/gitops/{path}"', self.pipeline)
+        self.assertIn(f"git add -- {path}", self.pipeline)
+        self.assertIn(f"'{path}'", self.pipeline)
+        self.assertNotIn('--kustomization "$WORKSPACE/gitops/k8s/overlays/homelab/kustomization.yaml"', self.pipeline)
+
     def test_uses_digest_pinned_non_privileged_containers(self) -> None:
         image_lines = [
             line.strip()

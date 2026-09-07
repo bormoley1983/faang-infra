@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang-gitops-root
+  namespace: argocd
+spec:
+  description: Staged DEP-051 App-of-Apps inventory boundary only
+  sourceRepos:
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: argocd
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: argoproj.io
+      kind: Application
+    - group: argoproj.io
+      kind: AppProject
+  orphanedResources:
+    warn: true

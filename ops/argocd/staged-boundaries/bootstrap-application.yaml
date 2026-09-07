@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-bootstrap
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
+spec:
+  project: faang-bootstrap
+  source:
+    repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+    targetRevision: refs/heads/dev-local
+    path: k8s/overlays/homelab/boundaries/bootstrap
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: faang
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false

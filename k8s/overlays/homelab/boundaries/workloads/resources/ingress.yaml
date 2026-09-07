@@ -1,0 +1,99 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: faang-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: faang-account.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-account-service
+            port:
+              number: 80
+  - host: faang-achievement.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-achievement-service
+            port:
+              number: 80
+  - host: faang-analytics.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-analytics-service
+            port:
+              number: 80
+  - host: faang-notification.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-notification-service
+            port:
+              number: 80
+  - host: faang-payment.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-payment-service
+            port:
+              number: 80
+  - host: faang-post.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-post-service
+            port:
+              number: 80
+  - host: faang-project.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-project-service
+            port:
+              number: 80
+  - host: faang-url-shortener.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-url-shortener-service
+            port:
+              number: 80
+  - host: faang-user.example.invalid
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: faang-user-service
+            port:
+              number: 80

@@ -183,7 +183,7 @@ class UpdateImageDigestTests(unittest.TestCase):
 
     def test_repository_overlay_has_exactly_one_mapping_for_every_inventory_service(self) -> None:
         repository_root = Path(__file__).resolve().parents[2]
-        overlay = repository_root / "k8s" / "overlays" / "homelab" / "kustomization.yaml"
+        overlay = repository_root / "k8s" / "overlays" / "homelab" / "boundaries" / "workloads" / "kustomization.yaml"
         inventory = repository_root / "ops" / "images" / "service-images.json"
         original = overlay.read_text(encoding="utf-8")
 

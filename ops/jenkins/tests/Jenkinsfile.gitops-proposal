@@ -173,7 +173,7 @@ EOF
                                 python3 "$WORKSPACE/protected-gitops-tools/ops/gitops/update_image_digest.py" \
                                   "$SERVICE_IMAGE" \
                                   "$PUBLICATION_DIGEST" \
-                                  --kustomization "$WORKSPACE/gitops/k8s/overlays/homelab/kustomization.yaml" \
+                                  --kustomization "$WORKSPACE/gitops/k8s/overlays/homelab/boundaries/workloads/kustomization.yaml" \
                                   --inventory "$WORKSPACE/protected-gitops-tools/ops/images/service-images.json"
                             '''
                         }
@@ -190,8 +190,8 @@ EOF
                                     ).trim().toInteger()
                                     env.GITOPS_PROPOSAL_REQUIRED = ahead > 0 ? 'true' : 'false'
                                     env.GITOPS_COMMIT_REQUIRED = 'false'
-                                } else if (status == 'M k8s/overlays/homelab/kustomization.yaml' ||
-                                           status == ' M k8s/overlays/homelab/kustomization.yaml') {
+                                } else if (status == 'M k8s/overlays/homelab/boundaries/workloads/kustomization.yaml' ||
+                                           status == ' M k8s/overlays/homelab/boundaries/workloads/kustomization.yaml') {
                                     env.GITOPS_PROPOSAL_REQUIRED = 'true'
                                     env.GITOPS_COMMIT_REQUIRED = 'true'
                                 } else {
@@ -228,13 +228,13 @@ EOF
                                     export GIT_TERMINAL_PROMPT=0
 
                                     git diff --check
-                                    git add -- k8s/overlays/homelab/kustomization.yaml
+                                    git add -- k8s/overlays/homelab/boundaries/workloads/kustomization.yaml
                                     git commit \
                                       -m "chore(gitops): promote $SERVICE_IMAGE" \
                                       -m "Service-Revision: $SERVICE_REVISION" \
                                       -m "Image-Digest: $PUBLICATION_DIGEST"
                                     test "$(git diff --name-only refs/remotes/origin/dev-local...HEAD)" = \
-                                      'k8s/overlays/homelab/kustomization.yaml'
+                                      'k8s/overlays/homelab/boundaries/workloads/kustomization.yaml'
                                     git push origin HEAD:refs/heads/gitops/promotions
                                         '''
                                     }

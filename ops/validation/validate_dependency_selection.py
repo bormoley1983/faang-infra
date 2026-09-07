@@ -60,19 +60,51 @@ def section_items(path: Path, section: str) -> list[str]:
 
 def selected_profiles(kustomization: Path, expected: set[str]) -> dict[str, str]:
     selected: dict[str, list[str]] = {name: [] for name in expected}
-    for item in section_items(kustomization, "resources"):
-        resolved = (kustomization.parent / item).resolve()
+    visited: set[Path] = set()
+
+    def record(dependency: str, mode: str) -> None:
+        if dependency not in expected:
+            raise SelectionError(f"Unknown dependency profile {dependency}")
+        if mode not in {"internal", "external"}:
+            raise SelectionError(f"Unsupported dependency mode {mode} for {dependency}")
+        selected[dependency].append(mode)
+
+    def visit(path: Path) -> None:
+        resolved_path = path.resolve()
         try:
-            relative = resolved.relative_to(ROOT.resolve()).as_posix()
+            relative = resolved_path.relative_to(ROOT.resolve()).as_posix()
         except (TypeError, ValueError) as error:
             raise SelectionError("Selection resource escapes the repository") from error
         match = PROFILE_PATTERN.search(relative)
-        if not match:
-            continue
-        dependency, mode = match.groups()
-        if dependency not in expected:
-            raise SelectionError(f"Unknown dependency profile {dependency}")
-        selected[dependency].append(mode)
+        if match:
+            record(*match.groups())
+            return
+        if resolved_path in visited:
+            return
+        visited.add(resolved_path)
+        if resolved_path.is_dir():
+            child = resolved_path / "kustomization.yaml"
+            if child.exists():
+                visit(child)
+            return
+        if resolved_path.name == "kustomization.yaml":
+            for item in section_items(resolved_path, "resources"):
+                visit(resolved_path.parent / item)
+            text = resolved_path.read_text(encoding="utf-8")
+            for dependency, mode in re.findall(
+                r"name:\s*faang-dependency-([a-z0-9-]+)-selection[\s\S]*?\n[ \t]*-[ \t]*mode=(internal|external)",
+                text,
+            ):
+                record(dependency, mode)
+            return
+        text = resolved_path.read_text(encoding="utf-8")
+        for dependency, mode in re.findall(
+            r"name:\s*faang-dependency-([a-z0-9-]+)-selection[\s\S]*?\ndata:[ \t]*\n[ \t]+mode:[ \t]*(internal|external)",
+            text,
+        ):
+            record(dependency, mode)
+
+    visit(kustomization)
 
     invalid = {
         name: modes for name, modes in selected.items() if len(modes) != 1

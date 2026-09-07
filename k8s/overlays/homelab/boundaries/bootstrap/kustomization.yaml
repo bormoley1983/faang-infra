@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: faang
+resources:
+  - service-account.yaml
+  - jobs.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/name: faang-bootstrap
+    app.kubernetes.io/component: bootstrap
+  annotations:
+    argocd.argoproj.io/sync-wave: "-50"
+configMapGenerator:
+  - name: faang-bootstrap-scripts-v1
+    files:
+      - scripts/init-postgres.sh
+      - scripts/init-kafka.sh
+      - scripts/init-elasticsearch.sh
+      - scripts/init-s3.sh
