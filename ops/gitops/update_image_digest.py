@@ -16,7 +16,7 @@ from typing import Sequence
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_KUSTOMIZATION = REPOSITORY_ROOT / "k8s" / "overlays" / "homelab" / "kustomization.yaml"
+DEFAULT_KUSTOMIZATION = REPOSITORY_ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "workloads" / "kustomization.yaml"
 DEFAULT_INVENTORY = REPOSITORY_ROOT / "ops" / "images" / "service-images.json"
 DIGEST_PATTERN = re.compile(r"sha256:[0-9a-f]{64}\Z")
 NAME_LINE_PATTERN = re.compile(r"^(?P<indent>\s*)-\s+name:\s+(?P<name>\S+)\s*$")

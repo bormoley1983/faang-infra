@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faang-payment-service
+  labels:
+    app: faang-payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: faang-payment-service
+  template:
+    metadata:
+      labels:
+        app: faang-payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: docker-registry:5000/faang-payment-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: REDIS_PORT
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: REDIS_PASSWORD
+                  optional: true
+            - name: PAYMENT_SERVICE_PORT
+              value: "8082"
+            - name: CURRENCY_EXCHANGE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: CURRENCY_EXCHANGE_API_URL
+            - name: CURRENCY_EXCHANGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: faang-secrets
+                  key: CURRENCY_EXCHANGE_ACCESS_KEY
+                  optional: true
+            - name: CURRENCY_EXCHANGE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: faang-config
+                  key: CURRENCY_EXCHANGE_ENABLED
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8082
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: faang-payment-service
+spec:
+  selector:
+    app: faang-payment-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8082
+  type: ClusterIP

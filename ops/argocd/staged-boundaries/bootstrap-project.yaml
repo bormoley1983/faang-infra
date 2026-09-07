@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang-bootstrap
+  namespace: argocd
+spec:
+  description: Staged DEP-051 idempotent bootstrap-job boundary
+  sourceRepos:
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: faang
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: ServiceAccount
+    - group: batch
+      kind: Job
+  orphanedResources:
+    warn: true

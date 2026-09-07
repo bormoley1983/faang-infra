@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: faang-dependency-s3-selection
+  labels:
+    app.kubernetes.io/part-of: faang-dependencies
+    faang.io/dependency: s3
+    faang.io/dependency-mode: internal
+  annotations:
+    argocd.argoproj.io/sync-wave: "-49"
+data:
+  mode: internal

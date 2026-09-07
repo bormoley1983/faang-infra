@@ -19,7 +19,7 @@ ROOT = MODULE_PATH.parents[2]
 CONTRACT_PATH = MODULE_PATH.with_name("dependency-contracts.json")
 CONTRACTS = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))["dependencies"]
 EXAMPLE_PATH = ROOT / "config" / "homelab.example.json"
-CONFIGMAP_PATH = ROOT / "k8s" / "overlays" / "homelab" / "configmap.yaml"
+CONFIGMAP_PATH = ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "runtime-foundation" / "configmap.yaml"
 DEPENDENCIES = {"postgresql", "redis", "elasticsearch", "kafka", "s3"}
 
 

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-main
+  namespace: faang
+  labels:
+    app.kubernetes.io/part-of: faang-dependencies
+    faang.io/dependency: postgresql
+    faang.io/dependency-mode: external
+  annotations:
+    argocd.argoproj.io/sync-wave: "-49"
+spec:
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+      protocol: TCP

@@ -12,7 +12,7 @@ explicit test-only allowance:
 python ops/validation/validate_dependency_selection.py `
   --kustomization k8s/overlays/homelab/kustomization.yaml `
   --topology config/homelab.example.json `
-  --configmap k8s/overlays/homelab/configmap.yaml `
+  --configmap k8s/overlays/homelab/boundaries/runtime-foundation/configmap.yaml `
   --allow-documentation-addresses
 ```
 

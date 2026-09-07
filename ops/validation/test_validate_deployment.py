@@ -141,7 +141,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
 
     def image_digests(self) -> dict[str, str]:
         """Read the promoted digests from their single GitOps source of truth."""
-        kustomization = ROOT / "k8s" / "overlays" / "homelab" / "kustomization.yaml"
+        kustomization = ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "workloads" / "kustomization.yaml"
         digests = {
             match.group("service"): match.group("digest")
             for match in self.IMAGE_DIGEST_PATTERN.finditer(
@@ -298,7 +298,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         try:
             copied_root = test_directory / "k8s"
             shutil.copytree(ROOT / "k8s", copied_root)
-            kustomization = copied_root / "overlays" / "homelab" / "kustomization.yaml"
+            kustomization = copied_root / "overlays" / "homelab" / "boundaries" / "workloads" / "kustomization.yaml"
             text = kustomization.read_text(encoding="utf-8")
             self.assertEqual(1, text.count(old_digest))
             kustomization.write_text(text.replace(old_digest, new_digest), encoding="utf-8")

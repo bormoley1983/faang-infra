@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-gitops-root
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-100"
+spec:
+  project: faang-gitops-root
+  source:
+    repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+    targetRevision: refs/heads/dev-local
+    path: ops/argocd/staged-boundaries
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false

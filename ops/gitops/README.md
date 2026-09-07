@@ -1,7 +1,7 @@
 # GitOps digest promotion helper
 
 `update_image_digest.py` is the mutation boundary for DEP-032. It updates one
-allowlisted service in `k8s/overlays/homelab/kustomization.yaml` and never
+allowlisted service in `k8s/overlays/homelab/boundaries/workloads/kustomization.yaml` and never
 performs Git, Jenkins, Argo CD, Kubernetes, registry, or credential operations.
 
 Run it from the `faang-infra` repository root with the exact digest archived by
