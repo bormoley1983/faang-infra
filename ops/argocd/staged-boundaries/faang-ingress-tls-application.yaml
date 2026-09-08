@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
     targetRevision: main
-    path: overlays/homelab
+    path: overlays/faang-tls
     plugin:
       name: ksops-v1
   destination:

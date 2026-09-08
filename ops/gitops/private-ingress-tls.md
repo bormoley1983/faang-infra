@@ -130,6 +130,12 @@ KSOPS generators for the Argo CD and Jenkins namespace overlays. This is the
 required bridge between encrypted files in Git and Argo render output; it does
 not decrypt a Secret, call SOPS, or contact Kubernetes.
 
+Before reconciling the dedicated `faang-ingress-tls` Application, run
+`isolate-private-application-tls-overlay.ps1`. It removes the application TLS
+entry from the existing `faang-secrets` renderer and creates the dedicated
+`overlays/faang-tls` renderer. This prevents two Argo Applications from
+claiming the same Secret; never force-sync through a shared-resource warning.
+
 ## Private environment overlay changes
 
 The generic public workload source must remain unchanged. In the private
