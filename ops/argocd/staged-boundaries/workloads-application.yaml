@@ -8,9 +8,9 @@ metadata:
 spec:
   project: faang-workloads
   source:
-    repoURL: 'https://github.com/bormoley1983/faang-infra.git'
-    targetRevision: refs/heads/dev-local
-    path: k8s/overlays/homelab/boundaries/workloads
+    repoURL: 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
+    targetRevision: main
+    path: overlays/workloads
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: faang
