@@ -1,7 +1,6 @@
 namespace: faang
 
 resources:
-  - boundaries/selected-dependencies
   - boundaries/retained-s3-main
   - boundaries/bootstrap
   - boundaries/workloads

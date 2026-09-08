@@ -58,7 +58,11 @@ def section_items(path: Path, section: str) -> list[str]:
     return items
 
 
-def selected_profiles(kustomization: Path, expected: set[str]) -> dict[str, str]:
+def selected_profiles(
+    kustomization: Path,
+    expected: set[str],
+    selection_overlays: Sequence[Path] = (),
+) -> dict[str, str]:
     selected: dict[str, list[str]] = {name: [] for name in expected}
     visited: set[Path] = set()
 
@@ -105,6 +109,8 @@ def selected_profiles(kustomization: Path, expected: set[str]) -> dict[str, str]
             record(dependency, mode)
 
     visit(kustomization)
+    for selection_overlay in selection_overlays:
+        visit(selection_overlay)
 
     invalid = {
         name: modes for name, modes in selected.items() if len(modes) != 1
@@ -205,13 +211,14 @@ def validate(
     configmap_path: Path,
     contract_path: Path = DEFAULT_CONTRACT,
     *,
+    selection_overlays: Sequence[Path] = (),
     allow_documentation_addresses: bool = False,
 ) -> dict[str, str]:
     contract_document = load_json(contract_path)
     contracts = contract_document.get("dependencies")
     if not isinstance(contracts, dict) or not contracts:
         raise SelectionError("Dependency contract has no dependencies")
-    selected = selected_profiles(kustomization, set(contracts))
+    selected = selected_profiles(kustomization, set(contracts), selection_overlays)
     validate_topology(
         selected,
         load_json(topology_path),
@@ -228,6 +235,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--topology", type=Path, required=True)
     parser.add_argument("--configmap", type=Path, required=True)
     parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
+    parser.add_argument(
+        "--selection-overlay",
+        action="append",
+        default=[],
+        type=Path,
+        help="Additional boundary Kustomization containing dependency selection profiles",
+    )
     parser.add_argument("--allow-documentation-addresses", action="store_true")
     return parser
 
@@ -240,6 +254,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
             options.topology,
             options.configmap,
             options.contract,
+            selection_overlays=options.selection_overlay,
             allow_documentation_addresses=options.allow_documentation_addresses,
         )
     except SelectionError as error:

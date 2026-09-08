@@ -11,6 +11,7 @@ explicit test-only allowance:
 ```powershell
 python ops/validation/validate_dependency_selection.py `
   --kustomization k8s/overlays/homelab/kustomization.yaml `
+  --selection-overlay k8s/overlays/homelab/boundaries/selected-dependencies `
   --topology config/homelab.example.json `
   --configmap k8s/overlays/homelab/boundaries/runtime-foundation/configmap.yaml `
   --allow-documentation-addresses

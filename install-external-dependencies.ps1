@@ -16,10 +16,12 @@ if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
 
 $validatorPath = Join-Path $PSScriptRoot "ops/validation/validate_dependency_selection.py"
 $selectionPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/kustomization.yaml"
+$selectionOverlayPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/boundaries/selected-dependencies"
 $configMapPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/boundaries/runtime-foundation/configmap.yaml"
 $resolvedConfigPath = (Resolve-Path -LiteralPath $ConfigPath).Path
 & python $validatorPath `
     --kustomization $selectionPath `
+    --selection-overlay $selectionOverlayPath `
     --topology $resolvedConfigPath `
     --configmap $configMapPath
 if ($LASTEXITCODE -ne 0) {
