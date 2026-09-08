@@ -14,17 +14,27 @@ REGISTERED = (ROOT / "ops" / "argocd" / "kustomization.yaml").read_text(encoding
 class StagedBoundaryTests(unittest.TestCase):
     def test_staged_projects_are_least_privilege_and_manual(self):
         expected = {
-            "runtime-foundation": ("30", "runtime-foundation"),
-            "selected-dependencies": ("10", "selected-dependencies"),
-            "bootstrap": ("40", "bootstrap"),
-            "workloads": ("50", "workloads"),
+            "runtime-foundation": ("30", "overlays/runtime-foundation", True),
+            "selected-dependencies": ("10", "selected-dependencies", False),
+            "bootstrap": ("40", "bootstrap", False),
+            "workloads": ("50", "overlays/workloads", True),
         }
-        for boundary, (wave, source) in expected.items():
+        private_source = "https://github.com/bormoley1983/faang-infra-env-homelab.git"
+        public_source = "https://github.com/bormoley1983/faang-infra.git"
+        for boundary, (wave, source, uses_private_overlay) in expected.items():
             project = (STAGED / f"{boundary}-project.yaml").read_text(encoding="utf-8")
             application = (STAGED / f"{boundary}-application.yaml").read_text(encoding="utf-8")
             self.assertIn("namespace: faang", project)
             self.assertIn(f'argocd.argoproj.io/sync-wave: "{wave}"', application)
-            self.assertIn(f"path: k8s/overlays/homelab/boundaries/{source}", application)
+            expected_path = source if uses_private_overlay else f"k8s/overlays/homelab/boundaries/{source}"
+            self.assertIn(f"path: {expected_path}", application)
+            if uses_private_overlay:
+                self.assertIn(private_source, application)
+                self.assertIn(private_source, project)
+                self.assertIn(public_source, project)
+            else:
+                self.assertIn(public_source, application)
+                self.assertNotIn(private_source, application)
             self.assertNotIn("automated:", application)
             self.assertNotIn("prune:", application)
             self.assertNotIn("selfHeal:", application)
