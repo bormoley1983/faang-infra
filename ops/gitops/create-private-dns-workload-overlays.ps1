@@ -45,6 +45,12 @@ patches:
     target:
       kind: Ingress
       name: faang-ingress
+  - path: url-shortener-public-url-rollout.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: faang-url-shortener-service
 "@
 $workloadsPatch = @"
 - op: replace
@@ -79,6 +85,17 @@ data:
   URL_SHORTENER_BASE_URL: https://faang-url-shortener.faang.$InternalZone
   URL_SHORTENER_PUBLIC_URL: https://faang-url-shortener.faang.$InternalZone/url
 "@
+$urlShortenerRolloutPatch = @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faang-url-shortener-service
+spec:
+  template:
+    metadata:
+      annotations:
+        faang.io/public-url: https://faang-url-shortener.faang.$InternalZone
+"@
 
 $createdOverlayPaths = @()
 try {
@@ -91,6 +108,7 @@ try {
     }
     [IO.File]::WriteAllText((Join-Path $root 'overlays/workloads/kustomization.yaml'), $workloadsKustomization, [Text.UTF8Encoding]::new($false))
     [IO.File]::WriteAllText((Join-Path $root 'overlays/workloads/ingress-private-dns-tls.yaml'), $workloadsPatch, [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $root 'overlays/workloads/url-shortener-public-url-rollout.yaml'), $urlShortenerRolloutPatch, [Text.UTF8Encoding]::new($false))
     [IO.File]::WriteAllText((Join-Path $root 'overlays/runtime-foundation/kustomization.yaml'), $runtimeKustomization, [Text.UTF8Encoding]::new($false))
     [IO.File]::WriteAllText((Join-Path $root 'overlays/runtime-foundation/url-shortener-public-url.yaml'), $runtimePatch, [Text.UTF8Encoding]::new($false))
 } catch {
