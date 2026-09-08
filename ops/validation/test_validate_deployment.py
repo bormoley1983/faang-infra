@@ -232,22 +232,34 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertIn("key: S3_SECRET_KEY", rendered)
         self.assertNotIn("value: password", rendered)
 
-    #TODO temporary test
-    # def test_external_elasticsearch_bootstrap_has_auth_and_explicit_tls_policy(self):
-    #     rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
-    #     self.assertIn("ELASTICSEARCH_URL: https://elasticsearch-main:9200", rendered)
-    #     self.assertIn('ELASTICSEARCH_TLS_INSECURE: "true"', rendered)
-    #     self.assertIn("key: ELASTICSEARCH_USERNAME", rendered)
-    #     self.assertIn("key: ELASTICSEARCH_PASSWORD", rendered)
-    #     script = (ROOT / "k8s" / "bootstrap" / "scripts" / "init-elasticsearch.sh").read_text(encoding="utf-8")
-    #     self.assertIn('--user "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD"', script)
-    #     self.assertIn('true) set -- "$@" --insecure', script)
+    def test_external_elasticsearch_bootstrap_has_auth_and_explicit_tls_policy(self):
+        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        rendered += "\n---\n" + self.render(
+            ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "runtime-foundation"
+        )
+        self.assertIn("ELASTICSEARCH_URL: https://elasticsearch-main:9200", rendered)
+        self.assertIn('ELASTICSEARCH_TLS_INSECURE: "true"', rendered)
+        self.assertIn("key: ELASTICSEARCH_USERNAME", rendered)
+        self.assertIn("key: ELASTICSEARCH_PASSWORD", rendered)
+        script = (ROOT / "k8s" / "bootstrap" / "scripts" / "init-elasticsearch.sh").read_text(encoding="utf-8")
+        self.assertIn('--user "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD"', script)
+        self.assertIn('true) set -- "$@" --insecure', script)
 
     def test_homelab_has_one_configmap_and_all_ingress_hosts(self):
         rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        foundation = self.render(
+            ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "runtime-foundation"
+        )
         documents = VALIDATOR.split_documents(rendered)
         identities = [VALIDATOR.resource_identity(document) for document in documents]
-        self.assertEqual(0, identities.count(("ConfigMap", "faang-config"))) #TODO Temporary change
+        foundation_identities = [
+            VALIDATOR.resource_identity(document)
+            for document in VALIDATOR.split_documents(foundation)
+        ]
+        configmap_count = identities.count(("ConfigMap", "faang-config"))
+        if configmap_count == 0:
+            configmap_count = foundation_identities.count(("ConfigMap", "faang-config"))
+        self.assertEqual(1, configmap_count)
         self.assertEqual(1, identities.count(("Ingress", "faang-ingress")))
         application_documents = [
             document for document in documents

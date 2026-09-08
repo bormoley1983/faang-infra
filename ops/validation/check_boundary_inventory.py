@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove proposed DEP-051 child Kustomizations partition the homelab render."""
+"""Prove boundary resources stay complete and non-overlapping during handoff."""
 
 from __future__ import annotations
 
@@ -68,14 +68,28 @@ def check() -> tuple[int, dict[str, int]]:
             raise RuntimeError(f"Boundary overlap in {name}: {duplicate}")
         children.update(child)
 
-    missing = sorted(set(monolith) - set(children))
-    extra = sorted(set(children) - set(monolith))
-    changed = sorted(resource for resource in monolith.keys() & children.keys() if monolith[resource] != children[resource])
-    if missing or extra or changed:
+    transferred: dict[tuple[str, str, str, str], str] = {}
+    partial: list[str] = []
+    for name in BOUNDARIES:
+        child = inventory(MONOLITH / "boundaries" / name)
+        shared = set(child) & set(monolith)
+        absent = set(child) - set(monolith)
+        if shared and absent:
+            partial.append(name)
+        if absent:
+            transferred.update({resource: child[resource] for resource in absent})
+
+    aggregate = dict(monolith)
+    aggregate.update(transferred)
+    missing = sorted(set(children) - set(aggregate))
+    extra = sorted(set(aggregate) - set(children))
+    changed = sorted(resource for resource in aggregate.keys() & children.keys() if aggregate[resource] != children[resource])
+    if partial or missing or extra or changed:
         raise RuntimeError(
-            f"Boundary inventory mismatch; missing={missing}, extra={extra}, changed={changed}"
+            "Boundary ownership mismatch; "
+            f"partial={partial}, missing={missing}, extra={extra}, changed={changed}"
         )
-    return len(monolith), counts
+    return len(aggregate), counts
 
 
 def main() -> int:
