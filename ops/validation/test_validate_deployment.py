@@ -161,6 +161,9 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         return result.stdout
 
+    def render_workloads(self) -> str:
+        return self.render(ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "workloads")
+
     def test_base_has_only_portable_configuration(self):
         rendered = self.render(ROOT / "k8s" / "base")
         forbidden = (
@@ -233,7 +236,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertNotIn("value: password", rendered)
 
     def test_external_elasticsearch_bootstrap_has_auth_and_explicit_tls_policy(self):
-        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        rendered = self.render_workloads()
         rendered += "\n---\n" + self.render(
             ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "runtime-foundation"
         )
@@ -249,7 +252,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertIn('true) set -- "$@" --insecure', script)
 
     def test_homelab_has_one_configmap_and_all_ingress_hosts(self):
-        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        rendered = self.render_workloads()
         foundation = self.render(
             ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "runtime-foundation"
         )
@@ -290,7 +293,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             self.assertNotIn("BASE_DOMAIN", script)
 
     def test_all_application_images_render_at_verified_digests(self):
-        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        rendered = self.render_workloads()
         documents = {
             VALIDATOR.resource_identity(document): document
             for document in VALIDATOR.split_documents(rendered)
@@ -303,7 +306,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             )
 
     def test_changing_one_digest_changes_only_its_deployment(self):
-        original = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        original = self.render_workloads()
         old_digest = self.image_digests()["faang-account-service"]
         new_digest = "f" * 64
         temporary_root = ROOT / ".cache" / "validation-tests"
@@ -318,7 +321,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             text = kustomization.read_text(encoding="utf-8")
             self.assertEqual(1, text.count(old_digest))
             kustomization.write_text(text.replace(old_digest, new_digest), encoding="utf-8")
-            changed = self.render(copied_root / "overlays" / "homelab")
+            changed = self.render(copied_root / "overlays" / "homelab" / "boundaries" / "workloads")
         finally:
             if test_directory.exists():
                 shutil.rmtree(test_directory)
@@ -339,7 +342,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         self.assertEqual({("Deployment", "faang-account-service")}, changed_resources)
 
     def test_all_application_deployments_have_safe_runtime_defaults(self):
-        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        rendered = self.render_workloads()
         deployments = [
             document
             for document in VALIDATOR.split_documents(rendered)
@@ -380,7 +383,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             self.assertEqual(3, documents[("Deployment", service)].count("httpGet:"), service)
 
     def test_redis_consumers_receive_optional_secret_backed_authentication(self):
-        rendered = self.render(ROOT / "k8s" / "overlays" / "homelab")
+        rendered = self.render_workloads()
         consumers = [
             document
             for document in VALIDATOR.split_documents(rendered)
