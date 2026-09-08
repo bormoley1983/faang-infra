@@ -387,6 +387,13 @@ def parse_arguments() -> argparse.Namespace:
         type=Path,
         help="Additional Kustomize overlay to render and schema-check without applying runtime policy",
     )
+    parser.add_argument(
+        "--policy-overlay",
+        action="append",
+        default=[],
+        type=Path,
+        help="Additional Kustomize overlay included in aggregate desired-state policy and contract validation",
+    )
     parser.add_argument("--strict", action="store_true", help="Reject all findings instead of honoring the known-debt baseline")
     parser.add_argument("--skip-schema", action="store_true", help="Skip kubeconform; intended only for unit tests or offline diagnosis")
     parser.add_argument("--print-fingerprints", action="store_true", help="Print current finding fingerprints as JSON")
@@ -408,7 +415,16 @@ def main() -> int:
             if arguments.tracked_source_list
             else None
         )
-        issues = validate_rendered(render.stdout, contracts) + validate_tracked_sources(tracked_names)
+        policy_render = render.stdout
+        for policy_overlay in arguments.policy_overlay:
+            additional = run(["kubectl", "kustomize", str(policy_overlay.resolve())])
+            if additional.returncode != 0:
+                raise RuntimeError(
+                    additional.stderr.strip()
+                    or f"Kustomize rendering failed for {policy_overlay}"
+                )
+            policy_render += "\n---\n" + additional.stdout
+        issues = validate_rendered(policy_render, contracts) + validate_tracked_sources(tracked_names)
         issues = sorted(set(issues))
     except (OSError, RuntimeError) as exc:
         print(f"Validation error: {exc}", file=sys.stderr)
@@ -419,7 +435,7 @@ def main() -> int:
 
     try:
         if not arguments.skip_schema:
-            validate_schema(render.stdout)
+            validate_schema(policy_render)
             for schema_overlay in arguments.schema_overlay:
                 additional = run(["kubectl", "kustomize", str(schema_overlay.resolve())])
                 if additional.returncode != 0:
