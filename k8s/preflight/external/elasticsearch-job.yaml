@@ -36,6 +36,8 @@ spec:
               valueFrom: {configMapKeyRef: {name: faang-config, key: ELASTICSEARCH_URL}}
             - name: ELASTICSEARCH_TLS_INSECURE
               valueFrom: {configMapKeyRef: {name: faang-config, key: ELASTICSEARCH_TLS_INSECURE}}
+            - name: ELASTICSEARCH_CA_FILE
+              value: /etc/faang-adcs-ca/ca.crt
             - name: ELASTICSEARCH_USERNAME
               valueFrom: {secretKeyRef: {name: faang-secrets, key: ELASTICSEARCH_USERNAME}}
             - name: ELASTICSEARCH_PASSWORD
@@ -49,9 +51,17 @@ spec:
             capabilities: {drop: ["ALL"]}
           volumeMounts:
             - {name: scripts, mountPath: /scripts, readOnly: true}
+            - {name: elasticsearch-ca, mountPath: /etc/faang-adcs-ca, readOnly: true}
             - {name: tmp, mountPath: /tmp}
       volumes:
         - name: scripts
           configMap: {name: faang-external-preflight-scripts, defaultMode: 0555}
+        - name: elasticsearch-ca
+          configMap:
+            name: faang-external-adcs-ca
+            items:
+              - key: ca.crt
+                path: ca.crt
+            defaultMode: 0444
         - name: tmp
           emptyDir: {sizeLimit: 16Mi}

@@ -11,9 +11,9 @@ data:
   REDIS_HOST: "redis-main"
   REDIS_PORT: "6379"
   ELASTICSEARCH_URL: "https://elasticsearch-main:9200"
-  # POC bridge for the external node's certificate, whose SAN does not contain the cluster-local alias.
-  # DEP-041 must replace this with a trusted CA and a SAN-correct private endpoint.
-  ELASTICSEARCH_TLS_INSECURE: "true"
+  # External Elasticsearch presents a certificate whose SAN includes this stable alias.
+  # Its private issuing CA is mounted only by the explicitly run preflight Job.
+  ELASTICSEARCH_TLS_INSECURE: "false"
   # The Service is cross-namespace; the
   # faang namespace is explicitly allowed by the SeaweedFS S3 NetworkPolicy on 9000.
   S3_ENDPOINT: "http://faang-object-storage-seaweedfs-s3.faang-object-storage.svc.cluster.local:9000"
