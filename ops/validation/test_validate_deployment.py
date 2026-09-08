@@ -237,6 +237,9 @@ class ConfigurationOwnershipTests(unittest.TestCase):
         rendered += "\n---\n" + self.render(
             ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "runtime-foundation"
         )
+        rendered += "\n---\n" + self.render(
+            ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "bootstrap"
+        )
         self.assertIn("ELASTICSEARCH_URL: https://elasticsearch-main:9200", rendered)
         self.assertIn('ELASTICSEARCH_TLS_INSECURE: "true"', rendered)
         self.assertIn("key: ELASTICSEARCH_USERNAME", rendered)
@@ -402,9 +405,13 @@ class ConfigurationOwnershipTests(unittest.TestCase):
 
 
 class BootstrapContractTests(unittest.TestCase):
-    def render_homelab(self) -> str:
+    def render_bootstrap_boundary(self) -> str:
         result = subprocess.run(
-            ["kubectl", "kustomize", str(ROOT / "k8s" / "overlays" / "homelab")],
+            [
+                "kubectl",
+                "kustomize",
+                str(ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "bootstrap"),
+            ],
             text=True,
             capture_output=True,
             check=False,
@@ -413,7 +420,7 @@ class BootstrapContractTests(unittest.TestCase):
         return result.stdout
 
     def test_bootstrap_is_four_versioned_ordered_jobs(self):
-        rendered = self.render_homelab()
+        rendered = self.render_bootstrap_boundary()
         documents = VALIDATOR.split_documents(rendered)
         jobs = {
             VALIDATOR.resource_identity(document)[1]: document
