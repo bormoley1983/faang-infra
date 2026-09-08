@@ -56,11 +56,24 @@ Run from an authorized operator shell after a manual `faang-workloads` sync:
 
 To evaluate one externally trusted ingress route, pass a reviewed URI with
 `-IngressUri`. The output records only DNS outcome, status code, TLS outcome,
-and redirect presence. A failed or untrusted HTTPS validation is a failed gate;
-do not bypass certificate validation. Dependency entries deliberately remain
-`not-probed`: a separately approved, scoped, read-only in-cluster diagnostic
-context is required. The existing external-preflight runner is excluded because
-it creates short-lived Jobs.
+and redirect presence. To perform an external readiness
+acceptance check, additionally pass the reviewed, exact HTTPS endpoint:
+
+```powershell
+./ops/validation/collect-post-deployment-verification.ps1 `
+  -Context <reviewed-context> `
+  -ReadinessUri https://<reviewed-service-host>/actuator/health/readiness `
+  -RequireReadiness
+```
+
+That check accepts only the exact readiness path, validates TLS without bypasses,
+and passes only when the endpoint returns HTTP 200 with JSON status `UP`; the
+`-RequireReadiness` switch fails the command for any other outcome. Use this
+generic check with the User Service hostname for its required external readiness
+acceptance.
+Dependency entries deliberately remain `not-probed`: a separately approved,
+scoped, read-only in-cluster diagnostic context is required. The existing
+external-preflight runner is excluded because it creates short-lived Jobs.
 
 For an observation-only Jenkins result, pass a reviewed **HTTPS** Jenkins base URI and
 job path, and supply a narrowly scoped read-only API identity through
@@ -71,8 +84,8 @@ one bounded HTTPS request and has no Argo credential, CLI, or mutation path.
 
 For the owner-approved in-cluster service smoke gate, use the separate,
 explicitly mutation-capable runner below. It creates one tokenless disposable
-Job, checks Actuator liveness/readiness for the eight services that expose it
-and TCP connectivity for User Service, then deletes that exact Job by default.
+Job, checks Actuator liveness/readiness for all nine application services,
+including User Service, then deletes that exact Job by default.
 It has no dependency credentials and performs no dependency, migration, Kafka,
 or S3 operation. Do not add its manifest to Argo.
 
