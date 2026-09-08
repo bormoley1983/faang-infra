@@ -75,3 +75,22 @@ python3 -m unittest discover -s ops/gitops -p "test_*.py"
 
 The legacy `ops/jenkins/update-image-tag.sh` edits `newTag` and is retained only
 for the obsolete root proof-of-concept pipeline. DEP-032 must not call it.
+
+## DEP-052 rollback boundary
+
+See [workload-rollback.md](workload-rollback.md) for the only approved rollback
+model: an explicitly approved, manually synced, no-prune revert of the
+`faang-workloads` source. It contains eligibility gates and stop conditions for
+stateful/data, dependency, secret, storage, and ownership changes.
+
+## Private DNS and TLS
+
+See [private-ingress-tls.md](private-ingress-tls.md) for the private-CA DNS,
+certificate custody, namespace registration, Argo reconciliation, renewal, and
+rollback procedure. It keeps real zones, addresses, certificate material, and
+private CA details out of this public repository.
+
+Once the three encrypted TLS Secret manifests are staged in the private source,
+run `configure-private-tls-ksops-overlays.ps1` there before committing. It
+registers their namespace-specific KSOPS render paths; it neither decrypts
+material nor calls cluster tooling.

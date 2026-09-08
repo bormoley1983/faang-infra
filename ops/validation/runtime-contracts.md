@@ -41,7 +41,11 @@ Run from `faang-infra`:
 
 ```powershell
 python -m unittest discover -s ops/validation -p "test_*.py"
-python ops/validation/validate_deployment.py
+python ops/validation/validate_deployment.py `
+  --policy-overlay k8s/overlays/homelab/boundaries/runtime-foundation `
+  --policy-overlay k8s/overlays/homelab/boundaries/selected-dependencies `
+  --policy-overlay k8s/overlays/homelab/boundaries/bootstrap `
+  --policy-overlay k8s/overlays/homelab/boundaries/workloads
 ```
 
 The validators check required environment variables, ports, probes,

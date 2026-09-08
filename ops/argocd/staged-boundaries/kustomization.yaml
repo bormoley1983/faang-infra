@@ -7,5 +7,9 @@ resources:
   - selected-dependencies-application.yaml
   - bootstrap-project.yaml
   - bootstrap-application.yaml
+  - private-tls-project.yaml
+  - faang-ingress-tls-application.yaml
+  - argocd-management-tls-application.yaml
+  - jenkins-management-tls-application.yaml
   - workloads-project.yaml
   - workloads-application.yaml

@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-ingress-tls
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: faang-private-tls
+  source:
+    repoURL: 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
+    targetRevision: main
+    path: overlays/homelab
+    plugin:
+      name: ksops-v1
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: faang
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
