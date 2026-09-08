@@ -27,7 +27,6 @@ class BoundarySourceEquivalenceTests(unittest.TestCase):
             (ROOT / "k8s/base/configmap.yaml", BOUNDARIES / "runtime-foundation/resources/configmap.yaml"),
             (ROOT / "k8s/base/ingress.yaml", BOUNDARIES / "workloads/resources/ingress.yaml"),
             (ROOT / "k8s/base/application-deployment-defaults.yaml", BOUNDARIES / "workloads/application-deployment-defaults.yaml"),
-            (ROOT / "k8s/base/user-service-probes.yaml", BOUNDARIES / "workloads/user-service-probes.yaml"),
         )
         for original, copied in pairs:
             with self.subTest(original=original.name):

@@ -377,9 +377,7 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             VALIDATOR.resource_identity(document): document
             for document in deployments
         }
-        user = documents[("Deployment", "faang-user-service")]
-        self.assertEqual(3, user.count("tcpSocket:"))
-        for service in self.APPLICATION_IMAGES - {"faang-user-service"}:
+        for service in self.APPLICATION_IMAGES:
             self.assertEqual(3, documents[("Deployment", service)].count("httpGet:"), service)
 
     def test_redis_consumers_receive_optional_secret_backed_authentication(self):
