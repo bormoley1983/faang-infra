@@ -4,6 +4,8 @@ param(
     [ValidateRange(5, 120)][int]$TimeoutSeconds = 20,
     [string]$Namespace = "faang",
     [string]$IngressUri = "",
+    [string]$ReadinessUri = "",
+    [switch]$RequireReadiness,
     [string]$JenkinsUri = "",
     [string]$JenkinsJob = "",
     [string]$JenkinsBuild = "lastCompletedBuild"
@@ -60,6 +62,35 @@ function Get-JenkinsBuildEvidence {
     } catch {
         return [ordered]@{ status = "failed-or-untrusted"; result = "unavailable"; building = $false; durationMilliseconds = $null }
     }
+}
+
+function Get-ReadinessEvidence {
+    param([string]$UriText)
+    $notRequested = [ordered]@{ requested = $false; dns = "not-run"; httpStatus = "not-run"; tls = "not-run"; contract = "not-run" }
+    if ([string]::IsNullOrWhiteSpace($UriText)) { return $notRequested }
+
+    $evidence = [ordered]@{ requested = $true; dns = "not-run"; httpStatus = "not-run"; tls = "not-run"; contract = "failed" }
+    try {
+        $uri = [uri]$UriText
+        if ($uri.Scheme -ne "https" -or -not [string]::IsNullOrWhiteSpace($uri.UserInfo) -or
+            $uri.AbsolutePath -ne "/actuator/health/readiness" -or -not [string]::IsNullOrWhiteSpace($uri.Query)) {
+            throw "readiness_https_contract_uri_required"
+        }
+        $evidence.dns = if ([System.Net.Dns]::GetHostAddresses($uri.Host).Count -gt 0) { "resolved" } else { "not-resolved" }
+        $handler = [System.Net.Http.HttpClientHandler]::new(); $handler.AllowAutoRedirect = $false
+        $client = [System.Net.Http.HttpClient]::new($handler); $client.Timeout = [TimeSpan]::FromSeconds($TimeoutSeconds)
+        $response = $client.GetAsync($uri).GetAwaiter().GetResult()
+        $evidence.httpStatus = [int]$response.StatusCode
+        $evidence.tls = "validated"
+        if ($response.StatusCode -eq [System.Net.HttpStatusCode]::OK) {
+            $payload = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json
+            if ($payload.status -eq "UP") { $evidence.contract = "passed" }
+        }
+    } catch {
+        $evidence.tls = "failed-or-untrusted"
+        if ($evidence.dns -eq "not-run") { $evidence.dns = "failed" }
+    }
+    return $evidence
 }
 
 $expectedApplications = @(
@@ -129,6 +160,10 @@ if ($external.requested) {
     }
 }
 $jenkins = Get-JenkinsBuildEvidence -BaseUri $JenkinsUri -Job $JenkinsJob -Build $JenkinsBuild
+$readiness = Get-ReadinessEvidence -UriText $ReadinessUri
+if ($RequireReadiness -and $readiness.contract -ne "passed") {
+    throw "readiness_contract_failed"
+}
 
 $result = [ordered]@{
     schemaVersion = 1
@@ -137,7 +172,7 @@ $result = [ordered]@{
     argo = $applicationEvidence
     workloads = $workloadEvidence
     services = $serviceEvidence
-    ingress = [ordered]@{ present = $null -ne $ingress; ruleCount = if ($ingress) { @($ingress.spec.rules).Count } else { 0 }; external = $external }
+    ingress = [ordered]@{ present = $null -ne $ingress; ruleCount = if ($ingress) { @($ingress.spec.rules).Count } else { 0 }; external = $external; readiness = $readiness }
     bootstrap = $jobEvidence
     dependencies = [ordered]@{ postgresql = "not-probed"; redis = "not-probed"; kafka = "not-probed"; elasticsearch = "not-probed"; s3 = "not-probed"; note = "Use a separately approved, scoped read-only in-cluster probe; do not use mutation-capable preflights for this baseline." }
     jenkins = $jenkins

@@ -16,10 +16,10 @@ class PostDeploymentSmokeTests(unittest.TestCase):
             "activeDeadlineSeconds: 180", "ttlSecondsAfterFinished: 600",
             "runAsNonRoot: true", "readOnlyRootFilesystem: true",
             "allowPrivilegeEscalation: false", "- ALL", "--connect-timeout 5",
-            "--max-time 10", "http://faang-user-service/",
+            "--max-time 10", "http://faang-$service-service/actuator/health/$endpoint",
         ):
             self.assertIn(required, source)
-        for service in ("account", "achievement", "analytics", "notification", "payment", "post", "project", "url-shortener"):
+        for service in ("account", "achievement", "analytics", "notification", "payment", "post", "project", "url-shortener", "user"):
             self.assertIn("faang-$service-service", source)
         for forbidden in ("POST", "PUT", "DELETE", "kubectl", "hostPath:", "privileged: true"):
             self.assertNotIn(forbidden, source)

@@ -15,7 +15,9 @@ class PostDeploymentVerificationTests(unittest.TestCase):
             "failed-or-untrusted", "AllowAutoRedirect = $false",
             "Get-JenkinsBuildEvidence", "FAANG_JENKINS_API_TOKEN",
             "jenkins_read_only_credentials_unavailable", "jenkins_https_uri_required",
-            "lastCompletedBuild",
+            "lastCompletedBuild", "ReadinessUri", "Get-ReadinessEvidence",
+            "/actuator/health/readiness", "readiness", "contract = \"passed\"",
+            "RequireReadiness", "readiness_contract_failed",
         ):
             self.assertIn(required, source)
         for forbidden in ("\"apply\"", "\"create\"", "\"delete\"", "\"patch\"", "\"sync\"", "\"rollout\"", "\"port-forward\""):

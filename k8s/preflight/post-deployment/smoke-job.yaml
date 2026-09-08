@@ -30,16 +30,13 @@ spec:
             - sh
             - -ec
             - |
-              for service in account achievement analytics notification payment post project url-shortener; do
+              for service in account achievement analytics notification payment post project url-shortener user; do
                 for endpoint in liveness readiness; do
                   curl --fail --silent --show-error --connect-timeout 5 --max-time 10 \
                     "http://faang-$service-service/actuator/health/$endpoint" >/dev/null
                   printf 'service=%s endpoint=%s result=pass\n' "$service" "$endpoint"
                 done
               done
-              curl --silent --show-error --connect-timeout 5 --max-time 10 \
-                --output /dev/null http://faang-user-service/
-              printf 'service=user endpoint=http-connectivity result=pass\n'
           resources:
             requests:
               cpu: 25m
