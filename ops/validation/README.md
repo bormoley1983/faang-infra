@@ -35,6 +35,11 @@ Linux Jenkins agents use `python3` with the same arguments.
 
 ## DEP-052 post-deployment evidence
 
+Application follow-ups found after trusted ingress verification are recorded in
+[service-followups.md](service-followups.md). They are deliberately separate
+from infrastructure acceptance evidence and do not authorize infrastructure
+changes.
+
 `collect-post-deployment-verification.ps1` is the default read-only release
 collector. It emits sanitized JSON only: Argo sync/health and safe revision
 identifiers, workload readiness and image digests, Service endpoint counts,
