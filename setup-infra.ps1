@@ -8,7 +8,14 @@ $repoRoot = $PSScriptRoot
 Write-Host "Validating the committed bootstrap contract..." -ForegroundColor Cyan
 Push-Location $repoRoot
 try {
-    python ops/validation/validate_deployment.py
+    $validationArguments = @(
+        "ops/validation/validate_deployment.py",
+        "--policy-overlay", "k8s/overlays/homelab/boundaries/runtime-foundation",
+        "--policy-overlay", "k8s/overlays/homelab/boundaries/selected-dependencies",
+        "--policy-overlay", "k8s/overlays/homelab/boundaries/bootstrap",
+        "--policy-overlay", "k8s/overlays/homelab/boundaries/workloads"
+    )
+    python @validationArguments
     if ($LASTEXITCODE -ne 0) {
         throw "Deployment validation failed."
     }

@@ -23,11 +23,57 @@ The local installer invokes the same validator without that flag.
 Run from the `faang-infra` repository root:
 
 ```powershell
-python ops/validation/validate_deployment.py
+python ops/validation/validate_deployment.py `
+  --policy-overlay k8s/overlays/homelab/boundaries/runtime-foundation `
+  --policy-overlay k8s/overlays/homelab/boundaries/selected-dependencies `
+  --policy-overlay k8s/overlays/homelab/boundaries/bootstrap `
+  --policy-overlay k8s/overlays/homelab/boundaries/workloads
 python -m unittest discover -s ops/validation -p "test_*.py"
 ```
 
 Linux Jenkins agents use `python3` with the same arguments.
+
+## DEP-052 post-deployment evidence
+
+`collect-post-deployment-verification.ps1` is the default read-only release
+collector. It emits sanitized JSON only: Argo sync/health and safe revision
+identifiers, workload readiness and image digests, Service endpoint counts,
+Ingress presence/rule count, and bootstrap Job completion. It does not output
+addresses, hosts, certificate details, or Secret data, and it cannot create,
+apply, delete, sync, restart, retry, scale, or port-forward resources.
+
+Run from an authorized operator shell after a manual `faang-workloads` sync:
+
+```powershell
+./ops/validation/collect-post-deployment-verification.ps1 -Context <reviewed-context> |
+  Set-Content -Encoding utf8 .\dep-052-sanitized-baseline.json
+```
+
+To evaluate one externally trusted ingress route, pass a reviewed URI with
+`-IngressUri`. The output records only DNS outcome, status code, TLS outcome,
+and redirect presence. A failed or untrusted HTTPS validation is a failed gate;
+do not bypass certificate validation. Dependency entries deliberately remain
+`not-probed`: a separately approved, scoped, read-only in-cluster diagnostic
+context is required. The existing external-preflight runner is excluded because
+it creates short-lived Jobs.
+
+For an observation-only Jenkins result, pass a reviewed **HTTPS** Jenkins base URI and
+job path, and supply a narrowly scoped read-only API identity through
+`FAANG_JENKINS_API_USER` and `FAANG_JENKINS_API_TOKEN`. The collector records
+only collection status, result, building state, and duration; it never records
+the URI, job name, credentials, console output, or build parameters. It makes
+one bounded HTTPS request and has no Argo credential, CLI, or mutation path.
+
+For the owner-approved in-cluster service smoke gate, use the separate,
+explicitly mutation-capable runner below. It creates one tokenless disposable
+Job, checks Actuator liveness/readiness for the eight services that expose it
+and TCP connectivity for User Service, then deletes that exact Job by default.
+It has no dependency credentials and performs no dependency, migration, Kafka,
+or S3 operation. Do not add its manifest to Argo.
+
+```powershell
+./run-post-deployment-smoke.ps1 -ConfirmActiveProbe -Context <reviewed-context>
+```
 
 The validator:
 
@@ -46,13 +92,21 @@ does not modify application Deployments.
 Normal CI mode allows only the exact known debt listed in `baseline.json`:
 
 ```powershell
-python ops/validation/validate_deployment.py
+python ops/validation/validate_deployment.py `
+  --policy-overlay k8s/overlays/homelab/boundaries/runtime-foundation `
+  --policy-overlay k8s/overlays/homelab/boundaries/selected-dependencies `
+  --policy-overlay k8s/overlays/homelab/boundaries/bootstrap `
+  --policy-overlay k8s/overlays/homelab/boundaries/workloads
 ```
 
 Strict mode ignores the baseline and must pass before final delivery:
 
 ```powershell
 python ops/validation/validate_deployment.py --strict `
+  --policy-overlay k8s/overlays/homelab/boundaries/runtime-foundation `
+  --policy-overlay k8s/overlays/homelab/boundaries/selected-dependencies `
+  --policy-overlay k8s/overlays/homelab/boundaries/bootstrap `
+  --policy-overlay k8s/overlays/homelab/boundaries/workloads `
   --schema-overlay k8s/preflight/external
 ```
 

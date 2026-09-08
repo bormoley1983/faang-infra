@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: faang-post-deployment-smoke
+  namespace: faang
+  labels:
+    app.kubernetes.io/name: faang-post-deployment-smoke
+    app.kubernetes.io/component: verification
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 180
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: faang-post-deployment-smoke
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: smoke
+          image: curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+          command:
+            - sh
+            - -ec
+            - |
+              for service in account achievement analytics notification payment post project url-shortener; do
+                for endpoint in liveness readiness; do
+                  curl --fail --silent --show-error --connect-timeout 5 --max-time 10 \
+                    "http://faang-${service}-service/actuator/health/${endpoint}" >/dev/null
+                  printf 'service=%s endpoint=%s result=pass\n' "$service" "$endpoint"
+                done
+              done
+              curl --silent --show-error --connect-timeout 5 --max-time 10 \
+                --output /dev/null http://faang-user-service/
+              printf 'service=user endpoint=http-connectivity result=pass\n'
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
