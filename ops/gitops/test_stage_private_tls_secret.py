@@ -12,7 +12,8 @@ class StagePrivateTlsSecretTests(unittest.TestCase):
             "Read-Host 'PFX password' -AsSecureString", "EphemeralKeySet", "Exportable",
             "kubernetes.io/tls", "--encrypt", "--config", ".sops.yaml", "--output",
             ".faang-tls-", ".sops.yaml')", "Remove-Item -LiteralPath $plainTempPath",
-            "Refusing to overwrite an existing encrypted Secret.",
+            "Refusing to overwrite an existing encrypted Secret without -ReplaceExisting.",
+            "[switch]$ReplaceExisting", "Move-Item -LiteralPath $encryptedTempPath -Destination $outputPath -Force",
             "Output path must be relative to the private environment root.",
         ):
             self.assertIn(required, source)
