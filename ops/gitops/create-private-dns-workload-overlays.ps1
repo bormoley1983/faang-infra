@@ -54,6 +54,9 @@ patches:
 "@
 $workloadsPatch = @"
 - op: replace
+  path: /metadata/annotations/traefik.ingress.kubernetes.io~1router.entrypoints
+  value: websecure
+- op: replace
   path: /spec/rules
   value:
 $($rules -join "`n")
