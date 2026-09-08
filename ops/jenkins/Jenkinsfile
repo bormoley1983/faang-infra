@@ -114,6 +114,7 @@ set +x
 python3 ops/validation/validate_deployment.py --strict \
   --tracked-source-list .ci-evidence/tracked-manifests.txt \
   --policy-overlay k8s/overlays/homelab/boundaries/runtime-foundation \
+  --policy-overlay k8s/overlays/homelab/boundaries/selected-dependencies \
   --schema-overlay k8s/preflight/external \
   --schema-overlay ops/storage/longhorn/manifests \
   > .ci-evidence/deployment-validation.log 2>&1

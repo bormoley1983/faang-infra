@@ -95,6 +95,9 @@ class DependencySelectionTests(unittest.TestCase):
             EXAMPLE_PATH,
             CONFIGMAP_PATH,
             CONTRACT_PATH,
+            selection_overlays=(
+                ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "selected-dependencies",
+            ),
             allow_documentation_addresses=True,
         )
         self.assertEqual(

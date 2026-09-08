@@ -17,8 +17,9 @@ if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
 
 $validatorPath = Join-Path $PSScriptRoot "ops/validation/validate_dependency_selection.py"
 $selectionPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/kustomization.yaml"
+$selectionOverlayPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/boundaries/selected-dependencies"
 $configMapPath = Join-Path $PSScriptRoot "k8s/overlays/homelab/boundaries/runtime-foundation/configmap.yaml"
-& python $validatorPath --kustomization $selectionPath --topology (Resolve-Path -LiteralPath $ConfigPath).Path --configmap $configMapPath
+& python $validatorPath --kustomization $selectionPath --selection-overlay $selectionOverlayPath --topology (Resolve-Path -LiteralPath $ConfigPath).Path --configmap $configMapPath
 if ($LASTEXITCODE -ne 0) { throw "Dependency selection contract validation failed." }
 
 $topology = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
