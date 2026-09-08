@@ -21,13 +21,20 @@ class SeaweedFsObjectStorageContractTests(unittest.TestCase):
         # fsGroup supplies write access to PVC data and emptyDir logs.
         for component in ("master", "volume", "filer", "s3"):
             with self.subTest(component=component):
-                block = re.search(rf"(?ms)^{component}:\n(.*?)(?=^\S|\Z)", VALUES).group(1)
-                pod = re.search(r"(?ms)^  podSecurityContext:\n(.*?)(?=^  \S|\Z)", block).group(1)
+                block_match = re.search(rf"(?ms)^{component}:\n(.*?)(?=^\S|\Z)", VALUES)
+                if block_match is None:
+                    self.fail(f"missing {component} section in values.yaml")
+                block = block_match.group(1)
+                pod_match = re.search(r"(?ms)^  podSecurityContext:\n(.*?)(?=^  \S|\Z)", block)
+                if pod_match is None:
+                    self.fail(f"missing podSecurityContext in {component}")
+                pod = pod_match.group(1)
                 self.assertRegex(pod, r"runAsNonRoot: true")
                 identity = {}
                 for field in ("runAsUser", "runAsGroup", "fsGroup"):
                     match = re.search(rf"(?m)^    {field}: ([1-9][0-9]*)$", pod)
-                    self.assertIsNotNone(match, f"{component} needs numeric non-root {field}")
+                    if match is None:
+                        self.fail(f"{component} needs numeric non-root {field}")
                     identity[field] = int(match.group(1))
                 self.assertEqual(identity["runAsGroup"], identity["fsGroup"])
 
@@ -52,8 +59,10 @@ class SeaweedFsObjectStorageContractTests(unittest.TestCase):
         selector = "key: node-role.kubernetes.io/control-plane\n                operator: DoesNotExist"
         for component in ("master", "volume", "filer", "s3"):
             with self.subTest(component=component):
-                block = re.search(rf"(?ms)^{component}:\n(.*?)(?=^\S|\Z)", VALUES).group(1)
-                self.assertIn(selector, block)
+                block_match = re.search(rf"(?ms)^{component}:\n(.*?)(?=^\S|\Z)", VALUES)
+                if block_match is None:
+                    self.fail(f"missing {component} section in values.yaml")
+                self.assertIn(selector, block_match.group(1))
 
     def test_s3_is_authenticated_internal_only_and_runtime_secret_backed(self):
         self.assertIn("enableAuth: true", VALUES)

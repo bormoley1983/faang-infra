@@ -163,7 +163,9 @@ def validate_topology(
             raise SelectionError(f"dependencies.{name}.tls.mode is missing or unsupported")
 
         credentials = entry.get("credentials")
-        credential_mode = credentials.get("mode") if isinstance(credentials, dict) else None
+        if not isinstance(credentials, dict):
+            raise SelectionError(f"dependencies.{name}.credentials must be an object")
+        credential_mode = credentials.get("mode")
         if credential_mode not in contract.get("credentialModes", []):
             raise SelectionError(f"dependencies.{name}.credentials.mode is missing or unsupported")
         if credential_mode == "secret":
@@ -181,6 +183,8 @@ def validate_topology(
             continue
 
         address = entry.get("address")
+        if not isinstance(address, str):
+            raise SelectionError(f"dependencies.{name}.address is missing or not a string")
         port = entry.get("port")
         try:
             parsed = ipaddress.ip_address(address)
