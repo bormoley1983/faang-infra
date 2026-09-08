@@ -1,69 +1,59 @@
-# FAANG System Infrastructure & Deployment
+# FAANG infrastructure
 
-This repository manages the deployment and configuration of the FAANG microservices system on a Kubernetes cluster.
+This repository is the public, portable GitOps and operations source for the
+FAANG platform. It contains no real topology, credentials, kubeconfig data,
+or plaintext runtime Secrets.
 
-## Ideal Architecture (The Homelab "All-in-Cluster" Setup)
-The system is designed for an optimized homelab environment where the entire CI/CD stack runs as internal workloads within the **K3s cluster**:
+## Verified delivery model
 
-- **CI (Jenkins)**: Running in the `jenkins` namespace. Builds Jars and Docker images.
-- **CD (ArgoCD)**: Running in the `argocd` namespace. Syncs Git manifests to the cluster.
-- **Registry (Distribution)**: A TLS/authenticated POC registry in namespace `registry`, with persistent storage and topology supplied by an ignored local mapping.
-- **Management (Rancher)**: Running in-cluster to provide a unified GUI for all workloads.
-- **Ingress (Traefik)**: Handles private subdomain routing (`faang-account.home.arpa` in the public example).
+- Existing k3s, Rancher, Argo CD, Longhorn, MetalLB, Traefik, cert-manager,
+  Jenkins, and Distribution registry installations are reused.
+- Jenkins validates and proposes one immutable workload image-digest update.
+  It does not apply manifests or sync Argo CD.
+- Argo CD watches the protected delivery branch and is operated manually:
+  automated sync, prune, self-heal, force, and replace are disabled.
+- The private environment repository supplies encrypted runtime Secrets,
+  topology, private DNS, and private TLS overlays.
 
-## Project Structure
-- `k8s/base/`: Standard Kubernetes manifests (Generic, tracked in Git).
-- `k8s/bootstrap/`: Versioned, idempotent PostgreSQL, Kafka, Elasticsearch, and S3 bootstrap Jobs.
-- `k8s/components/dependencies/`: Paired internal/external profiles that preserve stable dependency Service names.
-- `k8s/environments/examples/`: Render-only all-internal, all-external, and mixed selection proofs without private topology.
-- `k8s/overlays/homelab/`: Kustomize patches for your specific domain and environment.
-- `ops/`: Configuration for Jenkins and ArgoCD.
+## Repository map
 
-## Deployment Workflows
+- `k8s/base/`: portable application resource structure.
+- `k8s/overlays/homelab/`: public example composition. It is not a place for
+  real domains or endpoint mappings.
+- `k8s/overlays/homelab/boundaries/`: independently owned runtime foundation,
+  selected-dependencies, bootstrap, retained-backup, and workload sources.
+- `k8s/components/dependencies/`: reviewed internal/external dependency
+  profile components and render-only examples.
+- `ops/argocd/`: named AppProjects, Applications, and staged App-of-Apps
+  definitions.
+- `ops/gitops/`: digest proposal and workload-only rollback tooling.
+- `ops/validation/`: render, policy, boundary, and post-deployment evidence
+  checks.
 
-### 1. Internal Registry Setup
-Copy the safe mapping example, edit only the ignored local copy, and install the registry:
-```powershell
-Copy-Item .\config\homelab.example.json .\config\homelab.local.json
-.\install-registry.ps1
-```
+## Current runtime selection
 
-See `k8s/registry/README.md` for CA trust and verification. The obsolete unauthenticated `default/docker-registry` resource has been removed.
+PostgreSQL, Redis, Kafka, and Elasticsearch use external aliases.
+Application S3 uses the separate internal `faang-object-storage` endpoint.
+`s3-main` is retained local backup storage under `faang-system`; it is not the
+active application S3 endpoint and must not be pruned through routine delivery.
 
-### 2. Infrastructure Setup Validation
+## Operator path
 
-Validate the committed bootstrap resources without changing the cluster:
+Start at the root [deployment guide](../README_DEPLOY.md). Before a manual
+Argo action, validate the intended Git revision and inspect the exact
+Application diff. Sync only the approved Application, with Prune, Force, and
+Replace disabled; then collect sanitized read-only evidence.
 
-```powershell
-.\setup-infra.ps1
-```
+Do not use `deploy.ps1`, `deploy.sh`, or direct `kubectl apply` as routine
+delivery mechanisms. Those legacy emergency paths do not encode the current
+Application ownership gates.
 
-Argo CD executes the four versioned bootstrap Jobs in ordered sync waves after the protected Secret and dependency endpoints are ready. See `k8s/bootstrap/README.md`. No local `latest` utility image or direct Secret manifest is used.
+## Focused documentation
 
-### 3. Automated CI/CD (The GitOps Loop)
-1. **Service CI**: Each service repository runs its Gradle build and tests for pull requests and pushes to `dev-local`.
-2. **Jenkins**: The delivery pipeline builds an immutable image, pushes it to the endpoint configured in Jenkins Credentials/environment configuration, and commits only that service's image digest to the environment overlay.
-3. **Infrastructure CI**: `ops/jenkins/Jenkinsfile` renders the overlay to catch invalid Kustomize configuration; it does not deploy directly.
-4. **ArgoCD**: Watches the `faang-infra` `dev-local` branch and `k8s/overlays/homelab` directly, then performs the cluster sync. The `faang-main` submodule pointer is updated only for deliberate integration snapshots and is not used as the deployment revision. Apply the restricted project and app once to start the sync:
-   ```powershell
-   kubectl apply -f ops/argocd/project.yaml
-   kubectl apply -f ops/argocd/application.yaml
-   ```
-
-   Automated sync remains disabled while the initial deployment blockers are being closed. Applying the Application registers and compares the desired state but does not authorize rollout.
-
-Hashtag Service has no Kubernetes resource by design. Add one only after the repository contains a deployable application, Dockerfile, configuration contract, and health endpoints.
-
-### 4. Manual/Emergency Deployment
-If you need to bypass CI/CD and deploy from your workstation:
-```powershell
-.\deploy.ps1
-```
-
-## Configuration ownership
-
-- `k8s/base` contains portable resource structure and deliberately non-routable dependency/ingress defaults.
-- `k8s/overlays/homelab` is now a generic `home.arpa` example and selects exactly one internal/external profile per dependency. It must not contain real domains, LAN addresses, node names, or external-node mappings.
-- Stable names (`postgres-main`, `redis-main`, `kafka-main`, `elasticsearch-main`, and `s3-main`) isolate applications from physical placement changes.
-- Real topology belongs in a separate private environment repository before Argo CD workload sync. Ignored workstation mappings are bootstrap-only.
-- Credentials remain outside ConfigMaps and plaintext Git. Runtime secret delivery is implemented separately under DEP-043.
+- [Kubernetes operator access](K8S-SETUP.md)
+- [Operations and GitOps](ops/README.md)
+- [Validation and post-deployment evidence](ops/validation/README.md)
+- [Dependency selection](k8s/components/dependencies/README.md)
+- [Bootstrap contract](k8s/bootstrap/README.md)
+- [Registry trust](k8s/registry/README.md)
+- [Workload rollback](ops/gitops/workload-rollback.md)

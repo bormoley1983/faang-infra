@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "collectedAtUtc": "2026-09-08T19:34:39.5658816Z",
+  "mutationPerformed": false,
+  "argo": [
+    {
+      "application": "faang-system",
+      "present": true,
+      "sync": "Synced",
+      "health": "Healthy",
+      "revision": "eef705b03768726bdb67c5d56c1f7ba81f6895df"
+    },
+    {
+      "application": "faang-runtime-foundation",
+      "present": true,
+      "sync": "Synced",
+      "health": "Healthy",
+      "revision": "a6469a63a73988d3d8b576e7be917c817366b21f"
+    },
+    {
+      "application": "faang-selected-dependencies",
+      "present": true,
+      "sync": "Synced",
+      "health": "Healthy",
+      "revision": "eef705b03768726bdb67c5d56c1f7ba81f6895df"
+    },
+    {
+      "application": "faang-bootstrap",
+      "present": true,
+      "sync": "Synced",
+      "health": "Healthy",
+      "revision": "eef705b03768726bdb67c5d56c1f7ba81f6895df"
+    },
+    {
+      "application": "faang-workloads",
+      "present": true,
+      "sync": "Synced",
+      "health": "Healthy",
+      "revision": "a6469a63a73988d3d8b576e7be917c817366b21f"
+    }
+  ],
+  "workloads": [
+    {
+      "deployment": "faang-account-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:2f0d99d1d4cf4b589b2d0f4f99beca758adc19830b0b245ad107d751858e07b4"
+      ]
+    },
+    {
+      "deployment": "faang-achievement-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:07fed673fc55d03074b7cafdf1decdc78ff2be37a6f6cedfbe19cadb63744d19"
+      ]
+    },
+    {
+      "deployment": "faang-analytics-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:15eb6d5bb5e23db248f27a052d20f91ce04f3c8ee5256cd6bf67e010aee5f23b"
+      ]
+    },
+    {
+      "deployment": "faang-notification-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:11feaece82830473689eed7160c6b98a9fe946e14fde912c83a8f00ced350217"
+      ]
+    },
+    {
+      "deployment": "faang-payment-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:a4215a4bfef4234b1b35a895a6d5521b6ec7f2ff9bbab13075bea434e0f49303"
+      ]
+    },
+    {
+      "deployment": "faang-post-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:0a44d9e08d895008fa26189b269d3e136564eb8640f85731520a8950785d2238"
+      ]
+    },
+    {
+      "deployment": "faang-project-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:764049a25a74e68e98be58e34984a00b91c148725a269dd91b7069a5db034222"
+      ]
+    },
+    {
+      "deployment": "faang-url-shortener-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:33887772aed54edd225919ff57fb06787830d2d2edfb5256839bc87ef7a10028"
+      ]
+    },
+    {
+      "deployment": "faang-user-service",
+      "desired": 1,
+      "ready": 1,
+      "available": 1,
+      "images": [
+        "sha256:8bf1c466c53bdabf83f59375533593713cd958243681b44aa0be15143d3612b1"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "service": "faang-account-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-achievement-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-analytics-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-notification-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-payment-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-post-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-project-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-url-shortener-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    },
+    {
+      "service": "faang-user-service",
+      "endpointSlices": 1,
+      "readyEndpoints": 1
+    }
+  ],
+  "ingress": {
+    "present": true,
+    "ruleCount": 9,
+    "external": {
+      "requested": false,
+      "dns": "not-run",
+      "httpStatus": "not-run",
+      "tls": "not-run",
+      "redirect": "not-run"
+    },
+    "readiness": {
+      "requested": false,
+      "dns": "not-run",
+      "httpStatus": "not-run",
+      "tls": "not-run",
+      "contract": "not-run"
+    }
+  },
+  "bootstrap": [
+    {
+      "job": "faang-bootstrap-postgres-v1",
+      "present": true,
+      "completed": true,
+      "failed": false
+    },
+    {
+      "job": "faang-bootstrap-kafka-v1",
+      "present": true,
+      "completed": true,
+      "failed": false
+    },
+    {
+      "job": "faang-bootstrap-elasticsearch-v1",
+      "present": true,
+      "completed": true,
+      "failed": false
+    },
+    {
+      "job": "faang-bootstrap-s3-v1",
+      "present": true,
+      "completed": true,
+      "failed": false
+    }
+  ],
+  "dependencies": {
+    "postgresql": "not-probed",
+    "redis": "not-probed",
+    "kafka": "not-probed",
+    "elasticsearch": "not-probed",
+    "s3": "not-probed",
+    "note": "Use a separately approved, scoped read-only in-cluster probe; do not use mutation-capable preflights for this baseline."
+  },
+  "jenkins": {
+    "status": "not-collected",
+    "result": "not-collected",
+    "building": false,
+    "durationMilliseconds": null
+  }
+}

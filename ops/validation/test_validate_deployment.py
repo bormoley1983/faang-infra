@@ -244,12 +244,13 @@ class ConfigurationOwnershipTests(unittest.TestCase):
             ROOT / "k8s" / "overlays" / "homelab" / "boundaries" / "bootstrap"
         )
         self.assertIn("ELASTICSEARCH_URL: https://elasticsearch-main:9200", rendered)
-        self.assertIn('ELASTICSEARCH_TLS_INSECURE: "true"', rendered)
+        self.assertIn('ELASTICSEARCH_TLS_INSECURE: "false"', rendered)
         self.assertIn("key: ELASTICSEARCH_USERNAME", rendered)
         self.assertIn("key: ELASTICSEARCH_PASSWORD", rendered)
-        script = (ROOT / "k8s" / "bootstrap" / "scripts" / "init-elasticsearch.sh").read_text(encoding="utf-8")
+        script = (ROOT / "k8s" / "preflight" / "external" / "common" / "scripts" / "preflight-elasticsearch.sh").read_text(encoding="utf-8")
         self.assertIn('--user "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD"', script)
-        self.assertIn('true) set -- "$@" --insecure', script)
+        self.assertIn('--cacert "$ELASTICSEARCH_CA_FILE"', script)
+        self.assertNotIn('--insecure', script)
 
     def test_homelab_has_one_configmap_and_all_ingress_hosts(self):
         rendered = self.render_workloads()

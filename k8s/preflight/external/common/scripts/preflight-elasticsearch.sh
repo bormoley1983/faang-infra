@@ -4,14 +4,15 @@ set -eu
 
 : "${ELASTICSEARCH_URL:?ELASTICSEARCH_URL is required}"
 : "${ELASTICSEARCH_TLS_INSECURE:?ELASTICSEARCH_TLS_INSECURE is required}"
+: "${ELASTICSEARCH_CA_FILE:?ELASTICSEARCH_CA_FILE is required}"
 : "${ELASTICSEARCH_USERNAME:?ELASTICSEARCH_USERNAME is required}"
 : "${ELASTICSEARCH_PASSWORD:?ELASTICSEARCH_PASSWORD is required}"
 
 set -- --fail --silent --show-error --connect-timeout 10 --max-time 30 --user "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD"
 case "$ELASTICSEARCH_TLS_INSECURE" in
-  true) set -- "$@" --insecure ;;
-  false) ;;
-  *) echo "ELASTICSEARCH_TLS_INSECURE must be true or false" >&2; exit 2 ;;
+  false) set -- "$@" --cacert "$ELASTICSEARCH_CA_FILE" ;;
+  true) echo "ELASTICSEARCH_TLS_INSECURE must be false for external preflight" >&2; exit 2 ;;
+  *) echo "ELASTICSEARCH_TLS_INSECURE must be false" >&2; exit 2 ;;
 esac
 
 curl "$@" "$ELASTICSEARCH_URL" --output /tmp/elasticsearch-root.json
