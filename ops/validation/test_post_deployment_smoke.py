@@ -20,7 +20,7 @@ class PostDeploymentSmokeTests(unittest.TestCase):
         ):
             self.assertIn(required, source)
         for service in ("account", "achievement", "analytics", "notification", "payment", "post", "project", "url-shortener"):
-            self.assertIn(f"faang-${{service}}-service", source)
+            self.assertIn("faang-$service-service", source)
         for forbidden in ("POST", "PUT", "DELETE", "kubectl", "hostPath:", "privileged: true"):
             self.assertNotIn(forbidden, source)
 
