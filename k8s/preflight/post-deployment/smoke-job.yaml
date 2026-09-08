@@ -33,7 +33,7 @@ spec:
               for service in account achievement analytics notification payment post project url-shortener; do
                 for endpoint in liveness readiness; do
                   curl --fail --silent --show-error --connect-timeout 5 --max-time 10 \
-                    "http://faang-${service}-service/actuator/health/${endpoint}" >/dev/null
+                    "http://faang-$service-service/actuator/health/$endpoint" >/dev/null
                   printf 'service=%s endpoint=%s result=pass\n' "$service" "$endpoint"
                 done
               done
