@@ -8,9 +8,9 @@ metadata:
 spec:
   project: faang-runtime-foundation
   source:
-    repoURL: 'https://github.com/bormoley1983/faang-infra.git'
-    targetRevision: refs/heads/dev-local
-    path: k8s/overlays/homelab/boundaries/runtime-foundation
+    repoURL: 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
+    targetRevision: main
+    path: overlays/runtime-foundation
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: faang
