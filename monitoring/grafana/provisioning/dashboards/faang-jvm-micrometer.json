@@ -1,0 +1,230 @@
+{
+    "title": "FAANG JVM (Micrometer)",
+    "uid": "faang-jvm-micrometer",
+    "tags": [
+        "faang",
+        "jvm"
+    ],
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "templating": {
+        "list": [
+            {
+                "name": "service",
+                "label": "Service",
+                "type": "query",
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                },
+                "query": "label_values(jvm_memory_used_bytes, application)",
+                "refresh": 2,
+                "includeAll": true,
+                "multi": true
+            }
+        ]
+    },
+    "panels": [
+        {
+            "id": 1,
+            "type": "gauge",
+            "title": "Heap used",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "sum(jvm_memory_used_bytes{application=~\"$service\", area=\"heap\"})",
+                    "legendFormat": "heap"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 1073741824
+                            },
+                            {
+                                "color": "red",
+                                "value": 2147483648
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 2,
+            "type": "timeseries",
+            "title": "Heap usage over time",
+            "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 6,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "sum by (application) (jvm_memory_used_bytes{application=~\"$service\", area=\"heap\"})",
+                    "legendFormat": "{{application}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        },
+        {
+            "id": 3,
+            "type": "timeseries",
+            "title": "CPU usage (process)",
+            "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 15,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "sum by (application) (process_cpu_usage{application=~\"$service\"})",
+                    "legendFormat": "{{application}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percentunit",
+                    "max": 1,
+                    "min": 0
+                }
+            }
+        },
+        {
+            "id": 4,
+            "type": "timeseries",
+            "title": "Threads",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum by (application) (jvm_threads_live_threads{application=~\"$service\"})",
+                    "legendFormat": "{{application}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            }
+        },
+        {
+            "id": 5,
+            "type": "timeseries",
+            "title": "GC pause time (rate)",
+            "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 6,
+                "y": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum by (application) (rate(jvm_gc_pause_seconds_sum{application=~\"$service\"}[5m]))",
+                    "legendFormat": "{{application}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 6,
+            "type": "timeseries",
+            "title": "HTTP request rate by service",
+            "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 15,
+                "y": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum by (application) (rate(http_server_requests_seconds_count{application=~\"$service\"}[5m]))",
+                    "legendFormat": "{{application}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps"
+                }
+            }
+        },
+        {
+            "id": 7,
+            "type": "timeseries",
+            "title": "HTTP p95 latency",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 16
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by (application, le) (rate(http_server_requests_seconds_bucket{application=~\"$service\"}[5m])))",
+                    "legendFormat": "{{application}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 8,
+            "type": "timeseries",
+            "title": "HTTP error rate (5xx)",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 16
+            },
+            "targets": [
+                {
+                    "expr": "sum by (application) (rate(http_server_requests_seconds_count{application=~\"$service\", status=~\"5..\"}[5m]))",
+                    "legendFormat": "{{application}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps"
+                }
+            }
+        }
+    ]
+}

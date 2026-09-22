@@ -51,6 +51,7 @@ class InfrastructurePipelineTests(unittest.TestCase):
         self.assertIn("writeFile(file: 'tracked-manifests.txt'", script)
         self.assertIn("--tracked-source-list .ci-evidence/tracked-manifests.txt", script)
         self.assertIn("--schema-overlay k8s/preflight/external", script)
+        self.assertIn("--schema-overlay k8s/components/monitoring/base", script)
         self.assertIn("--schema-overlay ops/storage/longhorn/manifests", script)
         self.assertIn(".ci-evidence/tests.log", script)
         self.assertIn(".ci-evidence/deployment-validation.log", script)

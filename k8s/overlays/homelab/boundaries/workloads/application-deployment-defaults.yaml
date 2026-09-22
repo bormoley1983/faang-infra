@@ -45,6 +45,12 @@
   path: /spec/template/spec/containers/0/ports/0/name
   value: http
 - op: add
+  path: /spec/template/spec/containers/0/ports/-
+  value:
+    name: metrics
+    containerPort: 9090
+    protocol: TCP
+- op: add
   path: /spec/template/spec/containers/0/env/-
   value:
     name: SERVER_SHUTDOWN
@@ -54,6 +60,21 @@
   value:
     name: SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE
     value: 45s
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: MANAGEMENT_SERVER_PORT
+    value: "9090"
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: METRICS_ENVIRONMENT
+    value: homelab
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: METRICS_CLUSTER
+    value: faang-homelab
 - op: add
   path: /spec/template/spec/containers/0/resources
   value:
@@ -87,8 +108,8 @@
   path: /spec/template/spec/containers/0/startupProbe
   value:
     httpGet:
-      path: /actuator/health/liveness
-      port: http
+          path: /actuator/health/liveness
+          port: metrics
     periodSeconds: 10
     timeoutSeconds: 2
     failureThreshold: 30
@@ -98,12 +119,18 @@
 - op: add
   path: /spec/template/spec/containers/0/livenessProbe/failureThreshold
   value: 3
+- op: replace
+  path: /spec/template/spec/containers/0/livenessProbe/httpGet/port
+  value: metrics
 - op: add
   path: /spec/template/spec/containers/0/readinessProbe/timeoutSeconds
   value: 2
 - op: add
   path: /spec/template/spec/containers/0/readinessProbe/failureThreshold
   value: 3
+- op: replace
+  path: /spec/template/spec/containers/0/readinessProbe/httpGet/port
+  value: metrics
 - op: add
   path: /spec/template/spec/containers/0/volumeMounts
   value:

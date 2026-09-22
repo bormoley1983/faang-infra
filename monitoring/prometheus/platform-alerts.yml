@@ -1,0 +1,24 @@
+groups:
+  - name: faang-monitoring
+    rules:
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+          owner: platform
+        annotations:
+          summary: Prometheus target is unavailable
+          description: A monitored target has been unavailable for five minutes.
+          runbook_url: https://example.invalid/runbooks/prometheus-target-missing
+
+      - alert: PrometheusConfigurationReloadFailed
+        expr: prometheus_config_last_reload_successful == 0
+        for: 5m
+        labels:
+          severity: warning
+          owner: platform
+        annotations:
+          summary: Prometheus configuration reload failed
+          description: Prometheus is running with its previous configuration.
+          runbook_url: https://example.invalid/runbooks/prometheus-config-reload

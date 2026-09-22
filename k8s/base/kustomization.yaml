@@ -1,6 +1,7 @@
 resources:
   - configmap.yaml
   - ingress.yaml
+  - application-metrics-network-policy.yaml
   - account-service.yaml
   - achievement-service.yaml
   - analytics-service.yaml
@@ -17,4 +18,9 @@ patches:
       group: apps
       version: v1
       kind: Deployment
+      name: faang-.*-service
+  - path: application-service-metrics.yaml
+    target:
+      version: v1
+      kind: Service
       name: faang-.*-service

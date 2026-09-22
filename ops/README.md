@@ -22,6 +22,7 @@ scoped Argo CD reconciliation. It is not direct `kubectl apply`.
 | Jenkins pipelines and recovery | [`jenkins/README.md`](jenkins/README.md), [`jenkins/backup/README.md`](jenkins/backup/README.md) |
 | Deployment and post-release evidence | [`validation/README.md`](validation/README.md) |
 | Dependency profiles | [`../k8s/components/dependencies/README.md`](../k8s/components/dependencies/README.md) |
+| Monitoring profiles | [`../monitoring/README.md`](../monitoring/README.md) |
 | Bootstrap jobs | [`../k8s/bootstrap/README.md`](../k8s/bootstrap/README.md) |
 | Registry trust | [`../k8s/registry/README.md`](../k8s/registry/README.md) |
 | Private ingress and TLS | [`gitops/private-ingress-tls.md`](gitops/private-ingress-tls.md) |

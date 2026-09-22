@@ -1,0 +1,20 @@
+[
+  {
+    "targets": ["192.0.2.31:9187"],
+    "labels": {
+      "job": "postgresql-exporter",
+      "dependency": "postgresql",
+      "role": "primary",
+      "placement": "external"
+    }
+  },
+  {
+    "targets": ["192.0.2.32:9121"],
+    "labels": {
+      "job": "redis-exporter",
+      "dependency": "redis",
+      "role": "primary",
+      "placement": "external"
+    }
+  }
+]

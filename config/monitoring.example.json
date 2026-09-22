@@ -1,0 +1,7 @@
+{
+  "bindAddress": "127.0.0.1",
+  "grafanaAdminUser": "admin",
+  "grafanaAdminPasswordFile": "",
+  "prometheusRetentionTime": "15d",
+  "prometheusRetentionSize": "20GB"
+}

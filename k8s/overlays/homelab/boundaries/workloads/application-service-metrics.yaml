@@ -1,0 +1,11 @@
+- op: add
+  path: /metadata/labels
+  value:
+    metrics.faang.io/scrape: "true"
+- op: add
+  path: /spec/ports/-
+  value:
+    name: metrics
+    port: 9090
+    protocol: TCP
+    targetPort: metrics

@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: faang-monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: faang-homelab
+
+    rule_files:
+      - /etc/prometheus/*-alerts.yml
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager.monitoring.svc.cluster.local:9093']
+
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # FAANG Spring Boot services (cluster Service DNS).
+      - job_name: faang-services
+        metrics_path: /actuator/prometheus
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names: ['faang']
+        relabel_configs:
+          # Keep only the explicitly labelled internal management ports.
+          - source_labels: [__meta_kubernetes_service_label_metrics_faang_io_scrape]
+            regex: 'true'
+            action: keep
+          - source_labels: [__meta_kubernetes_service_name]
+            regex: 'faang-.*-service'
+            action: keep
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            regex: metrics
+            action: keep
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_service_name]
+            target_label: service
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+
+      # k3s / kubelet (in-cluster).
+      - job_name: kubernetes-nodes
+        scheme: https
+        authorization:
+          credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          server_name: kubernetes.default.svc
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+  platform-alerts.yml: |
+    groups:
+      - name: faang-monitoring
+        rules:
+          - alert: PrometheusTargetMissing
+            expr: up == 0
+            for: 5m
+            labels:
+              severity: warning
+              owner: platform
+            annotations:
+              summary: Prometheus target is unavailable
+              description: A monitored target has been unavailable for five minutes.
+              runbook_url: https://example.invalid/runbooks/prometheus-target-missing

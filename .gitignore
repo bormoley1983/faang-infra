@@ -36,4 +36,6 @@ faang-secrets.yaml
 # Workstation/homelab topology (copy from the tracked example)
 /config/*.local.json
 /k8s/registry/tests/*.local.yaml
+/monitoring/prometheus/file_sd/*.local.json
+/monitoring/secrets/
 /artifacts/
