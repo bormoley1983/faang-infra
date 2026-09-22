@@ -1,0 +1,376 @@
+def publicRepository =
+    'https://github.com/bormoley1983/faang-infra'
+
+def privateRepository =
+    'https://github.com/bormoley1983/faang-infra-env-homelab'
+
+def publicBranch = 'dev-local'
+def privateBranch = 'main'
+def proposalBranch = 'env/promotions'
+def targetFile = 'overlays/workloads/kustomization.yaml'
+
+properties([
+    disableConcurrentBuilds()
+])
+def publicRepository = 'https://github.com/bormoley1983/faang-infra.git'
+def privateRepository = 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
+def publicBranch = 'dev-local'
+def privateBranch = 'main'
+def proposalBranch = 'env/promotions'
+def targetFile = 'overlays/workloads/kustomization.yaml'
+
+properties([
+    disableConcurrentBuilds()
+])
+
+podTemplate(yaml: '''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: faang-build-agent
+  automountServiceAccountToken: false
+  activeDeadlineSeconds: 900
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  securityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: git
+      image: alpine/git:v2.54.0@sha256:8478c2c09b9ac52a74783c3008cf6a24f05119228f6867be9566f98dc26aa240
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["900"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: HOME
+          value: /home/jenkins/agent
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: temporary
+          mountPath: /tmp
+    - name: python
+      image: python:3.14.7-alpine3.24@sha256:5e0ede45886712ce95b0e66232f743cc3d69ff6c2f62cc0d63778e1e894f8bd4
+      imagePullPolicy: IfNotPresent
+      command: ["sleep"]
+      args: ["900"]
+      workingDir: /home/jenkins/agent
+      env:
+        - name: HOME
+          value: /home/jenkins/agent
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: temporary
+          mountPath: /tmp
+  volumes:
+    - name: temporary
+      emptyDir:
+        sizeLimit: 128Mi
+''') {
+    node(POD_LABEL) {
+        try {
+            timeout(time: 12, unit: 'MINUTES') {
+                stage('Checkout protected public revision and tools') {
+                    dir('public-infra') {
+                        deleteDir()
+                        def checkoutState = checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: "refs/heads/${publicBranch}"]],
+                            extensions: [[
+                                $class: 'CloneOption',
+                                depth: 1,
+                                honorRefspec: true,
+                                noTags: true,
+                                shallow: true
+                            ]],
+                            userRemoteConfigs: [[
+                                refspec: "+refs/heads/${publicBranch}:refs/remotes/origin/${publicBranch}",
+                                url: publicRepository
+                            ]]
+                        ])
+                        String revision = checkoutState.GIT_COMMIT ?: ''
+                        if (!(revision ==~ /[0-9a-f]{40}/)) {
+                            error('Public infrastructure checkout did not return an exact revision')
+                        }
+                        env.PUBLIC_INFRA_REVISION = revision
+                        stash(
+                            name: 'protected-environment-tools',
+                            includes: 'ops/gitops/update_environment_revision.py,' +
+                                      'ops/gitops/test_update_environment_revision.py,' +
+                                      'ops/gitops/test_environment_promotion_pipeline.py,' +
+                                      'ops/jenkins/tests/Jenkinsfile.environment-promotion,' +
+                                      'ops/validation/install_kubectl.py'
+                        )
+                    }
+                    dir('protected-environment-tools') {
+                        deleteDir()
+                        unstash 'protected-environment-tools'
+                    }
+                }
+
+                stage('Test protected promotion logic') {
+                    container('python') {
+                        sh '''#!/bin/sh
+set -eu
+set +x
+python3 -m unittest discover \
+  -s "$WORKSPACE/protected-environment-tools/ops/gitops" \
+  -p 'test_*environment*.py' \
+  -v
+'''
+                    }
+                }
+
+                stage('Checkout private environment proposal') {
+                    dir('environment') {
+                        deleteDir()
+                        withEnv([
+                            "PRIVATE_REPOSITORY=${privateRepository}",
+                            "PRIVATE_BRANCH=${privateBranch}",
+                            "PROPOSAL_BRANCH=${proposalBranch}"
+                        ]) {
+                            withCredentials([usernamePassword(
+                                credentialsId: 'faang-environment-proposer',
+                                usernameVariable: 'ENVIRONMENT_USERNAME',
+                                passwordVariable: 'ENVIRONMENT_TOKEN'
+                            )]) {
+                                container('git') {
+                                    sh '''#!/bin/sh
+set -eu
+set +x
+askpass="$WORKSPACE/.environment-askpass"
+trap 'rm -f "$askpass"' EXIT
+cat > "$askpass" <<'EOF'
+#!/bin/sh
+case "$1" in
+  *Username*) printf '%s\n' "$ENVIRONMENT_USERNAME" ;;
+  *) printf '%s\n' "$ENVIRONMENT_TOKEN" ;;
+esac
+EOF
+chmod 0700 "$askpass"
+export GIT_ASKPASS="$askpass"
+export GIT_TERMINAL_PROMPT=0
+
+git clone --filter=blob:none --no-checkout "$PRIVATE_REPOSITORY" .
+git sparse-checkout init --cone
+git sparse-checkout set overlays/workloads
+git fetch origin "refs/heads/$PRIVATE_BRANCH:refs/remotes/origin/$PRIVATE_BRANCH"
+git switch -C "$PRIVATE_BRANCH" "refs/remotes/origin/$PRIVATE_BRANCH"
+git config user.name 'faang-environment-proposer[bot]'
+git config user.email 'faang-environment-proposer@users.noreply.github.com'
+
+proposal_ref="$(git ls-remote --heads origin "refs/heads/$PROPOSAL_BRANCH")"
+if [ -n "$proposal_ref" ]; then
+  git fetch origin "refs/heads/$PROPOSAL_BRANCH:refs/remotes/origin/$PROPOSAL_BRANCH"
+  git switch -C "$PROPOSAL_BRANCH" "refs/remotes/origin/$PROPOSAL_BRANCH"
+  git merge --no-edit "refs/remotes/origin/$PRIVATE_BRANCH"
+else
+  git switch -C "$PROPOSAL_BRANCH" "refs/remotes/origin/$PRIVATE_BRANCH"
+fi
+'''
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Update exact public workload revision') {
+                    dir('environment') {
+                        container('python') {
+                            sh '''#!/bin/sh
+set -eu
+set +x
+python3 "$WORKSPACE/protected-environment-tools/ops/gitops/update_environment_revision.py" \
+  update \
+  --kustomization "$WORKSPACE/environment/overlays/workloads/kustomization.yaml" \
+  --public-repository "https://github.com/bormoley1983/faang-infra.git" \
+  --revision "$PUBLIC_INFRA_REVISION"
+'''
+                        }
+                        container('git') {
+                            String status = sh(
+                                returnStdout: true,
+                                script: 'git status --porcelain --untracked-files=all'
+                            ).trim()
+                            if (!status) {
+                                int ahead = sh(
+                                    returnStdout: true,
+                                    script: "git rev-list --count refs/remotes/origin/${privateBranch}..HEAD"
+                                ).trim().toInteger()
+                                env.ENVIRONMENT_PROPOSAL_REQUIRED = ahead > 0 ? 'true' : 'false'
+                                env.ENVIRONMENT_COMMIT_REQUIRED = 'false'
+                            } else if (status == "M ${targetFile}" || status == " M ${targetFile}") {
+                                env.ENVIRONMENT_PROPOSAL_REQUIRED = 'true'
+                                env.ENVIRONMENT_COMMIT_REQUIRED = 'true'
+                            } else {
+                                error("Unexpected private environment workspace change: ${status}")
+                            }
+                        }
+                    }
+                }
+
+                stage('Render and validate private workload boundary') {
+                    container('python') {
+                        sh '''#!/bin/sh
+set -eu
+set +x
+python3 "$WORKSPACE/protected-environment-tools/ops/validation/install_kubectl.py" \
+  --output "$WORKSPACE/.tools/kubectl"
+'''
+                    }
+                    try {
+                        dir('environment') {
+                            container('git') {
+                                sh '''#!/bin/sh
+set -eu
+set +x
+"$WORKSPACE/.tools/kubectl" kustomize \
+  "$WORKSPACE/environment/overlays/workloads" \
+  > "$WORKSPACE/rendered-workloads.yaml"
+'''
+                            }
+                        }
+                        container('python') {
+                            sh '''#!/bin/sh
+set -eu
+set +x
+python3 "$WORKSPACE/protected-environment-tools/ops/gitops/update_environment_revision.py" \
+  validate-render \
+  --rendered "$WORKSPACE/rendered-workloads.yaml"
+'''
+                        }
+                    } finally {
+                        container('git') {
+                            sh 'rm -f "$WORKSPACE/rendered-workloads.yaml"'
+                        }
+                    }
+                }
+
+                if (env.ENVIRONMENT_PROPOSAL_REQUIRED == 'true') {
+                    stage('Commit and push private proposal') {
+                        dir('environment') {
+                            container('git') {
+                                if (env.ENVIRONMENT_COMMIT_REQUIRED == 'true') {
+                                    sh '''#!/bin/sh
+set -eu
+set +x
+git diff --check
+test "$(git diff --name-only)" = 'overlays/workloads/kustomization.yaml'
+git add -- overlays/workloads/kustomization.yaml
+git commit \
+  -m 'chore(gitops): promote public workload revision' \
+  -m "Public-Infra-Revision: $PUBLIC_INFRA_REVISION"
+'''
+                                }
+                                sh '''#!/bin/sh
+set -eu
+set +x
+changed="$(git diff --name-only refs/remotes/origin/main...HEAD)"
+test "$changed" = 'overlays/workloads/kustomization.yaml'
+case "$changed" in
+  *secrets/*|*.sops.yaml|*.enc.yaml|.sops.yaml)
+    echo 'Private secret material entered the environment proposal diff.' >&2
+    exit 1
+    ;;
+esac
+'''
+                            }
+                            withCredentials([usernamePassword(
+                                credentialsId: 'faang-environment-proposer',
+                                usernameVariable: 'ENVIRONMENT_USERNAME',
+                                passwordVariable: 'ENVIRONMENT_TOKEN'
+                            )]) {
+                                container('git') {
+                                    sh '''#!/bin/sh
+set -eu
+set +x
+askpass="$WORKSPACE/.environment-askpass"
+trap 'rm -f "$askpass"' EXIT
+cat > "$askpass" <<'EOF'
+#!/bin/sh
+case "$1" in
+  *Username*) printf '%s\n' "$ENVIRONMENT_USERNAME" ;;
+  *) printf '%s\n' "$ENVIRONMENT_TOKEN" ;;
+esac
+EOF
+chmod 0700 "$askpass"
+export GIT_ASKPASS="$askpass"
+export GIT_TERMINAL_PROMPT=0
+git push origin HEAD:refs/heads/env/promotions
+'''
+                                }
+                            }
+                        }
+                    }
+
+                    stage('Create or reuse private review PR') {
+                        withCredentials([usernamePassword(
+                            credentialsId: 'faang-environment-proposer',
+                            usernameVariable: 'ENVIRONMENT_USERNAME',
+                            passwordVariable: 'ENVIRONMENT_TOKEN'
+                        )]) {
+                            container('python') {
+                                sh '''#!/bin/sh
+set -eu
+set +x
+python3 "$WORKSPACE/protected-environment-tools/ops/gitops/update_environment_revision.py" \
+  ensure-pr \
+  --repository 'bormoley1983/faang-infra-env-homelab' \
+  --owner 'bormoley1983' \
+  --head 'env/promotions' \
+  --base 'main' \
+  > "$WORKSPACE/environment-pull-request"
+'''
+                            }
+                        }
+                    }
+                } else {
+                    echo 'Private environment already pins the protected public revision.'
+                }
+            }
+        } finally {
+            writeFile(
+                file: 'environment-promotion-evidence.txt',
+                text: "publicInfraRevision=${env.PUBLIC_INFRA_REVISION ?: 'unknown'}\n" +
+                      "proposalRequired=${env.ENVIRONMENT_PROPOSAL_REQUIRED ?: 'unknown'}\n" +
+                      "commitRequired=${env.ENVIRONMENT_COMMIT_REQUIRED ?: 'unknown'}\n"
+            )
+            archiveArtifacts(
+                artifacts: 'environment-promotion-evidence.txt,environment-pull-request',
+                allowEmptyArchive: true,
+                fingerprint: true
+            )
+        }
+    }
+}
