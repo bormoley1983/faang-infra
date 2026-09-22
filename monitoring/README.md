@@ -98,8 +98,12 @@ Before registering either monitoring Application, deliver the encrypted
 `monitoring-secrets-application.yaml` boundary. That Application is manual,
 private-repository-only, and restricted to core Secrets in `monitoring`.
 Review and merge both the private Secret PR and this public boundary PR before
-registering it. Synchronize it manually without prune, force, or replace, and
-verify only the expected Secret key names without decoding their values.
+registering it. Create the namespace from the reviewed public
+`../k8s/components/monitoring/base/namespace.yaml` manifest first; the Secret
+AppProject intentionally has no cluster-resource permission and its
+Application uses `CreateNamespace=false`. Synchronize it manually without
+prune, force, or replace, and verify only the expected Secret key names without
+decoding their values.
 
 Only after the Secret Application is healthy, register
 `../ops/argocd/monitoring-project.yaml` and `monitoring-application.yaml`:
