@@ -1,0 +1,22 @@
+{
+  "postgresql": {
+    "external": {"ready": true, "state": "operational"},
+    "internal": {"ready": false, "state": "operator-and-canary-only"}
+  },
+  "redis": {
+    "external": {"ready": true, "state": "operational"},
+    "internal": {"ready": false, "state": "canary-only"}
+  },
+  "elasticsearch": {
+    "external": {"ready": true, "state": "operational"},
+    "internal": {"ready": false, "state": "operator-and-canary-only"}
+  },
+  "kafka": {
+    "external": {"ready": true, "state": "operational"},
+    "internal": {"ready": false, "state": "operator-and-canary-only"}
+  },
+  "s3": {
+    "external": {"ready": true, "state": "alias-and-preflight-ready"},
+    "internal": {"ready": true, "state": "seaweedfs-operational"}
+  }
+}

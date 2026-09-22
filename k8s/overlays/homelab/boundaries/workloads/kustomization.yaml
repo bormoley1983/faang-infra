@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: faang
 resources:
   - resources/ingress.yaml
+  - resources/application-metrics-network-policy.yaml
   - resources/account-service.yaml
   - resources/achievement-service.yaml
   - resources/analytics-service.yaml
@@ -18,6 +19,11 @@ patches:
       group: apps
       version: v1
       kind: Deployment
+      name: faang-.*-service
+  - path: application-service-metrics.yaml
+    target:
+      version: v1
+      kind: Service
       name: faang-.*-service
   - path: ingress-patch.yaml
     target:

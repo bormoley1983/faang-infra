@@ -118,6 +118,7 @@ python3 ops/validation/validate_deployment.py --strict \
   --policy-overlay k8s/overlays/homelab/boundaries/bootstrap \
   --policy-overlay k8s/overlays/homelab/boundaries/workloads \
   --schema-overlay k8s/preflight/external \
+  --schema-overlay k8s/components/monitoring/base \
   --schema-overlay ops/storage/longhorn/manifests \
   > .ci-evidence/deployment-validation.log 2>&1
 status=$?

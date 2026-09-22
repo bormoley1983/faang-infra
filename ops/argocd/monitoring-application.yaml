@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: faang-monitoring
+  namespace: argocd
+spec:
+  project: faang-monitoring
+  source:
+    repoURL: 'https://github.com/bormoley1983/faang-infra.git'
+    targetRevision: refs/heads/dev-local
+    path: k8s/components/monitoring/base
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

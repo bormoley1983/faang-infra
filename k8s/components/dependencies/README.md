@@ -25,3 +25,17 @@ After bootstrap, use the disposable read-only checks documented under
 `k8s/preflight/external` to validate only the dependencies selected as
 external. The preflights resolve these stable Services and never embed their
 physical endpoints.
+
+## Operator command
+
+Use `manage-dependency-profiles.ps1` or `manage-dependency-profiles.sh` as the
+single read-only status, validation, and planning entry point. It validates the
+private topology against this contract and reports production readiness without
+printing endpoints or credentials.
+
+The readiness inventory intentionally marks internal PostgreSQL, Redis, Kafka,
+and Elasticsearch as unavailable for production selection. Their existing
+operator/canary assets are prerequisites, not complete profiles. The tool exits
+with code `3` when a requested plan is contract-valid but not production-ready;
+it performs no mutation. Do not work around that refusal with `deploy.ps1`,
+`deploy.sh`, or a direct bulk apply.

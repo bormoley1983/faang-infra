@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: faang-monitoring
+  namespace: argocd
+spec:
+  description: Restricted optional in-cluster monitoring boundary
+  sourceRepos:
+    - 'https://github.com/bormoley1983/faang-infra.git'
+  destinations:
+    - namespace: monitoring
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: Secret
+        name: grafana-admin
