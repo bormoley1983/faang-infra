@@ -92,6 +92,12 @@ digest-pinned images, the non-default retained Longhorn StorageClass, a
 runtime-only `grafana-admin` Secret supplied by the private secret boundary,
 and a least-privilege monitoring AppProject.
 
+Each monitoring Deployment has one replica and mounts a ReadWriteOnce
+Longhorn PVC. Its rolling-update strategy therefore uses `maxSurge: 0` and
+`maxUnavailable: 1`, stopping the existing pod before its replacement starts.
+Expect a brief component outage during an image or pod-template rollout; this
+prevents old and new pods from competing for the same volume.
+
 Before registering either monitoring Application, deliver the encrypted
 `grafana-admin` Secret through the separate
 `../ops/argocd/monitoring-secrets-project.yaml` and
