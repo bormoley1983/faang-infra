@@ -213,6 +213,9 @@ metadata:
     metrics.faang.io/scrape: \"true\"
 spec:
   ports:
+    - name: http
+      port: 80
+      targetPort: application
     - name: metrics
       port: 9090
       targetPort: metrics
@@ -252,6 +255,14 @@ spec:
         )
         self.path.write_text(mutable, encoding="utf-8")
         with self.assertRaisesRegex(EnvironmentPromotionError, "mutable latest"):
+            validate_rendered_workloads(self.path)
+
+    def test_rejects_unnamed_application_service_port(self) -> None:
+        unnamed = self.valid_render().replace("    - name: http\n", "    -\n", 1)
+        self.path.write_text(unnamed, encoding="utf-8")
+        with self.assertRaisesRegex(
+            EnvironmentPromotionError, "named application service port"
+        ):
             validate_rendered_workloads(self.path)
 
 
