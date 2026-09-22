@@ -106,6 +106,10 @@ class MonitoringProfileTests(unittest.TestCase):
             3,
             result.stdout.count('storage.faang.io/longhorn-node: "true"'),
         )
+        # A single-replica Deployment cannot surge while its replacement uses
+        # the same ReadWriteOnce Longhorn volume. Stop the old pod first.
+        self.assertEqual(3, result.stdout.count("maxSurge: 0"))
+        self.assertEqual(3, result.stdout.count("maxUnavailable: 1"))
         self.assertEqual(3, result.stdout.count("@sha256:"))
         self.assertIn("__meta_kubernetes_endpoint_port_name", result.stdout)
         self.assertIn("regex: metrics", result.stdout)
