@@ -31,20 +31,20 @@ patches:
       name: faang-ingress
 images:
   - name: docker-registry:5000/faang-account-service
-    digest: sha256:2f0d99d1d4cf4b589b2d0f4f99beca758adc19830b0b245ad107d751858e07b4
+    digest: sha256:28d1d93ac2ac1c00e6224a736ebf0f2fb46db797d7837107a97b190785fef8b7
   - name: docker-registry:5000/faang-achievement-service
-    digest: sha256:07fed673fc55d03074b7cafdf1decdc78ff2be37a6f6cedfbe19cadb63744d19
+    digest: sha256:b28988f2ed1c34b0ed02dac79ba8e72f7074f4500bcc580bab0423031673e017
   - name: docker-registry:5000/faang-analytics-service
-    digest: sha256:15eb6d5bb5e23db248f27a052d20f91ce04f3c8ee5256cd6bf67e010aee5f23b
+    digest: sha256:c3145b635ffdd2d7577efee6cb6b49b19cc996e0d22a23b6442b7224c4602f7c
   - name: docker-registry:5000/faang-notification-service
-    digest: sha256:11feaece82830473689eed7160c6b98a9fe946e14fde912c83a8f00ced350217
+    digest: sha256:791dcf7d507d291303ed836d4ad8bac552d196eed5acb1ebf8aaf0d1e64287ea
   - name: docker-registry:5000/faang-payment-service
-    digest: sha256:a4215a4bfef4234b1b35a895a6d5521b6ec7f2ff9bbab13075bea434e0f49303
+    digest: sha256:96a7fa4c934ea28ed9c3fb4027006d167af118807c196f7a5ae2449412168049
   - name: docker-registry:5000/faang-post-service
-    digest: sha256:0a44d9e08d895008fa26189b269d3e136564eb8640f85731520a8950785d2238
+    digest: sha256:4ef4bc23bb3fe57a90dd257d5390470ac1d66061f3f57dff345e90d596249f09
   - name: docker-registry:5000/faang-project-service
-    digest: sha256:764049a25a74e68e98be58e34984a00b91c148725a269dd91b7069a5db034222
+    digest: sha256:894187953d168f35409543986ef6940289e8725f07783971ecb92e654b0b462c
   - name: docker-registry:5000/faang-url-shortener-service
-    digest: sha256:33887772aed54edd225919ff57fb06787830d2d2edfb5256839bc87ef7a10028
+    digest: sha256:e1ad753e4c7a9ddc41c8b51ae7cc1e09270cae0207ab1b928e7e63d6a85a2f18
   - name: docker-registry:5000/faang-user-service
-    digest: sha256:8bf1c466c53bdabf83f59375533593713cd958243681b44aa0be15143d3612b1
+    digest: sha256:fc3df9a4d0b77f760853c388cb2c8774fb0c52ebe8fcb3fd1c9f8e02aa7df4bd
