@@ -1,17 +1,3 @@
-def publicRepository =
-    'https://github.com/bormoley1983/faang-infra'
-
-def privateRepository =
-    'https://github.com/bormoley1983/faang-infra-env-homelab'
-
-def publicBranch = 'dev-local'
-def privateBranch = 'main'
-def proposalBranch = 'env/promotions'
-def targetFile = 'overlays/workloads/kustomization.yaml'
-
-properties([
-    disableConcurrentBuilds()
-])
 def publicRepository = 'https://github.com/bormoley1983/faang-infra.git'
 def privateRepository = 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
 def publicBranch = 'dev-local'
