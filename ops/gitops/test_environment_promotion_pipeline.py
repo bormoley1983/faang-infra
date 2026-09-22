@@ -37,6 +37,25 @@ class EnvironmentPromotionPipelineContractTests(unittest.TestCase):
             self.pipeline,
         )
 
+    def test_declares_fixed_configuration_once(self) -> None:
+        for variable in (
+            "publicRepository",
+            "privateRepository",
+            "publicBranch",
+            "privateBranch",
+            "proposalBranch",
+            "targetFile",
+        ):
+            declarations = re.findall(
+                rf"(?m)^def {re.escape(variable)}\s*=", self.pipeline
+            )
+            self.assertEqual(
+                1,
+                len(declarations),
+                f"{variable} must be declared exactly once",
+            )
+        self.assertEqual(1, self.pipeline.count("properties(["))
+
     def test_has_no_deployment_or_secret_decryption_capability(self) -> None:
         lowered = self.pipeline.lower()
         for forbidden in (
