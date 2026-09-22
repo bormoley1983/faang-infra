@@ -102,6 +102,10 @@ class MonitoringProfileTests(unittest.TestCase):
         self.assertNotIn("CHANGE_ME", result.stdout)
         self.assertNotIn(":latest", result.stdout)
         self.assertEqual(3, result.stdout.count("storageClassName: longhorn-production-retain"))
+        self.assertEqual(
+            3,
+            result.stdout.count('storage.faang.io/longhorn-node: "true"'),
+        )
         self.assertEqual(3, result.stdout.count("@sha256:"))
         self.assertIn("__meta_kubernetes_endpoint_port_name", result.stdout)
         self.assertIn("regex: metrics", result.stdout)
