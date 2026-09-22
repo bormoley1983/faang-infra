@@ -3,6 +3,9 @@
   value:
     metrics.faang.io/scrape: "true"
 - op: add
+  path: /spec/ports/0/name
+  value: http
+- op: add
   path: /spec/ports/-
   value:
     name: metrics

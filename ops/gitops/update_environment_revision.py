@@ -209,6 +209,13 @@ def validate_rendered_workloads(rendered_path: Path) -> None:
                 f"Service/{service} is not explicitly enabled for metrics discovery"
             )
         if not re.search(
+            r"(?ms)^\s*-\s+name:\s*http\s*$.*?^\s+port:\s*80\s*$",
+            service_document,
+        ):
+            raise EnvironmentPromotionError(
+                f"Service/{service} has no named application service port"
+            )
+        if not re.search(
             r"(?ms)^\s*-\s+name:\s*metrics\s*$.*?^\s+port:\s*9090\s*$"
             r".*?^\s+targetPort:\s*metrics\s*$",
             service_document,
