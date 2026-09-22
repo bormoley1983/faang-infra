@@ -60,6 +60,8 @@ spec:
         app.kubernetes.io/name: prometheus
         app.kubernetes.io/part-of: faang-monitoring
     spec:
+      nodeSelector:
+        storage.faang.io/longhorn-node: "true"
       serviceAccountName: prometheus
       automountServiceAccountToken: true
       securityContext:
