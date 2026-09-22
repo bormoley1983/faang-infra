@@ -109,7 +109,12 @@ class MonitoringProfileTests(unittest.TestCase):
     def test_monitoring_argo_boundary_is_manual_scoped_and_unregistered(self):
         application = (ROOT / "ops/argocd/monitoring-application.yaml").read_text(encoding="utf-8")
         project = (ROOT / "ops/argocd/monitoring-project.yaml").read_text(encoding="utf-8")
+        secret_application = (ROOT / "ops/argocd/monitoring-secrets-application.yaml").read_text(encoding="utf-8")
+        secret_project = (ROOT / "ops/argocd/monitoring-secrets-project.yaml").read_text(encoding="utf-8")
         registered = (ROOT / "ops/argocd/kustomization.yaml").read_text(encoding="utf-8")
+        staged_registered = (
+            ROOT / "ops/argocd/staged-boundaries/kustomization.yaml"
+        ).read_text(encoding="utf-8")
         self.assertIn("project: faang-monitoring", application)
         self.assertIn("namespace: monitoring", application)
         self.assertNotIn("automated:", application)
@@ -118,6 +123,31 @@ class MonitoringProfileTests(unittest.TestCase):
         self.assertEqual(1, project.count("namespace: monitoring"))
         self.assertNotIn("monitoring-application.yaml", registered)
         self.assertNotIn("monitoring-project.yaml", registered)
+        self.assertNotIn("monitoring-secrets-application.yaml", registered)
+        self.assertNotIn("monitoring-secrets-project.yaml", registered)
+        self.assertNotIn("monitoring-application.yaml", staged_registered)
+        self.assertNotIn("monitoring-project.yaml", staged_registered)
+        self.assertNotIn("monitoring-secrets-application.yaml", staged_registered)
+        self.assertNotIn("monitoring-secrets-project.yaml", staged_registered)
+
+        self.assertIn("name: faang-monitoring-secrets", secret_project)
+        self.assertIn("https://github.com/bormoley1983/faang-infra-env-homelab.git", secret_project)
+        self.assertEqual(1, secret_project.count("https://github.com/bormoley1983/faang-infra-env-homelab.git"))
+        self.assertEqual(1, secret_project.count("namespace: monitoring"))
+        self.assertIn("clusterResourceWhitelist: []", secret_project)
+        self.assertIn("group: ''", secret_project)
+        self.assertEqual(1, secret_project.count("kind: Secret"))
+        self.assertNotIn("kind: '*'", secret_project)
+
+        self.assertIn("project: faang-monitoring-secrets", secret_application)
+        self.assertIn("repoURL: 'https://github.com/bormoley1983/faang-infra-env-homelab.git'", secret_application)
+        self.assertIn("targetRevision: main", secret_application)
+        self.assertIn("path: overlays/monitoring", secret_application)
+        self.assertIn("name: ksops-v1", secret_application)
+        self.assertIn("namespace: monitoring", secret_application)
+        self.assertIn("CreateNamespace=true", secret_application)
+        for prohibited in ("automated:", "prune:", "force:", "replace:"):
+            self.assertNotIn(prohibited, secret_application)
 
     def test_workloads_expose_separate_internal_metrics_port(self):
         profile = ROOT / "k8s/overlays/homelab/boundaries/workloads"
