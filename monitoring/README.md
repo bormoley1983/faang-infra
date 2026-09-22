@@ -92,8 +92,17 @@ digest-pinned images, the non-default retained Longhorn StorageClass, a
 runtime-only `grafana-admin` Secret supplied by the private secret boundary,
 and a least-privilege monitoring AppProject.
 
-Before registering `../ops/argocd/monitoring-project.yaml` and
-`monitoring-application.yaml`:
+Before registering either monitoring Application, deliver the encrypted
+`grafana-admin` Secret through the separate
+`../ops/argocd/monitoring-secrets-project.yaml` and
+`monitoring-secrets-application.yaml` boundary. That Application is manual,
+private-repository-only, and restricted to core Secrets in `monitoring`.
+Review and merge both the private Secret PR and this public boundary PR before
+registering it. Synchronize it manually without prune, force, or replace, and
+verify only the expected Secret key names without decoding their values.
+
+Only after the Secret Application is healthy, register
+`../ops/argocd/monitoring-project.yaml` and `monitoring-application.yaml`:
 
 1. complete capacity and recovery review;
 2. stage the encrypted `grafana-admin` Secret privately;
@@ -103,6 +112,11 @@ Before registering `../ops/argocd/monitoring-project.yaml` and
 6. verify PVCs, targets, dashboards, alerts, backup, and restore;
 7. retain the LXC stack until a representative release-cycle comparison and
    rollback rehearsal pass.
+
+For rollback, do not use Argo prune and do not delete the `monitoring`
+namespace, monitoring PVCs, or retained Longhorn PVs. Stop the trial by
+scaling the monitoring Deployments to zero in an approved maintenance window;
+keep both Applications manual.
 
 The Argo resources are intentionally not registered in the current root
 Kustomization. Moving the monitoring control plane does not move PostgreSQL,
@@ -117,6 +131,10 @@ python -m unittest discover -s ops/validation -p "test_*.py"
 kubectl kustomize k8s/components/monitoring/base
 python ops/validation/validate_deployment.py `
   --schema-overlay k8s/components/monitoring/base `
+  --policy-overlay k8s/overlays/homelab/boundaries/runtime-foundation `
+  --policy-overlay k8s/overlays/homelab/boundaries/selected-dependencies `
+  --policy-overlay k8s/overlays/homelab/boundaries/bootstrap `
+  --policy-overlay k8s/overlays/homelab/boundaries/workloads `
   --strict
 ```
 
