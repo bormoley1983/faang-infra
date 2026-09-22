@@ -145,7 +145,8 @@ class MonitoringProfileTests(unittest.TestCase):
         self.assertIn("path: overlays/monitoring", secret_application)
         self.assertIn("name: ksops-v1", secret_application)
         self.assertIn("namespace: monitoring", secret_application)
-        self.assertIn("CreateNamespace=true", secret_application)
+        self.assertIn("CreateNamespace=false", secret_application)
+        self.assertNotIn("CreateNamespace=true", secret_application)
         for prohibited in ("automated:", "prune:", "force:", "replace:"):
             self.assertNotIn(prohibited, secret_application)
 
