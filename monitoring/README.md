@@ -66,6 +66,39 @@ digest-pinned images, runs `promtool` and `amtool`, then starts the three
 services. It performs no uninstall, volume deletion, firewall modification,
 DNS change, or credential creation.
 
+## External LXC backup and isolated restore verification
+
+Run a consistent backup from the LXC repository checkout. The guarded command
+requires all three services to be running, stops them briefly, streams their
+three named volumes into a mode-`0600` archive, writes SHA-256 and metadata
+sidecars, and always starts the stack again. Choose an absolute directory on a
+protected filesystem outside the Git checkout:
+
+```sh
+sh ./backup-monitoring-lxc.sh \
+  --config "$HOME/.config/faang-monitoring/monitoring.local.json" \
+  --output-directory /absolute/protected/backup/path \
+  --confirm FAANG-MONITORING-BACKUP
+```
+
+The archive contains the Prometheus TSDB, Alertmanager state, and Grafana
+database and is sensitive even though it contains no plaintext administrator
+password file. Copy it to encrypted off-host storage before claiming host-loss
+recovery.
+
+Verify the checksum and restore into uniquely named temporary Docker volumes:
+
+```sh
+sh ./verify-monitoring-backup-lxc.sh \
+  --archive /absolute/protected/backup/path/faang-monitoring-<timestamp>.tar.gz \
+  --confirm FAANG-MONITORING-RESTORE-VERIFY
+```
+
+Verification never overwrites the live volumes. It validates archive paths and
+required volume trees, extracts into isolated labelled volumes, checks the
+restored Prometheus WAL and Grafana database, and removes only those exact
+temporary volumes. Retain the archive and both sidecars after the test.
+
 Alertmanager initially routes to a null receiver deliberately. Configure and
 test real receivers from the private operations source; never commit webhook
 URLs, SMTP credentials, or tokens here. Likewise, secure remote write is not
@@ -97,6 +130,13 @@ Longhorn PVC. Its rolling-update strategy therefore uses `maxSurge: 0` and
 `maxUnavailable: 1`, stopping the existing pod before its replacement starts.
 Expect a brief component outage during an image or pod-template rollout; this
 prevents old and new pods from competing for the same volume.
+
+The Kubernetes Prometheus profile requests a 20 GiB retained PVC and limits
+TSDB blocks by both 15-day and 16 GB retention; whichever threshold is reached
+first applies. The remaining capacity is reserved for WAL, head chunks, and
+temporary compaction overhead. Treat any live expansion as an irreversible
+grow-only operation and merge the matching desired-state change before the
+next manual Argo synchronization.
 
 Before registering either monitoring Application, deliver the encrypted
 `grafana-admin` Secret through the separate

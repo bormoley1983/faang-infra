@@ -85,6 +85,7 @@ spec:
             - --config.file=/etc/prometheus/prometheus.yml
             - --storage.tsdb.path=/prometheus
             - --storage.tsdb.retention.time=15d
+            - --storage.tsdb.retention.size=16GB
           ports:
             - name: http
               containerPort: 9090
@@ -142,7 +143,7 @@ spec:
   storageClassName: longhorn-production-retain
   resources:
     requests:
-      storage: 10Gi
+      storage: 20Gi
 ---
 apiVersion: v1
 kind: Service
