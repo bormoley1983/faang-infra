@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tarfile
 import unittest
 
 
@@ -21,6 +22,14 @@ if SPEC is None or SPEC.loader is None:
 INSTALLER = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = INSTALLER
 SPEC.loader.exec_module(INSTALLER)
+sys.modules.setdefault("install", INSTALLER)
+BACKUP_PATH = MONITORING / "backup.py"
+BACKUP_SPEC = importlib.util.spec_from_file_location("monitoring_backup", BACKUP_PATH)
+if BACKUP_SPEC is None or BACKUP_SPEC.loader is None:
+    raise RuntimeError(f"Unable to load module spec for {BACKUP_PATH}")
+BACKUP = importlib.util.module_from_spec(BACKUP_SPEC)
+sys.modules[BACKUP_SPEC.name] = BACKUP
+BACKUP_SPEC.loader.exec_module(BACKUP)
 
 
 class MonitoringProfileTests(unittest.TestCase):
@@ -89,6 +98,58 @@ class MonitoringProfileTests(unittest.TestCase):
         finally:
             shutil.rmtree(temporary, ignore_errors=True)
 
+    def test_lxc_backup_is_guarded_consistent_and_restores_only_to_temporary_volumes(self):
+        source = (MONITORING / "backup.py").read_text(encoding="utf-8")
+        compose = (MONITORING / "compose.yaml").read_text(encoding="utf-8")
+        self.assertIn('BACKUP_CONFIRMATION = "FAANG-MONITORING-BACKUP"', source)
+        self.assertIn('VERIFY_CONFIRMATION = "FAANG-MONITORING-RESTORE-VERIFY"', source)
+        self.assertIn('compose("stop")', source)
+        self.assertIn('compose("up", "-d")', source)
+        self.assertIn("monitoring_restore_verify_", source)
+        self.assertIn("validate_archive_members", source)
+        self.assertIn("checksum verification failed", source)
+        self.assertNotIn("monitoring_prometheus_data", source.replace(
+            '"prometheus": "monitoring_prometheus_data"', ""
+        ))
+        for volume in (
+            "monitoring_prometheus_data",
+            "monitoring_alertmanager_data",
+            "monitoring_grafana_data",
+        ):
+            self.assertIn(f"name: {volume}", compose)
+
+    def test_lxc_backup_archive_validation_rejects_traversal_and_missing_trees(self):
+        temporary = ROOT / ".cache" / "validation-tests" / f"monitoring-backup-{os.getpid()}"
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        temporary.mkdir(parents=True)
+        try:
+            valid = temporary / "valid.tar.gz"
+            with tarfile.open(valid, "w:gz") as archive:
+                for name in ("prometheus/", "alertmanager/", "grafana/"):
+                    member = tarfile.TarInfo(name)
+                    member.type = tarfile.DIRTYPE
+                    archive.addfile(member)
+            BACKUP.validate_archive_members(valid)
+
+            unsafe = temporary / "unsafe.tar.gz"
+            with tarfile.open(unsafe, "w:gz") as archive:
+                member = tarfile.TarInfo("../escape")
+                member.size = 0
+                archive.addfile(member)
+            with self.assertRaises(BACKUP.BackupError):
+                BACKUP.validate_archive_members(unsafe)
+
+            incomplete = temporary / "incomplete.tar.gz"
+            with tarfile.open(incomplete, "w:gz") as archive:
+                member = tarfile.TarInfo("prometheus/")
+                member.type = tarfile.DIRTYPE
+                archive.addfile(member)
+            with self.assertRaises(BACKUP.BackupError):
+                BACKUP.validate_archive_members(incomplete)
+        finally:
+            shutil.rmtree(temporary, ignore_errors=True)
+
     def test_kubernetes_profile_renders_without_plaintext_secrets(self):
         profile = ROOT / "k8s/components/monitoring/base"
         result = subprocess.run(
@@ -111,6 +172,10 @@ class MonitoringProfileTests(unittest.TestCase):
         self.assertEqual(3, result.stdout.count("maxSurge: 0"))
         self.assertEqual(3, result.stdout.count("maxUnavailable: 1"))
         self.assertEqual(3, result.stdout.count("@sha256:"))
+        self.assertIn("--storage.tsdb.retention.time=15d", result.stdout)
+        self.assertIn("--storage.tsdb.retention.size=16GB", result.stdout)
+        self.assertIn("storage: 20Gi", result.stdout)
+        self.assertNotIn("storage: 10Gi", result.stdout)
         self.assertIn("__meta_kubernetes_endpoint_port_name", result.stdout)
         self.assertIn("regex: metrics", result.stdout)
 
