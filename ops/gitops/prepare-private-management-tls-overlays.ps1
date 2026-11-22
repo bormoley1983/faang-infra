@@ -6,6 +6,7 @@ param(
 # Prepares private-only TLS overlay directories. It never reads Secret values,
 # invokes Kubernetes/Argo, or creates a TLS Secret.
 $ErrorActionPreference = 'Stop'
+throw 'This legacy preparation script targets retired overlay paths. Use the platform overlays and SOPS rules in the private environment repository.'
 $root = (Resolve-Path -LiteralPath $PrivateEnvironmentRoot -ErrorAction Stop).Path
 $sopsPath = Join-Path $root '.sops.yaml'
 if (-not (Test-Path -LiteralPath $sopsPath -PathType Leaf)) { throw 'Private environment SOPS configuration was not found.' }

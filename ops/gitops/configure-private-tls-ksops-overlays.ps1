@@ -9,8 +9,8 @@ $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path -LiteralPath $PrivateEnvironmentRoot -ErrorAction Stop).Path
 $expectedFiles = @(
     'overlays/homelab/secrets/faang-ingress-tls.sops.yaml',
-    'overlays/argocd/secrets/argocd-management-tls.sops.yaml',
-    'overlays/jenkins/secrets/jenkins-management-tls.sops.yaml'
+    'platform/argocd/secrets/argocd-management-tls.sops.yaml',
+    'platform/jenkins/secrets/jenkins-management-tls.sops.yaml'
 )
 foreach ($relativePath in $expectedFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $root $relativePath) -PathType Leaf)) {
@@ -34,7 +34,7 @@ $managementOverlays = @(
 )
 $writes = @(@{ Path = $homeGeneratorPath; Content = $homeGenerator })
 foreach ($overlay in $managementOverlays) {
-    $overlayPath = Join-Path $root ('overlays/' + $overlay.Name)
+    $overlayPath = Join-Path $root ('platform/' + $overlay.Name)
     $kustomizationPath = Join-Path $overlayPath 'kustomization.yaml'
     $generatorPath = Join-Path $overlayPath 'secrets/ksops-generator.yaml'
     if (-not (Test-Path -LiteralPath $kustomizationPath -PathType Leaf)) { throw "Management overlay kustomization was not found: $($overlay.Name)" }

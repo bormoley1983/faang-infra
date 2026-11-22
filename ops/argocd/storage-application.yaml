@@ -12,12 +12,12 @@ spec:
       helm:
         releaseName: longhorn
         valueFiles:
-          - $values/ops/storage/longhorn/values.yaml
+          - $values/platform/longhorn/values.yaml
     - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
       targetRevision: refs/heads/dev-local
       path: ops/storage/longhorn/manifests
-    - repoURL: 'https://github.com/bormoley1983/faang-infra.git'
-      targetRevision: refs/heads/dev-local
+    - repoURL: 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
+      targetRevision: main
       ref: values
   destination:
     server: 'https://kubernetes.default.svc'
