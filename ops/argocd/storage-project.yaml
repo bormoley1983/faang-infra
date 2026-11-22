@@ -8,6 +8,7 @@ spec:
   sourceRepos:
     - 'https://charts.longhorn.io'
     - 'https://github.com/bormoley1983/faang-infra.git'
+    - 'https://github.com/bormoley1983/faang-infra-env-homelab.git'
   destinations:
     - namespace: longhorn-system
       server: 'https://kubernetes.default.svc'
