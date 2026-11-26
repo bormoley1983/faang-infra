@@ -117,11 +117,10 @@ possible. Do not rely on a secret from `faang` for Argo or Jenkins: Kubernetes
 Secrets are namespace-scoped and each ingress needs a Secret in its own
 namespace.
 
-Before staging a management PFX, use
-`prepare-private-management-tls-overlays.ps1` to create separate private
-`argocd` and `jenkins` overlay skeletons and extend the existing private SOPS
-creation rule. It refuses an ambiguous rule or an existing overlay and never
-contacts Kubernetes or Argo.
+Management TLS overlays are maintained under `platform/argocd` and
+`platform/jenkins` in the private environment repository. The older
+`prepare-private-management-tls-overlays.ps1` targets retired paths and is
+disabled; use the existing platform overlays and their SOPS creation rule.
 
 After all three encrypted TLS manifests have been staged, run
 `configure-private-tls-ksops-overlays.ps1`. It registers the application

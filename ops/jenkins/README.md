@@ -31,7 +31,7 @@ Publication remains a later trusted job and cannot run when validation fails.
 
 ## DEP-031 acceptance status
 
-The reviewed plugin lock, controller restart, Shared Library, and nine
+The reviewed plugin configuration, controller restart, Shared Library, and nine
 multibranch jobs are live. Each SCM source uses the dedicated
 `github-app-faang-ci` GitHub App credential with inferred-repository/read-only
 contents access. All nine current `dev-local` revisions pass the common Jenkins
@@ -70,7 +70,7 @@ revision, unit-test log, and strict deployment-validation log. It binds no
 Jenkins credential and contains no publication, signing, Git-write, Argo, or
 cluster-apply step.
 
-Do not add the `timestamps()` Pipeline option: the deliberately locked plugin
+Do not add the `timestamps()` Pipeline option: the plugin
 set does not include its optional provider. GitHub commit-status update failures
 are also expected from the read-only discovery App and are not a reason to
 broaden that App; retained Jenkins build evidence is the acceptance record.
@@ -242,13 +242,16 @@ intended digest with zero restarts, and automated sync remained disabled. The
 merged proposal head was deleted, preventing linear-history commits from
 accumulating into the next promotion cycle.
 
-## Plugin and JCasC update policy
+## Controller, plugin and JCasC update policy
 
-`values/controller-hardening.yaml` is an exact 74-plugin lock. An update-center
-notification is not authorization to change individual pins: review Jenkins
-core compatibility, transitive dependency changes, backup/rollback, and the
-full CI acceptance suite in a separate upgrade change.
+`values/controller-hardening.yaml` requests the `jenkins/jenkins:latest` controller image with an always-pull policy. A new image is pulled when the Pod starts; this does not trigger a rollout by itself. Private Helm values applied later can override these settings.
+
+`values/controller-hardening.yaml` requests the latest releases of its 74
+listed plugins and their dependencies whenever the controller starts. Plugin
+versions can therefore change on restart, subject to update-center availability
+and Jenkins core compatibility. Keep a current backup and validate CI after
+controller restarts; restore the previous plugin set if an update causes problems.
 
 The Shared Library retriever uses the current `gitSource` JCasC symbol. The old
 `git` alias is obsolete and must not be reintroduced. A focused regression test
-checks both this schema field and the unchanged 74-entry lock.
+checks both this schema field and the latest-plugin configuration.
