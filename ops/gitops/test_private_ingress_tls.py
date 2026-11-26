@@ -15,7 +15,7 @@ class PrivateIngressTlsRunbookTests(unittest.TestCase):
             "do not patch their `repoURL` or `targetRevision` live",
         ):
             self.assertIn(required, source)
-        for forbidden in ("office.aviv.com.ua", "homelab.local"):
+        for forbidden in ("lab.local", "homelab.local"):
             self.assertNotIn(forbidden, source)
 
 
